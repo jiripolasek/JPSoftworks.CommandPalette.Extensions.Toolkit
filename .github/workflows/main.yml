@@ -78,30 +78,33 @@ jobs:
         id: pack
         shell: pwsh
         run: |
-            # Determine version: manual > tag-driven > feature-preview
-            if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
-                $version = $env:GITHUB_EVENT_INPUTS_VERSION
-            } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
-                $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
-                try {
-                    $lastTagRaw = git describe --tags --abbrev=0 2>$null
-                    if (-not $lastTagRaw) {
-                        $lastTag = "0.0.0"
-                        $commitsSince = (git rev-list HEAD --count)
-                    } else {
-                        $lastTag = $lastTagRaw -replace '^v', ''
-                        $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
-                    }
-                } catch {
-                    $lastTag = "0.0.0"
-                    $commitsSince = (git rev-list HEAD --count)
-                }
-                $safeBranch = $branchName -replace '/', '-'
-                $version = "$lastTag-ci-$safeBranch.$commitsSince"
-            } else {
-                $lastTagRaw = git describe --tags --abbrev=0
-                $version = $lastTagRaw -replace '^v', ''
-            }
+          # Determine version: manual > tag-driven > feature-preview
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
+              $version = $env:GITHUB_EVENT_INPUTS_VERSION
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
+              $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
+              $trimmedBranch = $branchName -replace '^[^/]+/',''
+              $safeBranch = $trimmedBranch -replace '/','-'
+
+              try {
+                  $lastTagRaw = git describe --tags --abbrev=0 2>$null
+                  if (-not $lastTagRaw) {
+                      $lastTag = "0.0.0"
+                      $commitsSince = (git rev-list HEAD --count)
+                  } else {
+                      $lastTag = $lastTagRaw -replace '^v', ''
+                      $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+                  }
+              } catch {
+                  $lastTag = "0.0.0"
+                  $commitsSince = (git rev-list HEAD --count)
+              }
+
+              $version = "$lastTag-ci-$safeBranch.$commitsSince"
+          } else {
+              $lastTagRaw = git describe --tags --abbrev=0
+              $version = $lastTagRaw -replace '^v', ''
+          }
 
             Write-Host "Using version $version"
 
