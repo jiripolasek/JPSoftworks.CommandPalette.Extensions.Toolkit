@@ -29,6 +29,10 @@ permissions:
   actions: read
 
 jobs:
+
+  # ----------------------------------------------
+  # Build & Test
+  # ----------------------------------------------
   build-test-pack:
     name: Build & Test
     runs-on: windows-latest
@@ -121,8 +125,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nupkg
-          path: artifacts/*.nupkg
+          path: |
+              artifacts/*.nupkg
+              artifacts/*.snupkg
 
+  # ----------------------------------------------
+  # Publish preview to GitHub Packages
+  # ----------------------------------------------
   publish-preview:
     name: Publish Preview
     needs: build-test-pack
@@ -132,7 +141,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nupkg
-          path: ./artifacts
+          path: artifacts
 
       - name: Push to GitHub Packages
         shell: pwsh
@@ -141,6 +150,9 @@ jobs:
             --api-key ${{ secrets.GITHUB_TOKEN }} `
             --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
+  # ----------------------------------------------
+  # Publish release
+  # ----------------------------------------------
   publish-release:
     name: Publish Release
     needs: build-test-pack
@@ -150,7 +162,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: nupkg
-          path: ./artifacts
+          path: artifacts
 
       - name: Push to NuGet.org
         shell: pwsh
