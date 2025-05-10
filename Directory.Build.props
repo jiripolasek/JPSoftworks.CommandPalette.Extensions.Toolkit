@@ -6,5 +6,7 @@
 
 	  <LangVersion>preview</LangVersion>
 	  <PlatformTarget>AnyCPU</PlatformTarget>
+
+	  <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 </Project>
