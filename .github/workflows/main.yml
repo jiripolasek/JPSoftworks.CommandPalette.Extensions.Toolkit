@@ -148,9 +148,9 @@ jobs:
         run: |
           
           Write-Host "Checking contents of artifacts folder"
-          Get-ChildItem ./artifacts/*.*nupkg -ErrorAction SilentlyContinue
+          Get-ChildItem ./artifacts/*.nupkg -ErrorAction SilentlyContinue
 
-          dotnet nuget push "**/*.*nupkg" `
+          dotnet nuget push "artifacts\*.nupkg" `
             --api-key ${{ secrets.GITHUB_TOKEN }} `
             --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
@@ -171,17 +171,10 @@ jobs:
       - name: Push to NuGet.org
         shell: pwsh
         run: |
-          Write-Host "Checking contents of current folder"
-
-          Get-ChildItem -Path . -Recurse | Out-String | Write-Host
-
           Write-Host "Checking contents of artifacts folder"
+          Get-ChildItem ./artifacts/*.nupkg -ErrorAction SilentlyContinue
 
-          Get-ChildItem -Path ./artifacts -Recurse | Out-String | Write-Host
-
-          $packages = Get-ChildItem ./artifacts/*.nupkg,./artifacts/*.snupkg -ErrorAction SilentlyContinue
-
-          dotnet nuget push ./artifacts/*.*nupkg `
+          dotnet nuget push "artifacts\*.nupkg" `
             --api-key ${{ secrets.NUGET_API_KEY }} `
             --source https://api.nuget.org/v3/index.json
 
