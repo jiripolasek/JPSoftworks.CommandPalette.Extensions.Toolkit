@@ -74,42 +74,48 @@ jobs:
         id: pack
         shell: pwsh
         run: |
-          # Determine version: manual > tag-driven > feature-preview
-          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
-            $version = $env:GITHUB_EVENT_INPUTS_VERSION
-          } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
-            $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
-            try {
-              $lastTagRaw = git describe --tags --abbrev=0 2>$null
-              if (-not $lastTagRaw) {
-                $lastTag = "0.0.0"
-                $commitsSince = (git rev-list HEAD --count)
-              } else {
-                $lastTag = $lastTagRaw -replace '^v', ''
-                $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
-              }
-            } catch {
-              $lastTag = "0.0.0"
-              $commitsSince = (git rev-list HEAD --count)
+            # Determine version: manual > tag-driven > feature-preview
+            if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
+                $version = $env:GITHUB_EVENT_INPUTS_VERSION
+            } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
+                $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
+                try {
+                    $lastTagRaw = git describe --tags --abbrev=0 2>$null
+                    if (-not $lastTagRaw) {
+                        $lastTag = "0.0.0"
+                        $commitsSince = (git rev-list HEAD --count)
+                    } else {
+                        $lastTag = $lastTagRaw -replace '^v', ''
+                        $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+                    }
+                } catch {
+                    $lastTag = "0.0.0"
+                    $commitsSince = (git rev-list HEAD --count)
+                }
+                $safeBranch = $branchName -replace '/', '-'
+                $version = "$lastTag-ci-$safeBranch.$commitsSince"
+            } else {
+                $lastTagRaw = git describe --tags --abbrev=0
+                $version = $lastTagRaw -replace '^v', ''
             }
-            $safeBranch = $branchName -replace '/', '-'
-            $version = "$lastTag-ci-$safeBranch.$commitsSince"
-          } else {
-            $lastTagRaw = git describe --tags --abbrev=0
-            $version = $lastTagRaw -replace '^v', ''
-          }
 
-          Write-Host "Using version $version"
+            Write-Host "Using version $version"
 
-          $packageFolder = "src/JPSoftworks.CommandPalette.Extensions.Toolkit/artifacts"
-          if (!(Test-Path "$packageFolder/*.nupkg")) {
-              Write-Error "NuGet package was not created in expected location. Check MSBuild logs for Pack errors."
-              exit 1
-          }
+            $artifactsFolder = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+            msbuild src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
+                /t:Pack /p:Configuration=Release /p:NoBuild=true /p:NoRestore=true /p:PackageVersion=$version /p:PackageOutputPath=$artifactsFolder
 
-          $nupkgPath = Get-ChildItem "$packageFolder/*.nupkg" | Select-Object -ExpandProperty FullName
-          "nupkg-path=$nupkgPath" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
-          "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+            Write-Host "Checking contents of $artifactsFolder"
+            Get-ChildItem -Path $artifactsFolder -Recurse | Out-String | Write-Host
+
+            if (!(Test-Path "$artifactsFolder/*.nupkg")) {
+            Write-Error "NuGet package was not created. Check msbuild logs for Pack errors."
+            exit 1
+            }
+
+            $nupkgPath = Get-ChildItem "$artifactsFolder/*.nupkg" | Select-Object -ExpandProperty FullName
+            "nupkg-path=$nupkgPath" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+            "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
       - name: Upload NuGet package
         uses: actions/upload-artifact@v4
