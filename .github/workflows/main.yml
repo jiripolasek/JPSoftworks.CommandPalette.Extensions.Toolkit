@@ -167,6 +167,16 @@ jobs:
       - name: Push to NuGet.org
         shell: pwsh
         run: |
+          Write-Host "Checking contents of current folder"
+
+          Get-ChildItem -Path . -Recurse | Out-String | Write-Host
+
+          Write-Host "Checking contents of artifacts folder"
+
+          Get-ChildItem -Path ./artifacts -Recurse | Out-String | Write-Host
+
+          $packages = Get-ChildItem ./artifacts/*.nupkg,./artifacts/*.snupkg -ErrorAction SilentlyContinue
+
           dotnet nuget push ./artifacts/*.nupkg `
             --api-key ${{ secrets.NUGET_API_KEY }} `
             --source https://api.nuget.org/v3/index.json
