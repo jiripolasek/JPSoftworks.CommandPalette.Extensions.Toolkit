@@ -47,9 +47,10 @@ jobs:
           key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
 
       - name: Setup .NET 9 SDK
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+          cache: true
           
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2
@@ -78,9 +79,19 @@ jobs:
             $version = $env:GITHUB_EVENT_INPUTS_VERSION
           } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
             $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
-            $lastTagRaw = git describe --tags --abbrev=0
-            $lastTag = $lastTagRaw -replace '^v', ''
-            $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+            try {
+              $lastTagRaw = git describe --tags --abbrev=0 2>$null
+              if (-not $lastTagRaw) {
+                $lastTag = "0.0.0"
+                $commitsSince = (git rev-list HEAD --count)
+              } else {
+                $lastTag = $lastTagRaw -replace '^v', ''
+                $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+              }
+            } catch {
+              $lastTag = "0.0.0"
+              $commitsSince = (git rev-list HEAD --count)
+            }
             $safeBranch = $branchName -replace '/', '-'
             $version = "$lastTag-ci-$safeBranch.$commitsSince"
           } else {
@@ -90,11 +101,16 @@ jobs:
 
           Write-Host "Using version $version"
 
-          dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
-            --configuration Release --no-build --no-restore `
-            --output ./artifacts /p:PackageVersion=$version
+          msbuild src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
+            /t:Pack /p:Configuration=Release /p:NoBuild=true /p:NoRestore=true /p:PackageVersion=$version /p:PackageOutputPath=artifacts
 
-          "nupkg-path=$(Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          if (!(Test-Path artifacts)) {
+            Write-Error "NuGet package was not created. Check msbuild logs for Pack errors."
+            exit 1
+          }
+
+          $nupkgPath = Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName
+          "nupkg-path=$nupkgPath" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
           "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
       - name: Upload NuGet package
