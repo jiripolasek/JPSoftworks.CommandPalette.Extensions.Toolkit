@@ -146,15 +146,11 @@ jobs:
       - name: Push to GitHub Packages
         shell: pwsh
         run: |
-          Write-Host "Checking contents of current folder"
-
-          Get-ChildItem -Path . -Recurse | Out-String | Write-Host
-
+          
           Write-Host "Checking contents of artifacts folder"
+          Get-ChildItem ./artifacts/*.*nupkg -ErrorAction SilentlyContinue
 
-          $packages = Get-ChildItem ./artifacts/*.nupkg,./artifacts/*.snupkg -ErrorAction SilentlyContinue
-
-          dotnet nuget push ./artifacts/*.*nupkg `
+          dotnet nuget push "**/*.*nupkg" `
             --api-key ${{ secrets.GITHUB_TOKEN }} `
             --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
