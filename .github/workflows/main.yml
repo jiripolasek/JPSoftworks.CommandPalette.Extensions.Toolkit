@@ -37,7 +37,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache NuGet packages
+      - name: Cache NuGet packages and build artifacts
         uses: actions/cache@v3
         with:
           path: |
@@ -52,47 +52,49 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore
-        run: dotnet restore JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
+        shell: pwsh
+        run: |
+          dotnet restore JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
 
       - name: Build (Release)
+        shell: pwsh
         run: |
-          dotnet build JPSoftworks.CommandPalette.Extensions.Toolkit.slnx \
+          dotnet build JPSoftworks.CommandPalette.Extensions.Toolkit.slnx `
             --configuration Release --no-restore
 
       - name: Run unit tests
-        run: |
-          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx \
-            --configuration Release --no-build --no-restore
-
-      - name: Pack NuGet
-        id: pack       
         shell: pwsh
         run: |
-            # Determine version: manual > tag-driven > feature-preview
-            if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
-                $version = $env:GITHUB_EVENT_INPUTS_VERSION
-            }
-            elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
-                $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
-                $lastTagRaw = git describe --tags --abbrev=0
-                $lastTag = $lastTagRaw -replace '^v', ''
-                $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
-                $safeBranch = $branchName -replace '/', '-'
-                $version = \"$lastTag-ci-$safeBranch.$commitsSince\"
-            }
-            else {
-                $lastTagRaw = git describe --tags --abbrev=0
-                $version = $lastTagRaw -replace '^v', ''
-            }
+          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx `
+            --configuration Release --no-build --no-restore
 
-            Write-Host \"Using version $version\"
+      - name: Pack to Nuget
+        id: pack
+        shell: pwsh
+        run: |
+          # Determine version: manual > tag-driven > feature-preview
+          if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
+            $version = $env:GITHUB_EVENT_INPUTS_VERSION
+          } elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
+            $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
+            $lastTagRaw = git describe --tags --abbrev=0
+            $lastTag = $lastTagRaw -replace '^v', ''
+            $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+            $safeBranch = $branchName -replace '/', '-'
+            $version = "$lastTag-ci-$safeBranch.$commitsSince"
+          } else {
+            $lastTagRaw = git describe --tags --abbrev=0
+            $version = $lastTagRaw -replace '^v', ''
+          }
 
-            dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
-                --configuration Release --no-build --no-restore `
-                --output ./artifacts /p:PackageVersion=$version
+          Write-Host "Using version $version"
 
-            echo \"nupkg-path=$(Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName)\" >> $env:GITHUB_OUTPUT
-            echo \"version=$version\" >> $env:GITHUB_OUTPUT
+          dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
+            --configuration Release --no-build --no-restore `
+            --output ./artifacts /p:PackageVersion=$version
+
+          "nupkg-path=$(Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
       - name: Upload NuGet package
         uses: actions/upload-artifact@v4
@@ -112,9 +114,10 @@ jobs:
           path: ./artifacts
 
       - name: Push to GitHub Packages
+        shell: pwsh
         run: |
-          dotnet nuget push ./artifacts/*.nupkg \
-            --api-key ${{ secrets.GITHUB_TOKEN }} \
+          dotnet nuget push ./artifacts/*.nupkg `
+            --api-key ${{ secrets.GITHUB_TOKEN }} `
             --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
 
   publish-release:
@@ -129,9 +132,10 @@ jobs:
           path: ./artifacts
 
       - name: Push to NuGet.org
+        shell: pwsh
         run: |
-          dotnet nuget push ./artifacts/*.nupkg \
-            --api-key ${{ secrets.NUGET_API_KEY }} \
+          dotnet nuget push ./artifacts/*.nupkg `
+            --api-key ${{ secrets.NUGET_API_KEY }} `
             --source https://api.nuget.org/v3/index.json
 
       - name: Create GitHub Release
