@@ -101,15 +101,13 @@ jobs:
 
           Write-Host "Using version $version"
 
-          msbuild src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
-            /t:Pack /p:Configuration=Release /p:NoBuild=true /p:NoRestore=true /p:PackageVersion=$version /p:PackageOutputPath=artifacts
-
-          if (!(Test-Path artifacts)) {
-            Write-Error "NuGet package was not created. Check msbuild logs for Pack errors."
-            exit 1
+          $packageFolder = "src/JPSoftworks.CommandPalette.Extensions.Toolkit/artifacts"
+          if (!(Test-Path "$packageFolder/*.nupkg")) {
+              Write-Error "NuGet package was not created in expected location. Check MSBuild logs for Pack errors."
+              exit 1
           }
 
-          $nupkgPath = Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName
+          $nupkgPath = Get-ChildItem "$packageFolder/*.nupkg" | Select-Object -ExpandProperty FullName
           "nupkg-path=$nupkgPath" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
           "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
