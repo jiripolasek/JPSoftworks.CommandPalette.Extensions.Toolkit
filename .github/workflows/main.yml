@@ -50,23 +50,24 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
+          
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v2
 
-      - name: Restore
+      - name: Restore packages
         shell: pwsh
         run: |
-          dotnet restore JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
+          msbuild JPSoftworks.CommandPalette.Extensions.Toolkit.slnx /t:Restore /p:Configuration=Release
 
-      - name: Build (Release)
+      - name: Build
         shell: pwsh
         run: |
-          dotnet build JPSoftworks.CommandPalette.Extensions.Toolkit.slnx `
-            --configuration Release --no-restore
+          msbuild JPSoftworks.CommandPalette.Extensions.Toolkit.slnx /p:Configuration=Release
 
       - name: Run unit tests
         shell: pwsh
         run: |
-          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx `
-            --configuration Release --no-build --no-restore
+          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx --configuration Release --no-build --no-restore
 
       - name: Pack to Nuget
         id: pack
