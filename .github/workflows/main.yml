@@ -65,30 +65,34 @@ jobs:
             --configuration Release --no-build --no-restore
 
       - name: Pack NuGet
-        id: pack
+        id: pack       
+        shell: pwsh
         run: |
-          # Determine version: manual dispatch > semantic tag > CI preview for feature/*
-          if [[ -n "${{ github.event.inputs.version }}" ]]; then
-            VERSION=${{ github.event.inputs.version }}
-          elif [[ "$GITHUB_EVENT_NAME" == 'push' && "${GITHUB_REF#refs/heads/}" == feature/* ]]; then
-            # Preview build on feature branch
-            BRANCH_NAME=${GITHUB_REF#refs/heads/}
-            LAST_TAG_RAW=$(git describe --tags --abbrev=0)
-            LAST_TAG=${LAST_TAG_RAW#v}
-            COMMITS_SINCE=$(git rev-list ${LAST_TAG_RAW}..HEAD --count)
-            SAFE_BRANCH=${BRANCH_NAME//\//-}
-            VERSION="${LAST_TAG}-ci-${SAFE_BRANCH}.${COMMITS_SINCE}"
-          else
-            # Stable release or other branches: use last tag
-            LAST_TAG_RAW=$(git describe --tags --abbrev=0)
-            VERSION=${LAST_TAG_RAW#v}
-          fi
-          echo "Using version $VERSION"
-          dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj \
-            --configuration Release --no-build --no-restore \
-            --output ./artifacts /p:PackageVersion=$VERSION
-          echo "::set-output name=nupkg-path::$(ls artifacts/*.nupkg)"
-          echo "::set-output name=version::$VERSION"
+            # Determine version: manual > tag-driven > feature-preview
+            if ($env:GITHUB_EVENT_NAME -eq 'workflow_dispatch' -and $env:GITHUB_EVENT_INPUTS_VERSION) {
+                $version = $env:GITHUB_EVENT_INPUTS_VERSION
+            }
+            elseif ($env:GITHUB_EVENT_NAME -eq 'pull_request' -or $env:GITHUB_REF.StartsWith('refs/heads/feature/')) {
+                $branchName = $env:GITHUB_REF -replace '^refs/heads/', ''
+                $lastTagRaw = git describe --tags --abbrev=0
+                $lastTag = $lastTagRaw -replace '^v', ''
+                $commitsSince = (git rev-list "$lastTagRaw..HEAD" --count)
+                $safeBranch = $branchName -replace '/', '-'
+                $version = \"$lastTag-ci-$safeBranch.$commitsSince\"
+            }
+            else {
+                $lastTagRaw = git describe --tags --abbrev=0
+                $version = $lastTagRaw -replace '^v', ''
+            }
+
+            Write-Host \"Using version $version\"
+
+            dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj `
+                --configuration Release --no-build --no-restore `
+                --output ./artifacts /p:PackageVersion=$version
+
+            echo \"nupkg-path=$(Get-ChildItem artifacts/*.nupkg | Select-Object -ExpandProperty FullName)\" >> $env:GITHUB_OUTPUT
+            echo \"version=$version\" >> $env:GITHUB_OUTPUT
 
       - name: Upload NuGet package
         uses: actions/upload-artifact@v4
