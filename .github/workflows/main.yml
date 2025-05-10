@@ -1,0 +1,151 @@
+# .github/workflows/ci-pack-deploy.yml
+name: CI • Build • Test • Pack & Deploy
+
+# Triggers:
+# - Build & test on master pushes and PRs
+# - Release and publish on semantic-version tag pushes (e.g. v1.2.3)
+# - Manual dispatch for flexibility
+on:
+  push:
+    branches:
+      - master
+      - 'feature/**'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, e.g. 1.2.3'
+        required: true
+      release_notes:
+        description: 'Release notes for the GitHub Release'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+jobs:
+  build-test-pack:
+    name: Build & Test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.nuget/packages
+            ~/.dotnet/tools
+            **/obj
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
+
+      - name: Build (Release)
+        run: |
+          dotnet build JPSoftworks.CommandPalette.Extensions.Toolkit.slnx \
+            --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: |
+          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx \
+            --configuration Release --no-build --no-restore
+
+      - name: Pack NuGet
+        id: pack
+        run: |
+          # Determine version: manual dispatch > semantic tag > CI preview for feature/*
+          if [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION=${{ github.event.inputs.version }}
+          elif [[ "$GITHUB_EVENT_NAME" == 'push' && "${GITHUB_REF#refs/heads/}" == feature/* ]]; then
+            # Preview build on feature branch
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            LAST_TAG_RAW=$(git describe --tags --abbrev=0)
+            LAST_TAG=${LAST_TAG_RAW#v}
+            COMMITS_SINCE=$(git rev-list ${LAST_TAG_RAW}..HEAD --count)
+            SAFE_BRANCH=${BRANCH_NAME//\//-}
+            VERSION="${LAST_TAG}-ci-${SAFE_BRANCH}.${COMMITS_SINCE}"
+          else
+            # Stable release or other branches: use last tag
+            LAST_TAG_RAW=$(git describe --tags --abbrev=0)
+            VERSION=${LAST_TAG_RAW#v}
+          fi
+          echo "Using version $VERSION"
+          dotnet pack src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj \
+            --configuration Release --no-build --no-restore \
+            --output ./artifacts /p:PackageVersion=$VERSION
+          echo "::set-output name=nupkg-path::$(ls artifacts/*.nupkg)"
+          echo "::set-output name=version::$VERSION"
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v3
+        with:
+          name: nupkg
+          path: artifacts/*.nupkg
+
+  publish-preview:
+    name: Publish Preview
+    needs: build-test-pack
+    if: startsWith(github.ref, 'refs/heads/feature/')
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: nupkg
+          path: ./artifacts
+
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+
+  publish-release:
+    name: Publish Release
+    needs: build-test-pack
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: nupkg
+          path: ./artifacts
+
+      - name: Push to NuGet.org
+        run: |
+          dotnet nuget push ./artifacts/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: v${{ needs.build-test-pack.outputs.version }}
+          release_name: Release ${{ needs.build-test-pack.outputs.version }}
+          body: |
+            ${{ github.event.inputs.release_notes }}
+          draft: false
+          prerelease: false
+
+      - name: Upload NuGet to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/*.nupkg
+          asset_name: ${{ needs.build-test-pack.outputs.version }}.nupkg
+          asset_content_type: application/octet-stream
