@@ -6,7 +6,7 @@ using Serilog.Events;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
-internal static class Logger
+public static class Logger
 {
     public static void Initialize(string publisherName, string productName)
     {

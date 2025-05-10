@@ -1,0 +1,27 @@
+﻿JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Error = 16 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Help = 32 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Info = 64 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Warning = 48 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.Abort = 3 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.Cancel = 2 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.Ignore = 5 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.No = 7 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.OK = 1 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.Retry = 4 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult.Yes = 6 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType.OK = 0 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.Show(string! text, string! caption, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType iconType, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType type) -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync() -> System.Threading.Tasks.Task!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.Initialize(string! publisherName, string! productName) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogDebug(string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(string! message, System.Exception! exception) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(System.Exception! exception) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogInformation(string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogWarning(string! message) -> void

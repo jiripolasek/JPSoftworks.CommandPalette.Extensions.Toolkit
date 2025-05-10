@@ -5,6 +5,7 @@
   <ItemGroup>
     <PackageVersion Include="AudioSwitcher.AudioApi" Version="4.0.0-alpha5" />
     <PackageVersion Include="AudioSwitcher.AudioApi.CoreAudio" Version="4.0.0-alpha5" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.4" />
     <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.1.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="9.0.0-preview.24508.2" />
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
