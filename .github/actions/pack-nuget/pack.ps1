@@ -1,6 +1,6 @@
 param(
   [string] $ProjectPath,
-  [string] $version,
+  [string] $Version,
   [string] $Workspace,
   [string] $Configuration    = 'Release'
 )
@@ -9,7 +9,7 @@ param(
 $artifactsFolder = Join-Path $Workspace "artifacts"
 msbuild $ProjectPath `
     /t:Pack /p:Configuration=$Configuration /p:NoBuild=true /p:NoRestore=true `
-    /p:PackageVersion=$version /p:PackageOutputPath=$artifactsFolder
+    /p:PackageVersion=$Version /p:PackageOutputPath=$artifactsFolder
 
 # Verify package creation
 $nupkg = Get-ChildItem "$artifactsFolder/*.nupkg" -ErrorAction SilentlyContinue
@@ -21,4 +21,4 @@ if (-not $nupkg) {
 # Output results
 Write-Host "Package created: $($nupkg.FullName)"
 "nupkg-path=$($nupkg.FullName)" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
-"version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+"version=$Version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT

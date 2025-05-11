@@ -24,8 +24,8 @@ runs:
       shell: pwsh
       run: |
         $actionDir = "${{ github.action_path }}"
-        pwsh "$actionDir/pack.ps1" `
+        & "$actionDir/pack.ps1" `
           -ProjectPath     '${{ inputs.projectPath }}' `
-          -InputsVersion   '${{ inputs.version }}' `
+          -$Version        '${{ inputs.version }}' `
           -Workspace       '${{ inputs.workspace }}' `
           -Configuration   '${{ inputs.configuration }}'
