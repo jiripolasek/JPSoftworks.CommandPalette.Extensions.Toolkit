@@ -6,27 +6,33 @@ param(
 
 
 function Get-LastTag {
-    try {
-        $tag = git describe --tags --abbrev=0 2>$null
-        return if ($tag) { $tag -replace '^v', '' } else { '0.0.0' }
-    } catch {
-        return '0.0.0'
+    $tag = & git describe --tags --abbrev=0 2>$null
+
+    if ($LASTEXITCODE -ne 0 -or -not $tag) {
+        $tag = '0.0.0'
     }
+
+    $global:LASTEXITCODE = 0
+    return $tag -replace '^v', ''
 }
 
 function Get-CommitCount {
     param([string]$fromTag)
-    
-    try {
-        if ($fromTag -eq '0.0.0') {
-            return git rev-list HEAD --count
-        } else {
-            return git rev-list "v$fromTag..HEAD" --count
-        }
-    } catch {
-        return 0
+
+    if ($fromTag -eq '0.0.0') {
+        $count = & git rev-list HEAD --count
+    } else {
+        $count = & git rev-list "v$fromTag..HEAD" --count
     }
+
+    if ($LASTEXITCODE -ne 0) {
+        $count = 0
+    }
+
+    $global:LASTEXITCODE = 0
+    return $count
 }
+
 
 # Determine version based on event type
 switch ($GitHubEventName) {
