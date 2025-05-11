@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - master
+      - master-test
       - 'feature/**'
     tags:
       - 'v*.*.*'

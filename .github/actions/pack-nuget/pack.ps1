@@ -32,7 +32,16 @@ elseif ($GitHubEventName -eq 'pull_request' -or $GitHubRef.StartsWith('refs/head
     $version = "$lastTag-ci-$safeBranch.$commitsSince"
 }
 else {
-    $lastTagRaw = git describe --tags --abbrev=0
+    try {
+        $lastTagRaw = git describe --tags --abbrev=0 2>$null        
+        if (-not $lastTagRaw) {
+            $lastTagRaw = "0.0.0"
+        }
+    }
+    catch {
+        Write-Host "No tags found. Using default version 0.0.0"
+        $lastTagRaw = "0.0.0"
+    }
     $version = $lastTagRaw -replace '^v', ''
 }
 
