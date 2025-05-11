@@ -1,6 +1,7 @@
 name: 'Get Version'
-description: 'Determines semantic version based on Git tags and branch context'
 author: 'Jiri Polasek'
+description: >-
+    'Determines semantic version based on Git tags and branch context'
 
 inputs:
   github-event-name:
@@ -29,8 +30,13 @@ runs:
       shell: pwsh
       run: |
         $scriptPath = Join-Path $env:GITHUB_ACTION_PATH "Get-Version.ps1"
-        $version = & $scriptPath -GitHubEventName "${{ inputs.github-event-name }}" -GitHubRef "${{ inputs.github-ref }}" -InputsVersion "${{ inputs.version-override }}"
+        $version = & $scriptPath ` 
+            -GitHubEventName "${{ inputs.github-event-name }}" `
+            -GitHubRef "${{ inputs.github-ref }}" `
+            -InputsVersion "${{ inputs.version-override }}"
         
+        "Version: $version" >> $env:GITHUB_STEP_SUMMARY
+        Write-Host "Version (YML): $version"
         "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
 branding:
