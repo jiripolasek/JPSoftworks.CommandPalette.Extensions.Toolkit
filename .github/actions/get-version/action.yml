@@ -1,0 +1,41 @@
+name: 'Get Version'
+description: 'Determines semantic version based on Git tags and branch context'
+author: 'Jiri Polasek'
+
+inputs:
+  github-event-name:
+    description: 'GitHub event name (defaults to GITHUB_EVENT_NAME environment variable)'
+    required: false
+    default: ''
+  github-ref:
+    description: 'GitHub reference (defaults to GITHUB_REF environment variable)'
+    required: false
+    default: ''
+  version-override:
+    description: 'Manual version input for workflow_dispatch events'
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: 'The calculated semantic version'
+    value: ${{ steps.get-version.outputs.version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Version
+      id: get-version
+      shell: pwsh
+      run: |
+        # Execute the Get-Version.ps1 script with inline parameters
+        $scriptPath = Join-Path $env:GITHUB_ACTION_PATH "Get-Version.ps1"
+        $version = & $scriptPath -GitHubEventName "${{ inputs.github-event-name }}" -GitHubRef "${{ inputs.github-ref }}" -InputsVersion "${{ inputs.version-override }}"
+        
+        # Output the version for GitHub Actions
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+        Write-Host "::set-output name=version::$version"
+
+branding:
+  icon: 'tag'
+  color: 'blue'

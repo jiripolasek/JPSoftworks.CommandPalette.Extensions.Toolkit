@@ -85,14 +85,20 @@ jobs:
         shell: pwsh
         run: |
           dotnet test $env:SolutionName --configuration $env:BuildConfiguration --no-build --no-restore
+      
+      - name: Get Version
+        id: version
+        uses: ./.github/actions/get-version
+        with:
+          github-event-name: ${{ github.event_name }}
+          github-ref: ${{ github.ref }}
+          version-override: ${{ github.event.inputs.version || '' }}
 
       - name: Pack to NuGet
         uses: ./.github/actions/pack-nuget
         with:
           projectPath:   ${{ env.ProjectPath }}
-          event_name:    ${{ github.event_name }}
-          ref:           ${{ github.ref }}
-          version:       ${{ github.event.inputs.version || '' }}
+          version:       ${{ steps.version.outputs.version }}
           workspace:     ${{ github.workspace }}
           configuration: ${{ env.BuildConfiguration }}
 
