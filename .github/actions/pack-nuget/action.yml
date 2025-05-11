@@ -1,0 +1,32 @@
+name: 'Pack NuGet'
+author: 'Jiri Polasek'
+description: >-
+  Determine version suffix from tag/branch and pack the project into artifacts/.
+  
+inputs:
+  event_name:
+    description: "github.event_name (push, workflow_dispatch, etc.)"
+    required: true
+  ref:
+    description: "github.ref (e.g. refs/heads/feature/123-issue-desc)"
+    required: true
+  version:
+    description: "Manual version override (only for workflow_dispatch)"
+    required: false
+    default: ""
+  workspace:
+    description: "github.workspace (path to repo root)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Pack
+      shell: pwsh
+      run: |
+        $actionDir = "${{ github.action_path }}"
+        pwsh "$actionDir/pack.ps1" `
+          -GitHubEventName '${{ inputs.event_name }}' `
+          -GitHubRef       '${{ inputs.ref }}' `
+          -InputsVersion   '${{ inputs.version }}' `
+          -Workspace       '${{ inputs.workspace }}'
