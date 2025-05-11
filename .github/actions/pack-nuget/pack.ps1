@@ -3,7 +3,7 @@ param(
   [string] $GitHubEventName  = $env:GITHUB_EVENT_NAME,
   [string] $GitHubRef        = $env:GITHUB_REF,
   [string] $InputsVersion    = $env:GITHUB_EVENT_INPUTS_VERSION,
-  [string] $Workspace        = $env:GITHUB_WORKSPACE
+  [string] $Workspace        = $env:GITHUB_WORKSPACE,
   [string] $Configuration    = 'Release'
 )
 
