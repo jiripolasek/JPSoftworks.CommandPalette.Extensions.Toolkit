@@ -41,9 +41,13 @@ runs:
           $version = '0.0.0'
         }
 
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Get-Version.ps1 failed with exit code $LASTEXITCODE"
+        }
+
         "Version: $version" >> $env:GITHUB_STEP_SUMMARY
         Write-Host "Version (YML): $version"
-        "version=$version" | Add-Content -Path $env:GITHUB_OUTPUT
+        "version=$version" | Add-Content -Path $env:GITHUB_OUTPUT -Encoding utf8
 
         # (optionally) if something else set $LASTEXITCODE non-zero you can force a zero exit
         if ($LASTEXITCODE -ne 0) {
