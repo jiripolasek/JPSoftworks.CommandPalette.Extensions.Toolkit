@@ -30,7 +30,7 @@ runs:
       shell: pwsh
       run: |
         $scriptPath = Join-Path $env:GITHUB_ACTION_PATH "Get-Version.ps1"
-        $version = & $scriptPath ` 
+        $version = & $scriptPath `
             -GitHubEventName "${{ inputs.github-event-name }}" `
             -GitHubRef "${{ inputs.github-ref }}" `
             -InputsVersion "${{ inputs.version-override }}"
