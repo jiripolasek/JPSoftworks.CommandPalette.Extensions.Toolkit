@@ -28,13 +28,10 @@ runs:
       id: get-version
       shell: pwsh
       run: |
-        # Execute the Get-Version.ps1 script with inline parameters
         $scriptPath = Join-Path $env:GITHUB_ACTION_PATH "Get-Version.ps1"
         $version = & $scriptPath -GitHubEventName "${{ inputs.github-event-name }}" -GitHubRef "${{ inputs.github-ref }}" -InputsVersion "${{ inputs.version-override }}"
         
-        # Output the version for GitHub Actions
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-        Write-Host "::set-output name=version::$version"
+        "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
 branding:
   icon: 'tag'
