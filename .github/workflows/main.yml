@@ -10,6 +10,7 @@ on:
       - master
       - master-test
       - 'feature/**'
+      - 'hotfix/**'
     tags:
       - 'v*.*.*'
   pull_request:
@@ -43,6 +44,7 @@ jobs:
 
     env:
       SolutionName: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
+      ProjectPath: src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj
       BuildConfiguration: Release
 
     steps:
@@ -87,18 +89,19 @@ jobs:
       - name: Pack to NuGet
         uses: ./.github/actions/pack-nuget
         with:
-          event_name: ${{ github.event_name }}
-          ref:        ${{ github.ref }}
-          version:    ${{ github.event.inputs.version || '' }}
-          workspace:  ${{ github.workspace }}
+          projectPath:   ${{ env.ProjectPath }}
+          event_name:    ${{ github.event_name }}
+          ref:           ${{ github.ref }}
+          version:       ${{ github.event.inputs.version || '' }}
+          workspace:     ${{ github.workspace }}
+          configuration: ${{ env.BuildConfiguration }}
 
       - name: Upload NuGet package artifact
         uses: actions/upload-artifact@v4
         with:
-          name: nupkg
-          path: |
-              artifacts/*.nupkg
-              artifacts/*.snupkg
+          name: nupkg          
+          if-no-files-found: error
+          path: artifacts/
 
   # ----------------------------------------------
   # Publish preview to GitHub Packages
@@ -106,7 +109,7 @@ jobs:
   publish-preview:
     name: Publish Preview
     needs: build-test-pack
-    if: startsWith(github.ref, 'refs/heads/feature/')
+    if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/hotfix/')
     runs-on: windows-latest
     steps:
       - uses: actions/download-artifact@v4

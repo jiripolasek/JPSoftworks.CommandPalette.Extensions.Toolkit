@@ -4,6 +4,9 @@ description: >-
   Determine version suffix from tag/branch and pack the project into artifacts/.
   
 inputs:
+  projectPath:
+    description: "Path to the project file (e.g. src/ProjectName.csproj)"
+    required: true
   event_name:
     description: "github.event_name (push, workflow_dispatch, etc.)"
     required: true
@@ -17,6 +20,9 @@ inputs:
   workspace:
     description: "github.workspace (path to repo root)"
     required: true
+  configuration:
+    description: "Build configuration (e.g. Release, Debug)"
+    default: "Release"
 
 runs:
   using: "composite"
@@ -26,7 +32,9 @@ runs:
       run: |
         $actionDir = "${{ github.action_path }}"
         pwsh "$actionDir/pack.ps1" `
+          -ProjectPath     '${{ inputs.projectPath }}' `
           -GitHubEventName '${{ inputs.event_name }}' `
           -GitHubRef       '${{ inputs.ref }}' `
           -InputsVersion   '${{ inputs.version }}' `
-          -Workspace       '${{ inputs.workspace }}'
+          -Workspace       '${{ inputs.workspace }}' `
+          -Configuration   '${{ inputs.configuration }}'
