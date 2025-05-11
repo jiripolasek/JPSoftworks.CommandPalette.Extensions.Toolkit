@@ -28,6 +28,9 @@ permissions:
   packages: write
   actions: read
 
+env:
+  PackageName: JPSoftworks.CommandPalette.Extensions.Toolkit
+
 jobs:
 
   # ----------------------------------------------
@@ -36,8 +39,11 @@ jobs:
   build-test-pack:
     name: Build & Test
     runs-on: windows-latest
+
     env:
       SolutionName: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
+      BuildConfiguration: Release
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -57,8 +63,7 @@ jobs:
       - name: Setup .NET 9 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
-          cache: false # TODO
+          global-json-file: ./global.json
           
       - name: Setup MSBuild.exe
         uses: microsoft/setup-msbuild@v2
@@ -66,17 +71,17 @@ jobs:
       - name: Restore packages
         shell: pwsh
         run: |
-          msbuild $env:SolutionName /t:Restore /p:Configuration=Release
+          msbuild $env:SolutionName /t:Restore /p:Configuration=$env:BuildConfiguration
 
       - name: Build
         shell: pwsh
         run: |
-          msbuild $env:SolutionName /p:Configuration=Release
+          msbuild $env:SolutionName /p:Configuration=$env:BuildConfiguration
 
       - name: Run unit tests
         shell: pwsh
         run: |
-          dotnet test $env:SolutionName --configuration Release --no-build --no-restore
+          dotnet test $env:SolutionName --configuration $env:BuildConfiguration --no-build --no-restore
 
       - name: Pack to NuGet
         uses: ./.github/actions/pack-nuget
@@ -160,4 +165,12 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./artifacts/*.nupkg
           asset_name: ${{ needs.build-test-pack.outputs.version }}.nupkg
+          asset_content_type: application/octet-stream
+
+      - name: Upload NuGet Symbols to Release
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./artifacts/*.snupkg
+          asset_name: ${{ needs.build-test-pack.outputs.version }}.snupkg
           asset_content_type: application/octet-stream
