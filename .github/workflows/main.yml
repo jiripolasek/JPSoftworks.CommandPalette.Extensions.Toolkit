@@ -36,6 +36,8 @@ jobs:
   build-test-pack:
     name: Build & Test
     runs-on: windows-latest
+    env:
+      SolutionName: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
     steps:
       - uses: actions/checkout@v3
         with:
@@ -48,7 +50,9 @@ jobs:
             ~/.nuget/packages
             ~/.dotnet/tools
             **/obj
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
 
       - name: Setup .NET 9 SDK
         uses: actions/setup-dotnet@v4
@@ -62,17 +66,17 @@ jobs:
       - name: Restore packages
         shell: pwsh
         run: |
-          msbuild JPSoftworks.CommandPalette.Extensions.Toolkit.slnx /t:Restore /p:Configuration=Release
+          msbuild $env:SolutionName /t:Restore /p:Configuration=Release
 
       - name: Build
         shell: pwsh
         run: |
-          msbuild JPSoftworks.CommandPalette.Extensions.Toolkit.slnx /p:Configuration=Release
+          msbuild $env:SolutionName /p:Configuration=Release
 
       - name: Run unit tests
         shell: pwsh
         run: |
-          dotnet test JPSoftworks.CommandPalette.Extensions.Toolkit.slnx --configuration Release --no-build --no-restore
+          dotnet test $env:SolutionName --configuration Release --no-build --no-restore
 
       - name: Pack to NuGet
         uses: ./.github/actions/pack-nuget
