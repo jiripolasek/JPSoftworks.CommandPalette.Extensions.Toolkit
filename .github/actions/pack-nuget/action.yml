@@ -26,6 +26,6 @@ runs:
         $actionDir = "${{ github.action_path }}"
         & "$actionDir/pack.ps1" `
           -ProjectPath     '${{ inputs.projectPath }}' `
-          -$Version        '${{ inputs.version }}' `
+          -Version         '${{ inputs.version }}' `
           -Workspace       '${{ inputs.workspace }}' `
           -Configuration   '${{ inputs.configuration }}'

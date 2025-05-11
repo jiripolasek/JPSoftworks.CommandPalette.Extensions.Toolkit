@@ -8,8 +8,12 @@ param(
 # Build and pack
 $artifactsFolder = Join-Path $Workspace "artifacts"
 msbuild $ProjectPath `
-    /t:Pack /p:Configuration=$Configuration /p:NoBuild=true /p:NoRestore=true `
-    /p:PackageVersion=$Version /p:PackageOutputPath=$artifactsFolder
+    /t:Pack `
+    /p:Configuration=$Configuration `
+    /p:NoBuild=true `
+    /p:NoRestore=true `
+    /p:PackageVersion=$Version `
+    /p:PackageOutputPath=$artifactsFolder
 
 # Verify package creation
 $nupkg = Get-ChildItem "$artifactsFolder/*.nupkg" -ErrorAction SilentlyContinue
