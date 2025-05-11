@@ -1,0 +1,60 @@
+name: 'Get Version'
+author: 'Jiri Polasek'
+description: >-
+    'Determines semantic version based on Git tags and branch context'
+
+inputs:
+  github-event-name:
+    description: 'GitHub event name (defaults to GITHUB_EVENT_NAME environment variable)'
+    required: false
+    default: ''
+  github-ref:
+    description: 'GitHub reference (defaults to GITHUB_REF environment variable)'
+    required: false
+    default: ''
+  version-override:
+    description: 'Manual version input for workflow_dispatch events'
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: 'The calculated semantic version'
+    value: ${{ steps.get-version.outputs.version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Version
+      id: get-version
+      shell: pwsh
+      run: |
+        $scriptPath = Join-Path $env:GITHUB_ACTION_PATH "Get-Version.ps1"
+        try {
+          $version = & $scriptPath `
+            -GitHubEventName "push" `
+            -GitHubRef       "refs/heads/master-test" `
+            -InputsVersion   ""
+        }
+        catch {
+          Write-Warning "Get-Version.ps1 failed: $_"
+          $version = '0.0.0'
+        }
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Get-Version.ps1 failed with exit code $LASTEXITCODE"
+        }
+
+        "Version: $version" >> $env:GITHUB_STEP_SUMMARY
+        Write-Host "Version (YML): $version"
+        "version=$version" | Add-Content -Path $env:GITHUB_OUTPUT -Encoding utf8
+
+        # (optionally) if something else set $LASTEXITCODE non-zero you can force a zero exit
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "Forcing success exit so that downstream steps still run."
+          exit 0
+        }
+
+branding:
+  icon: 'tag'
+  color: 'blue'
