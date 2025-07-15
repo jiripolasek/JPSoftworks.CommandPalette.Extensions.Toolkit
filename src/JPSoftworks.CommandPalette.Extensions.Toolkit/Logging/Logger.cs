@@ -8,7 +8,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 public static class Logger
 {
-    public static void Initialize(string publisherName, string productName)
+    public static void Initialize(string publisherName, string productName, bool isDebug = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(publisherName);
         ArgumentException.ThrowIfNullOrWhiteSpace(productName);
@@ -21,12 +21,7 @@ public static class Logger
             string? logDirectory = Path.GetDirectoryName(logFile);
             if (logDirectory != null && !Directory.Exists(logDirectory)) Directory.CreateDirectory(logDirectory);
 
-#if DEBUG
-            const LogEventLevel minLevel = LogEventLevel.Debug;
-#else
-            const LogEventLevel minLevel = LogEventLevel.Information;
-#endif
-
+            var minLevel = isDebug ? LogEventLevel.Debug : LogEventLevel.Information;
 
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.File(
