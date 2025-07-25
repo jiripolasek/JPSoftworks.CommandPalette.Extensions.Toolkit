@@ -32,7 +32,7 @@ override JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParame
 static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.RunAsync(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> System.Threading.Tasks.Task!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.Show(string! text, string! caption, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType iconType, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType type) -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync() -> System.Threading.Tasks.Task!
-static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.Initialize(string! publisherName, string! productName) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.CloseAndFlush() -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogDebug(string! message) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(string! message) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(string! message, System.Exception! exception) -> void
