@@ -1,4 +1,14 @@
-﻿JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper
+﻿JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory
+JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.CreateExtension(System.Threading.ManualResetEvent! extensionDisposedEvent) -> Microsoft.CommandPalette.Extensions.IExtension!
+JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.DelegateExtensionFactory(System.Func<System.Threading.ManualResetEvent!, Microsoft.CommandPalette.Extensions.IExtension!>! createExtension) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.EnableEfficiencyMode.get -> bool
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.ExtensionFactories.get -> System.Collections.Generic.List<JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory!>!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.IsDebug.get -> bool
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.ProductMoniker.get -> string!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.PublisherMoniker.get -> string!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Error = 16 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType.Help = 32 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType
@@ -15,7 +25,11 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBo
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType.OK = 0 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper
+JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory
+JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory.CreateExtension(System.Threading.ManualResetEvent! extensionDisposedEvent) -> Microsoft.CommandPalette.Extensions.IExtension!
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger
+override JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.ToString() -> string!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.RunAsync(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> System.Threading.Tasks.Task!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.Show(string! text, string! caption, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType iconType, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType type) -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync() -> System.Threading.Tasks.Task!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.Initialize(string! publisherName, string! productName) -> void
