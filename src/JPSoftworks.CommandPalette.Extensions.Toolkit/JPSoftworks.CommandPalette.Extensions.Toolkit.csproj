@@ -12,6 +12,7 @@
 		<Title>Toolkit for Command Palette</Title>
 		<Copyright>(c) Jiri Polasek</Copyright>
 		<Authors>Jiri Polasek</Authors>
+		<PackageIcon>icon.png</PackageIcon>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<IncludeSymbols>True</IncludeSymbols>
@@ -35,6 +36,19 @@
 		<PackageReference Include="Serilog.Sinks.File" />
 		<PackageReference Include="System.Text.Json" />
 		<PackageReference Include="Shmuelie.WinRTServer" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="icon.png" Condition=" '$(VersionSuffix)' == '' ">
+			<Pack>True</Pack>
+			<PackagePath>\icon.png</PackagePath>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Include="icon-dev.png" Condition=" '$(VersionSuffix)' != '' ">
+			<Pack>True</Pack>
+			<PackagePath>\icon.png</PackagePath>
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
