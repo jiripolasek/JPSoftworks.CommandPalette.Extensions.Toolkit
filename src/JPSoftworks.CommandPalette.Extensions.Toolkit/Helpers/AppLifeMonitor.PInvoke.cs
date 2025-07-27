@@ -90,7 +90,7 @@ internal sealed partial class AppLifeMonitor
 
 
 
-        [LibraryImport("user32.dll")]
+        [LibraryImport("user32.dll", EntryPoint = "TranslateMessage")]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool TranslateMessage(in MSG lpMsg);
 
@@ -101,7 +101,7 @@ internal sealed partial class AppLifeMonitor
 
 
 
-        [LibraryImport("user32.dll", EntryPoint = "PostQuitMessageW")]
+        [LibraryImport("user32.dll", EntryPoint = "PostQuitMessage")]
         internal static partial void PostQuitMessage(int nExitCode);
 
 
@@ -128,7 +128,7 @@ internal sealed partial class AppLifeMonitor
 
 
 
-        [LibraryImport("kernel32.dll", SetLastError = false)]
+        [LibraryImport("kernel32.dll", EntryPoint = "GetCurrentThreadId", SetLastError = false)]
         internal static partial uint GetCurrentThreadId();
 
 
