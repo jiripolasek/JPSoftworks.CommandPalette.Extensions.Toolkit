@@ -7,11 +7,14 @@
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
 
-		<VersionPrefix>0.3.0-preview.3</VersionPrefix>
+		<VersionPrefix>0.3.0-preview.5</VersionPrefix>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>Toolkit for Command Palette</Title>
 		<Copyright>(c) Jiri Polasek</Copyright>
 		<Authors>Jiri Polasek</Authors>
+		<RepositoryUrl>https://github.com/jiripolasek/JPSoftworks.CommandPalette.Extensions.Toolkit</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>icon.png</PackageIcon>
 		<NeutralLanguage>en-US</NeutralLanguage>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -39,6 +42,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Update="README.md" Pack="true" PackagePath="\" />
 		<None Include="icon.png" Condition=" '$(VersionSuffix)' == '' ">
 			<Pack>True</Pack>
 			<PackagePath>\icon.png</PackagePath>
