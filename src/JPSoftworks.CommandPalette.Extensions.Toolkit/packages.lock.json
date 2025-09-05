@@ -10,9 +10,9 @@
       },
       "Microsoft.CommandPalette.Extensions": {
         "type": "Direct",
-        "requested": "[0.2.0, )",
-        "resolved": "0.2.0",
-        "contentHash": "xSI1FkItLioQUOg0O5+1nEtfmTMFuOsM26GyhGqoniGnZNHb4oI0+uzsOvnSSRHI/C5VnCPXxwJlkzoXVVASUQ==",
+        "requested": "[0.5.250829002, )",
+        "resolved": "0.5.250829002",
+        "contentHash": "PrVPTRnGheDuhP5+8G578jeVSPzN6uvXnzThsREVAXcjkE5PTCC53cIGjaPQJGg0jZM+XKCfenO+0sg0vdADhw==",
         "dependencies": {
           "Microsoft.Windows.CsWinRT": "2.2.0"
         }
@@ -76,9 +76,9 @@
     "net9.0-windows10.0.22621/win-arm64": {
       "Microsoft.CommandPalette.Extensions": {
         "type": "Direct",
-        "requested": "[0.2.0, )",
-        "resolved": "0.2.0",
-        "contentHash": "xSI1FkItLioQUOg0O5+1nEtfmTMFuOsM26GyhGqoniGnZNHb4oI0+uzsOvnSSRHI/C5VnCPXxwJlkzoXVVASUQ==",
+        "requested": "[0.5.250829002, )",
+        "resolved": "0.5.250829002",
+        "contentHash": "PrVPTRnGheDuhP5+8G578jeVSPzN6uvXnzThsREVAXcjkE5PTCC53cIGjaPQJGg0jZM+XKCfenO+0sg0vdADhw==",
         "dependencies": {
           "Microsoft.Windows.CsWinRT": "2.2.0"
         }
@@ -103,9 +103,9 @@
     "net9.0-windows10.0.22621/win-x64": {
       "Microsoft.CommandPalette.Extensions": {
         "type": "Direct",
-        "requested": "[0.2.0, )",
-        "resolved": "0.2.0",
-        "contentHash": "xSI1FkItLioQUOg0O5+1nEtfmTMFuOsM26GyhGqoniGnZNHb4oI0+uzsOvnSSRHI/C5VnCPXxwJlkzoXVVASUQ==",
+        "requested": "[0.5.250829002, )",
+        "resolved": "0.5.250829002",
+        "contentHash": "PrVPTRnGheDuhP5+8G578jeVSPzN6uvXnzThsREVAXcjkE5PTCC53cIGjaPQJGg0jZM+XKCfenO+0sg0vdADhw==",
         "dependencies": {
           "Microsoft.Windows.CsWinRT": "2.2.0"
         }

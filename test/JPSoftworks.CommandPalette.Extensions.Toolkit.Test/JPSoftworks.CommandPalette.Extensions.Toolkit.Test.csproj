@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <IsPackable>false</IsPackable>
+	<WindowsSdkPackageVersion>10.0.26100.57</WindowsSdkPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
