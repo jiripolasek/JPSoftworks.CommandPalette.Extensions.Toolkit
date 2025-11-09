@@ -1,7 +1,7 @@
 ﻿// ------------------------------------------------------------
-// 
+//
 // Copyright (c) Jiří Polášek. All rights reserved.
-// 
+//
 // ------------------------------------------------------------
 
 using System.Globalization;
@@ -86,7 +86,7 @@ public static class Logger
         Log.Logger.Error(exception, formattedMessage);
         ExtensionHost.LogMessage(new LogMessage(formattedMessage) { State = MessageState.Error });
     }
-    
+
     public static void CloseAndFlush()
     {
         Log.CloseAndFlush();
