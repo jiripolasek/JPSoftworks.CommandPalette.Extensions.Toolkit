@@ -6,6 +6,12 @@ A set of extensions and utilities for building [Command Palette](https://learn.m
 
 The implementation may change in the future. As Command Palette evolves, so will this toolkit. Use at your own risk.
 
+## Compatibility
+
+The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both target frameworks verified through an executable `win-x64` Native AOT publish in CI.
+
+The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its runtime package dependencies are limited to the Command Palette SDK and the WinRT server used by the extension host.
+
 ## Features
 
 ### Extension Host Runner

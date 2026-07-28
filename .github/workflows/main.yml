@@ -45,6 +45,7 @@ jobs:
     env:
       SolutionName: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
       ProjectPath: src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj
+      AotSmokeTestProjectPath: test/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.csproj
       BuildConfiguration: Release
 
     steps:
@@ -63,28 +64,59 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      - name: Setup .NET 9 SDK
+      - name: Setup .NET 10 SDK
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: ./global.json
           
-      - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v2
-
       - name: Restore packages
         shell: pwsh
         run: |
-          msbuild $env:SolutionName /t:Restore /p:Configuration=$env:BuildConfiguration
+          dotnet restore $env:SolutionName
 
       - name: Build
         shell: pwsh
         run: |
-          msbuild $env:SolutionName /p:Configuration=$env:BuildConfiguration
+          dotnet build $env:SolutionName --configuration $env:BuildConfiguration --no-restore
 
       - name: Run unit tests
         shell: pwsh
         run: |
           dotnet test $env:SolutionName --configuration $env:BuildConfiguration --no-build --no-restore
+
+      - name: Verify Native AOT and trimming
+        shell: pwsh
+        run: |
+          dotnet restore $env:AotSmokeTestProjectPath `
+            --runtime win-x64 `
+            -p:PublishAot=true `
+            -p:RestoreLockedMode=false
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          dotnet publish $env:AotSmokeTestProjectPath `
+            --configuration $env:BuildConfiguration `
+            --framework net9.0-windows10.0.22621.0 `
+            --runtime win-x64 `
+            --self-contained true `
+            --no-restore `
+            -p:GeneratePackageOnBuild=false `
+            -p:PublishAot=true `
+            -p:PublishTrimmed=true `
+            -p:PublishSingleFile=false `
+            -p:TrimmerSingleWarn=false
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+          dotnet publish $env:AotSmokeTestProjectPath `
+            --configuration $env:BuildConfiguration `
+            --framework net10.0-windows10.0.22621.0 `
+            --runtime win-x64 `
+            --self-contained true `
+            --no-restore `
+            -p:GeneratePackageOnBuild=false `
+            -p:PublishAot=true `
+            -p:PublishTrimmed=true `
+            -p:PublishSingleFile=false `
+            -p:TrimmerSingleWarn=false
       
       - name: Get Version
         id: version

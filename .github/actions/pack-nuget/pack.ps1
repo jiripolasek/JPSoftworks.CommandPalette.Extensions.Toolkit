@@ -5,20 +5,19 @@ param(
   [string] $Configuration    = 'Release'
 )
 
-# Build and pack
+# Pack the already-built project
 $artifactsFolder = Join-Path $Workspace "artifacts"
-msbuild $ProjectPath `
-    /t:Pack `
-    /p:Configuration=$Configuration `
-    /p:NoBuild=true `
-    /p:NoRestore=true `
-    /p:PackageVersion=$Version `
-    /p:PackageOutputPath=$artifactsFolder
+dotnet pack $ProjectPath `
+    --configuration $Configuration `
+    --no-build `
+    --no-restore `
+    -p:PackageVersion=$Version `
+    --output $artifactsFolder
 
 # Verify package creation
 $nupkg = Get-ChildItem "$artifactsFolder/*.nupkg" -ErrorAction SilentlyContinue
 if (-not $nupkg) {
-    Write-Error "NuGet package was not created. Check msbuild logs for Pack errors."
+    Write-Error "NuGet package was not created. Check dotnet pack logs for errors."
     exit 1
 }
 

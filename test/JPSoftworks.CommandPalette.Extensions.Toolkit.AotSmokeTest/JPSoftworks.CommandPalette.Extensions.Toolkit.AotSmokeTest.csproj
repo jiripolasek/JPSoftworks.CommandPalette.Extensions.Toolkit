@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>false</IsTestProject>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit\JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />
+    <TrimmerRootAssembly Include="JPSoftworks.CommandPalette.Extensions.Toolkit" />
+  </ItemGroup>
+
+</Project>

@@ -22,6 +22,10 @@ A set of extensions and utilities for building [Command Palette](https://learn.m
 
 [JPSoftworks.CommandPalette.Extensions.Toolkit](https://www.nuget.org/packages/JPSoftworks.CommandPalette.Extensions.Toolkit/) at Nuget.org.
 
+## Compatibility
+
+The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both target frameworks verified through an executable `win-x64` Native AOT publish in CI.
+
 ## Features
 
 ### Extension Host Runner

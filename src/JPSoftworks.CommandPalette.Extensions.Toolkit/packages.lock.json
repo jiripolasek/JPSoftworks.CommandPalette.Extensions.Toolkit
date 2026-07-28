@@ -1,6 +1,40 @@
 {
   "version": 2,
   "dependencies": {
+    "net10.0-windows10.0.22621": {
+      "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
+        "type": "Direct",
+        "requested": "[4.14.0, )",
+        "resolved": "4.14.0",
+        "contentHash": "5zBDSa8D1pfn5VyDzRekcYdVx/DGAzwegblVJhzdN0kvPt97TPr12haA6ZG0wS2WgBb1W42GeZJRiRtlNaoY1w=="
+      },
+      "Microsoft.CommandPalette.Extensions": {
+        "type": "Direct",
+        "requested": "[0.9.260303001, )",
+        "resolved": "0.9.260303001",
+        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
+        "dependencies": {
+          "Microsoft.Windows.CsWinRT": "2.2.0"
+        }
+      },
+      "Microsoft.NET.ILLink.Tasks": {
+        "type": "Direct",
+        "requested": "[10.0.9, )",
+        "resolved": "10.0.9",
+        "contentHash": "4Iw41e2h7I4t70SJcX2GCmbyKJIlA273Cfm9RJMM050/3VBejGAG1KcthP5Z2L6SQcbfbf6BhNWO26+ZG+GzMg=="
+      },
+      "Shmuelie.WinRTServer": {
+        "type": "Direct",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "Nt+t3cMga8YWXToaTw//CGjO9mTQORc+qSKyrVXZAhnyUWiZ7flhFBTWI1igp+2o2PYl5CCNHYfz9JI4F25GPA=="
+      },
+      "Microsoft.Windows.CsWinRT": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
+      }
+    },
     "net9.0-windows10.0.22621": {
       "Microsoft.CodeAnalysis.PublicApiAnalyzers": {
         "type": "Direct",
@@ -17,26 +51,11 @@
           "Microsoft.Windows.CsWinRT": "2.2.0"
         }
       },
-      "Microsoft.Windows.CsWinRT": {
+      "Microsoft.NET.ILLink.Tasks": {
         "type": "Direct",
-        "requested": "[2.2.0, )",
-        "resolved": "2.2.0",
-        "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
-      },
-      "Serilog": {
-        "type": "Direct",
-        "requested": "[4.3.0, )",
-        "resolved": "4.3.0",
-        "contentHash": "+cDryFR0GRhsGOnZSKwaDzRRl4MupvJ42FhCE4zhQRVanX0Jpg6WuCBk59OVhVDPmab1bB+nRykAnykYELA9qQ=="
-      },
-      "Serilog.Sinks.File": {
-        "type": "Direct",
-        "requested": "[7.0.0, )",
-        "resolved": "7.0.0",
-        "contentHash": "fKL7mXv7qaiNBUC71ssvn/dU0k9t0o45+qm2XgKAlSt19xF+ijjxyA3R6HmCgfKEKwfcfkwWjayuQtRueZFkYw==",
-        "dependencies": {
-          "Serilog": "4.2.0"
-        }
+        "requested": "[9.0.17, )",
+        "resolved": "9.0.17",
+        "contentHash": "P5qY/hIYMlo0+QRM0W3Gd/SRf20TX+z5W5NwpdzkOk0FtgcbSTNwNcYBRNDgfThFcLpcDFslz65RcGqWOq00/w=="
       },
       "Shmuelie.WinRTServer": {
         "type": "Direct",
@@ -44,33 +63,10 @@
         "resolved": "2.2.1",
         "contentHash": "Nt+t3cMga8YWXToaTw//CGjO9mTQORc+qSKyrVXZAhnyUWiZ7flhFBTWI1igp+2o2PYl5CCNHYfz9JI4F25GPA=="
       },
-      "System.Text.Json": {
-        "type": "Direct",
-        "requested": "[9.0.10, )",
-        "resolved": "9.0.10",
-        "contentHash": "XM02ZBnzxk7Ti6l9YRy8Bp639wANqJzJzw4W4VYiCh+HXY9hBOWkGB4k89OLP/s/RxgM02P4a/mWcJTgFiLf1Q=="
-      }
-    },
-    "net9.0-windows10.0.22621/win-arm64": {
-      "Microsoft.CommandPalette.Extensions": {
-        "type": "Direct",
-        "requested": "[0.9.260303001, )",
-        "resolved": "0.9.260303001",
-        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
-        "dependencies": {
-          "Microsoft.Windows.CsWinRT": "2.2.0"
-        }
-      }
-    },
-    "net9.0-windows10.0.22621/win-x64": {
-      "Microsoft.CommandPalette.Extensions": {
-        "type": "Direct",
-        "requested": "[0.9.260303001, )",
-        "resolved": "0.9.260303001",
-        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
-        "dependencies": {
-          "Microsoft.Windows.CsWinRT": "2.2.0"
-        }
+      "Microsoft.Windows.CsWinRT": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
       }
     }
   }

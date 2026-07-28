@@ -1,13 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<WindowsSdkPackageVersion>10.0.26100.57</WindowsSdkPackageVersion>
-		<TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
-		<TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-		<RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-
-		<VersionPrefix>0.9.0</VersionPrefix>
+		<VersionPrefix>0.9.1</VersionPrefix>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>Toolkit for Command Palette</Title>
 		<Copyright>(c) Jiri Polasek</Copyright>
@@ -20,9 +14,8 @@
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<IncludeSymbols>True</IncludeSymbols>
 		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-		<EnableMsixTooling>true</EnableMsixTooling>
-		<EnableCoreMrtTooling Condition=" '$(BuildingInsideVisualStudio)' != 'true' ">false</EnableCoreMrtTooling>
+		<IsAotCompatible>true</IsAotCompatible>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
@@ -32,23 +25,20 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.CommandPalette.Extensions" />
-		<PackageReference Include="Microsoft.Windows.CsWinRT" />
-		<PackageReference Include="Serilog" />
-		<PackageReference Include="Serilog.Sinks.File" />
-		<PackageReference Include="System.Text.Json" />
 		<PackageReference Include="Shmuelie.WinRTServer" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="README.md" Pack="true" PackagePath="\" />
+		<None Remove="README.md" />
+		<None Include="README.md" Pack="true" PackagePath="" />
 		<None Include="icon.png" Condition=" '$(VersionSuffix)' == '' ">
 			<Pack>True</Pack>
-			<PackagePath>\icon.png</PackagePath>
+			<PackagePath>icon.png</PackagePath>
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 		<None Include="icon-dev.png" Condition=" '$(VersionSuffix)' != '' ">
 			<Pack>True</Pack>
-			<PackagePath>\icon.png</PackagePath>
+			<PackagePath>icon.png</PackagePath>
 			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

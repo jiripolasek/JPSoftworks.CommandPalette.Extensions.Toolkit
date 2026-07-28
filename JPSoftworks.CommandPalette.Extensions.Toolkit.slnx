@@ -6,5 +6,6 @@
     <File Path="README.md" />
   </Folder>
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />
+  <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.csproj" />
   <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.Test/JPSoftworks.CommandPalette.Extensions.Toolkit.Test.csproj" Id="f65fccc4-4bb3-4952-9439-dd858c33d06d" />
 </Solution>
