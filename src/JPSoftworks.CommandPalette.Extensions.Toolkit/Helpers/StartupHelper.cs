@@ -5,10 +5,10 @@
 // ------------------------------------------------------------
 
 using System.Diagnostics;
-using Windows.ApplicationModel;
-using Windows.Management.Deployment;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Resources;
+using Windows.ApplicationModel;
+using Windows.Management.Deployment;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers;
 
@@ -17,6 +17,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers;
 /// </summary>
 public static class StartupHelper
 {
+    private const string LogCategory = nameof(StartupHelper);
     private const string CommandPalettePackageFamilyName = "Microsoft.CommandPalette_8wekyb3d8bbwe";
     private const string CommandPaletteDevPackageFamilyName = "Microsoft.CommandPalette.Dev_8wekyb3d8bbwe";
     private const string StorePowerToysLink = "ms-windows-store://pdp/?productid=XP89DCGQ3K6VLD";
@@ -26,15 +27,27 @@ public static class StartupHelper
     /// and attempts to launch it. Shows appropriate messages to the user based on the outcome.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task HandleDirectLaunchAsync()
+    public static Task HandleDirectLaunchAsync()
     {
+        return HandleDirectLaunchAsync(TraceExtensionHostLogSink.Instance);
+    }
+
+    /// <summary>
+    /// Handles direct launch while forwarding diagnostics to the supplied sink.
+    /// </summary>
+    /// <param name="logSink">The caller-owned diagnostics sink.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public static async Task HandleDirectLaunchAsync(IExtensionHostLogSink logSink)
+    {
+        ArgumentNullException.ThrowIfNull(logSink);
+
         try
         {
-            await HandleDirectLaunchCoreAsync();
+            await HandleDirectLaunchCoreAsync(logSink);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            logSink.LogError(LogCategory, ex);
             MessageBoxHelper.Show(
                 Strings.UserExperienceHelper_GeneralErrorOnStart!,
                 Strings.UserExperienceHelper_ErrorCaption!,
@@ -43,13 +56,13 @@ public static class StartupHelper
         }
     }
 
-    private static async Task HandleDirectLaunchCoreAsync()
+    private static async Task HandleDirectLaunchCoreAsync(IExtensionHostLogSink logSink)
     {
         // Let's add something meaningful for the end-user experience.
         // 1. We are not running as a COM server, so we can show a message box.
         // 2. We can check if PowerToys Command Palette is installed.
 
-        var (retailCommandPalettePackage, devCommandPalettePackage) = FindCommandPaletteApps();
+        var (retailCommandPalettePackage, devCommandPalettePackage) = FindCommandPaletteApps(logSink);
 
         if (retailCommandPalettePackage != null || devCommandPalettePackage != null)
         {
@@ -67,7 +80,7 @@ public static class StartupHelper
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
+                logSink.LogError(LogCategory, ex);
             }
 
             if (!started)
@@ -93,7 +106,7 @@ public static class StartupHelper
             catch (Exception ex)
             {
                 // ignore exception, we just want to open the store link
-                Logger.LogError(ex);
+                logSink.LogError(LogCategory, ex);
             }
         }
     }
@@ -109,7 +122,7 @@ public static class StartupHelper
         return false;
     }
 
-    private static PackageDetectionResult FindCommandPaletteApps()
+    private static PackageDetectionResult FindCommandPaletteApps(IExtensionHostLogSink logSink)
     {
         try
         {
@@ -123,7 +136,7 @@ public static class StartupHelper
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            logSink.LogError(LogCategory, ex);
             return new PackageDetectionResult(null, null);
         }
     }

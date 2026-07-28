@@ -9,7 +9,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit\JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />
+    <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.csproj" />
+    <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.csproj" />
     <TrimmerRootAssembly Include="JPSoftworks.CommandPalette.Extensions.Toolkit" />
+    <TrimmerRootAssembly Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions" />
+    <TrimmerRootAssembly Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog" />
   </ItemGroup>
 
 </Project>

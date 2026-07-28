@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.csproj" />
+    <ProjectReference Include="..\..\src\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

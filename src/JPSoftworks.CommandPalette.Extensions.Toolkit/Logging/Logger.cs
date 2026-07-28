@@ -1,167 +1,240 @@
-﻿// ------------------------------------------------------------
+// ------------------------------------------------------------
 //
 // Copyright (c) Jiří Polášek. All rights reserved.
 //
 // ------------------------------------------------------------
 
-using System.Globalization;
-using Microsoft.CommandPalette.Extensions;
-using Microsoft.CommandPalette.Extensions.Toolkit;
-
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
+/// <summary>
+/// Provides the original static logging API retained for compatibility.
+/// </summary>
+/// <remarks>
+/// When an <see cref="ExtensionHostRunner"/> is active, entries are forwarded to its effective log sink.
+/// Calling <see cref="Initialize"/> directly configures the original daily-file and Command Palette destinations.
+/// </remarks>
+[Obsolete("Use IExtensionHostLogSink and configure sinks through ExtensionHostRunner.CreateBuilder instead.")]
 public static class Logger
 {
-    private static readonly object SyncRoot = new();
-
-    private static string? _logFilePath;
-    private static DateOnly _logFileDate;
-    private static StreamWriter? _writer;
-    private static bool _isDebug;
-
+    /// <summary>
+    /// Initializes the compatibility logger with its original default destinations.
+    /// </summary>
     public static void Initialize(string publisherName, string productName, bool isDebug = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(publisherName);
         ArgumentException.ThrowIfNullOrWhiteSpace(productName);
 
+        LegacyLoggerBridge.Initialize(publisherName, productName, isDebug);
+    }
+
+    /// <summary>
+    /// Logs a debug message when debug logging is enabled.
+    /// </summary>
+    public static void LogDebug(string message)
+    {
+        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Debug, message);
+    }
+
+    /// <summary>
+    /// Logs an informational message.
+    /// </summary>
+    public static void LogInformation(string message)
+    {
+        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Information, message);
+    }
+
+    /// <summary>
+    /// Logs a warning message.
+    /// </summary>
+    public static void LogWarning(string message)
+    {
+        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Warning, message);
+    }
+
+    /// <summary>
+    /// Logs an error message.
+    /// </summary>
+    public static void LogError(string message)
+    {
+        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Error, message);
+    }
+
+    /// <summary>
+    /// Logs an exception as an error.
+    /// </summary>
+    public static void LogError(Exception exception)
+    {
+        LegacyLoggerBridge.Write(
+            ExtensionHostLogLevel.Error,
+            $"{exception.GetType().Name}: {exception.Message}",
+            exception);
+    }
+
+    /// <summary>
+    /// Logs an error message and its associated exception.
+    /// </summary>
+    public static void LogError(string message, Exception exception)
+    {
+        LegacyLoggerBridge.Write(
+            ExtensionHostLogLevel.Error,
+            $"{message}: {exception.Message}",
+            exception);
+    }
+
+    /// <summary>
+    /// Flushes and closes resources owned by the compatibility logger.
+    /// </summary>
+    public static void CloseAndFlush()
+    {
+        LegacyLoggerBridge.CloseAndFlush();
+    }
+}
+
+internal static class LegacyLoggerBridge
+{
+    private const string Category = "Logger";
+
+    private static readonly object SyncRoot = new();
+
+    [ThreadStatic]
+    private static bool _isWriting;
+
+    private static IExtensionHostLogSink? _sink;
+    private static IDisposable? _ownedResource;
+    private static bool _isDebugEnabled;
+
+    internal static void Initialize(string publisherName, string productName, bool isDebug)
+    {
         try
         {
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData,
+            var localAppData = Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData,
                 Environment.SpecialFolderOption.DoNotVerify);
-            string logFile = Path.Combine(localAppData, publisherName, productName, "log.txt");
-            string? logDirectory = Path.GetDirectoryName(logFile);
-            if (logDirectory != null && !Directory.Exists(logDirectory)) Directory.CreateDirectory(logDirectory);
+            var logFilePath = Path.Combine(localAppData, publisherName, productName, "log.txt");
+            var fileSink = new DailyFileExtensionHostLogSink(logFilePath);
+            var sink = new CompositeExtensionHostLogSink(
+                [
+                    fileSink,
+                    CommandPaletteExtensionHostLogSink.Instance,
+                ]);
 
-            lock (SyncRoot)
-            {
-                CloseWriter();
-                _logFilePath = logFile;
-                _isDebug = isDebug;
-                EnsureWriter();
-            }
-
-            LogDebug("Logger initialized");
+            SetSink(sink, fileSink, isDebug);
+            Write(ExtensionHostLogLevel.Debug, "Logger initialized");
         }
         catch (Exception ex)
         {
-            LogError(ex);
+            Write(
+                ExtensionHostLogLevel.Error,
+                $"{ex.GetType().Name}: {ex.Message}",
+                ex);
         }
     }
 
-    public static void LogDebug(string message)
+    internal static void UseSink(IExtensionHostLogSink sink, bool isDebug)
     {
-        if (_isDebug)
+        ArgumentNullException.ThrowIfNull(sink);
+        SetSink(sink, ownedResource: null, isDebug: isDebug);
+    }
+
+    internal static void Write(
+        ExtensionHostLogLevel level,
+        string message,
+        Exception? exception = null)
+    {
+        if (_isWriting)
         {
-            WriteToFile("DBG", message);
+            return;
         }
+
+        IExtensionHostLogSink? sink;
+        bool isDebugEnabled;
+
+        lock (SyncRoot)
+        {
+            sink = _sink;
+            isDebugEnabled = _isDebugEnabled;
+        }
+
+        if (level == ExtensionHostLogLevel.Debug && !isDebugEnabled)
+        {
 #if DEBUG
-        ExtensionHost.LogMessage(new LogMessage(message) { State = MessageState.Info });
+            TryWrite(CommandPaletteExtensionHostLogSink.Instance, level, message, exception);
 #endif
+            return;
+        }
+
+        TryWrite(sink ?? CommandPaletteExtensionHostLogSink.Instance, level, message, exception);
     }
 
-    public static void LogInformation(string message)
+    internal static void CloseAndFlush()
     {
-        WriteToFile("INF", message);
-        ExtensionHost.LogMessage(new LogMessage(message) { State = MessageState.Info });
+        IDisposable? ownedResource;
+
+        lock (SyncRoot)
+        {
+            _sink = null;
+            _isDebugEnabled = false;
+            ownedResource = _ownedResource;
+            _ownedResource = null;
+        }
+
+        TryDispose(ownedResource);
     }
 
-    public static void LogError(string message)
+    private static void SetSink(
+        IExtensionHostLogSink sink,
+        IDisposable? ownedResource,
+        bool isDebug)
     {
-        WriteToFile("ERR", message);
-        ExtensionHost.LogMessage(new LogMessage(message) { State = MessageState.Error });
+        IDisposable? previousOwnedResource;
+
+        lock (SyncRoot)
+        {
+            previousOwnedResource = _ownedResource;
+            _sink = sink;
+            _ownedResource = ownedResource;
+            _isDebugEnabled = isDebug;
+        }
+
+        TryDispose(previousOwnedResource);
     }
 
-    public static void LogWarning(string message)
-    {
-        WriteToFile("WRN", message);
-        ExtensionHost.LogMessage(new LogMessage(message) { State = MessageState.Warning });
-    }
-
-    public static void LogError(Exception exception)
-    {
-        string message = string.Format(CultureInfo.InvariantCulture, "{0}: {1}", exception.GetType().Name,
-            exception.Message);
-        WriteToFile("ERR", exception.ToString());
-        ExtensionHost.LogMessage(new LogMessage(message) { State = MessageState.Error });
-    }
-
-    public static void LogError(string message, Exception exception)
-    {
-        string formattedMessage = string.Format(CultureInfo.InvariantCulture, "{0}: {1}", message, exception.Message);
-        WriteToFile("ERR", string.Format(CultureInfo.InvariantCulture, "{0}: {1}", message, exception));
-        ExtensionHost.LogMessage(new LogMessage(formattedMessage) { State = MessageState.Error });
-    }
-
-    public static void CloseAndFlush()
+    private static void TryWrite(
+        IExtensionHostLogSink sink,
+        ExtensionHostLogLevel level,
+        string message,
+        Exception? exception)
     {
         try
         {
-            lock (SyncRoot)
-            {
-                CloseWriter();
-                _logFilePath = null;
-            }
+            _isWriting = true;
+            sink.Write(new ExtensionHostLogEntry(
+                DateTimeOffset.Now,
+                level,
+                Category,
+                eventId: 0,
+                message,
+                exception));
+        }
+        catch
+        {
+            // Compatibility logging must never interrupt the extension host.
+        }
+        finally
+        {
+            _isWriting = false;
+        }
+    }
+
+    private static void TryDispose(IDisposable? resource)
+    {
+        try
+        {
+            resource?.Dispose();
         }
         catch
         {
             // Logging shutdown must never interrupt the extension host.
         }
-    }
-
-    private static void WriteToFile(string level, string message)
-    {
-        try
-        {
-            lock (SyncRoot)
-            {
-                EnsureWriter();
-                if (_writer == null)
-                {
-                    return;
-                }
-
-                string timestamp = DateTimeOffset.Now.ToString(
-                    "yyyy-MM-dd HH:mm:ss.fff zzz",
-                    CultureInfo.InvariantCulture);
-                _writer.WriteLine(
-                    string.Format(CultureInfo.InvariantCulture, "{0} [{1}] {2}", timestamp, level, message));
-            }
-        }
-        catch
-        {
-            // Logging must never interrupt the extension host.
-        }
-    }
-
-    private static void EnsureWriter()
-    {
-        if (_logFilePath == null)
-        {
-            return;
-        }
-
-        DateOnly today = DateOnly.FromDateTime(DateTime.Now);
-        if (_writer != null && _logFileDate == today)
-        {
-            return;
-        }
-
-        CloseWriter();
-
-        string? logDirectory = Path.GetDirectoryName(_logFilePath);
-        string logFileName = Path.GetFileNameWithoutExtension(_logFilePath);
-        string logExtension = Path.GetExtension(_logFilePath);
-        string dateSuffix = today.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        string dailyLogFile = Path.Combine(logDirectory ?? string.Empty, $"{logFileName}{dateSuffix}{logExtension}");
-
-        var stream = new FileStream(dailyLogFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-        _writer = new StreamWriter(stream) { AutoFlush = true };
-        _logFileDate = today;
-    }
-
-    private static void CloseWriter()
-    {
-        _writer?.Dispose();
-        _writer = null;
     }
 }

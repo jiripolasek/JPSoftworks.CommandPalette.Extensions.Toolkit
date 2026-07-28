@@ -1,7 +1,7 @@
 // ------------------------------------------------------------
-// 
+//
 // Copyright (c) Jiří Polášek. All rights reserved.
-// 
+//
 // ------------------------------------------------------------
 
 using System.Diagnostics;
@@ -14,151 +14,205 @@ using WinRT;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 
 /// <summary>
-/// Provides functionality for running self-contained Command Palette extension servers.
-/// This static class handles the complete lifecycle of extension hosting, including COM server setup,
-/// extension factory registration, application lifecycle monitoring, and graceful shutdown handling.
+/// Runs self-contained Command Palette extension servers.
 /// </summary>
 /// <remarks>
-/// <para>
-/// The server supports both COM server mode (activated by the -RegisterProcessAsComServer argument) 
-/// and direct launch mode. In COM server mode, it sets up a WinRT COM server to host Command Palette 
-/// extensions, manages process efficiency settings, and monitors for application shutdown events.
-/// </para>
-/// <para>
-/// In direct launch mode, it contains a fallback mechanism that will attempt to launch
-/// Command Palette or bring it to the foreground if it is already running to give the user
-/// at least some feedback.
-/// </para>
+/// The zero-configuration <see cref="RunAsync"/> overload uses the toolkit's daily file and Command Palette
+/// diagnostic sinks. <see cref="CreateBuilder"/> exposes the same execution path with additional or replacement sinks.
 /// </remarks>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static class ExtensionHostRunner
 {
+    private const string LogCategory = nameof(ExtensionHostRunner);
+
     /// <summary>
-    /// Runs the self-contained extension server with the specified configuration.
+    /// Creates an extension host runner builder.
+    /// </summary>
+    /// <param name="args">Command line arguments passed to the application.</param>
+    /// <param name="runParams">Configuration parameters for running the server.</param>
+    /// <returns>A builder initialized with the toolkit's default behavior.</returns>
+    public static ExtensionHostRunnerBuilder CreateBuilder(
+        string[] args,
+        ExtensionHostRunnerParameters runParams)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+        ArgumentNullException.ThrowIfNull(runParams);
+        return new ExtensionHostRunnerBuilder(args, runParams);
+    }
+
+    /// <summary>
+    /// Runs the self-contained extension server with the toolkit's default behavior.
     /// </summary>
     /// <param name="args">Command line arguments passed to the application.</param>
     /// <param name="runParams">Configuration parameters for running the server.</param>
     /// <returns>A task that represents the asynchronous server operation.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="args"/> is null or <paramref name="runParams"/> is null.</exception>
-    /// <exception cref="InvalidOperationException">Thrown when the COM server is not running in an MTA thread.</exception>
-    public static async Task RunAsync(string[] args, ExtensionHostRunnerParameters runParams)
+    public static Task RunAsync(
+        string[] args,
+        ExtensionHostRunnerParameters runParams)
     {
-        ArgumentNullException.ThrowIfNull(args);
-        ArgumentNullException.ThrowIfNull(runParams);
+        return CreateBuilder(args, runParams).RunAsync();
+    }
+
+    internal static async Task RunCoreAsync(
+        string[] args,
+        ExtensionHostRunnerParameters runParams,
+        bool includeDefaultLogSinks,
+        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(runParams.PublisherMoniker);
+        ArgumentException.ThrowIfNullOrWhiteSpace(runParams.ProductMoniker);
+        ArgumentNullException.ThrowIfNull(runParams.ExtensionFactories);
+
+        var isExplicitlyDebug = args.Any(static arg => arg == "-Debug");
+        var isDebug = runParams.IsDebug || isExplicitlyDebug;
+        var isComServer = args.Any(static arg => arg == "-RegisterProcessAsComServer");
+
+        using var logSink = CreateLogSink(runParams, includeDefaultLogSinks, additionalLogSinks, isDebug);
+        LegacyLoggerBridge.UseSink(logSink, isDebug);
 
         try
         {
-            var isExplicitlyDebug = args.Length > 0 && args.Any(arg => arg == "-Debug");
-            var isComServer = args.Length > 0 && args.Any(arg => arg == "-RegisterProcessAsComServer");
-
-            Logger.Initialize(runParams.PublisherMoniker, runParams.ProductMoniker, runParams.IsDebug || isExplicitlyDebug);
+            logSink.LogDebug(LogCategory, "Diagnostics initialized");
 
             if (isComServer)
             {
-                Logger.LogDebug("Running as COM server");
-
-                ManualResetEvent extensionDisposedEvent = new(false);
-
-                var server = new ComServer();
-
-                ManualResetEvent appLifeMonitorTerminationEvent = new(false);
-
-                TrySetAppLifeMonitor(appLifeMonitorTerminationEvent);
-
-                TrySetShutdownPriority();
-
-                TryEnableEfficiencyMode(runParams);
-
-                if (runParams.ExtensionFactories?.Count > 0)
-                {
-                    DefaultComWrappers? comWrappers = null;
-
-                    Logger.LogDebug("Creating extensions from factories");
-                    foreach (var factory in runParams.ExtensionFactories)
-                    {
-                        if (factory == null)
-                        {
-                            Logger.LogWarning("Extension factory is null, skipping");
-                            continue;
-                        }
-                        try
-                        {
-                            var extension = factory.CreateExtension(extensionDisposedEvent);
-                            if (extension == null)
-                            {
-                                Logger.LogError("Extension factory returned null, skipping");
-                                continue;
-                            }
-
-                            server.RegisterClassFactory(new SingletonExtensionFactory(extension), comWrappers ??= new());
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.LogError($"Failed to create extension from factory {factory.GetType().Name}", ex);
-                        }
-                    }
-                }
-                else
-                {
-                    Logger.LogDebug("No extension factories provided, using default extension");
-                }
-
-                if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
-                {
-                    throw new InvalidOperationException("The COM server must be run in MTA thread.");
-                }
-
-                Logger.LogDebug("Starting COM server");
-
-                server.Start();
-
-                Logger.LogDebug("Waiting for extension to be release or extension app be closed");
-
-                await WaitForAnyEventAsync(extensionDisposedEvent, appLifeMonitorTerminationEvent);
-
-                Logger.LogDebug("Extension disposed or app closed, shutting down COM server");
-
-                server.UnsafeDispose();
+                await RunComServerAsync(runParams, logSink);
             }
             else
             {
-                await StartupHelper.HandleDirectLaunchAsync();
+                await StartupHelper.HandleDirectLaunchAsync(logSink);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError("Unhandled fatal exception", ex);
+            logSink.LogError(LogCategory, "Unhandled fatal exception", ex);
         }
         finally
         {
-            Logger.LogDebug("Done");
-            Logger.CloseAndFlush();
+            logSink.LogDebug(LogCategory, "Done");
+            LegacyLoggerBridge.CloseAndFlush();
         }
     }
 
-    /// <summary>
-    /// Attempts to enable efficiency mode for the current process if configured to do so.
-    /// This includes setting the process priority to idle and enabling EcoQoS efficiency mode.
-    /// </summary>
-    /// <param name="extensionHostRunnerParameters">The server configuration parameters containing the efficiency mode setting.</param>
+    private static ExtensionHostLogRouter CreateLogSink(
+        ExtensionHostRunnerParameters runParams,
+        bool includeDefaultLogSinks,
+        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks,
+        bool isDebug)
+    {
+        List<IExtensionHostLogSink> sinks = [];
+        List<IDisposable> ownedResources = [];
+
+        if (includeDefaultLogSinks)
+        {
+            try
+            {
+                var localAppData = Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData,
+                    Environment.SpecialFolderOption.DoNotVerify);
+                var logFilePath = Path.Combine(
+                    localAppData,
+                    runParams.PublisherMoniker,
+                    runParams.ProductMoniker,
+                    "log.txt");
+                var fileSink = new DailyFileExtensionHostLogSink(logFilePath);
+                sinks.Add(fileSink);
+                ownedResources.Add(fileSink);
+            }
+            catch
+            {
+                sinks.Add(TraceExtensionHostLogSink.Instance);
+            }
+
+            sinks.Add(CommandPaletteExtensionHostLogSink.Instance);
+        }
+
+        sinks.AddRange(additionalLogSinks);
+
+        return new ExtensionHostLogRouter(sinks, ownedResources, isDebug);
+    }
+
+    private static async Task RunComServerAsync(
+        ExtensionHostRunnerParameters runParams,
+        IExtensionHostLogSink logSink)
+    {
+        logSink.LogDebug(LogCategory, "Running as COM server");
+
+        using ManualResetEvent extensionDisposedEvent = new(false);
+        using ManualResetEvent appLifeMonitorTerminationEvent = new(false);
+        using var appLifeMonitor = TrySetAppLifeMonitor(appLifeMonitorTerminationEvent, logSink);
+
+        var context = new ExtensionHostContext(extensionDisposedEvent, logSink);
+        var server = new ComServer();
+
+        TrySetShutdownPriority(logSink);
+        TryEnableEfficiencyMode(runParams);
+
+        if (runParams.ExtensionFactories.Count > 0)
+        {
+            DefaultComWrappers? comWrappers = null;
+
+            logSink.LogDebug(LogCategory, "Creating extensions from factories");
+            foreach (var factory in runParams.ExtensionFactories)
+            {
+                if (factory == null)
+                {
+                    logSink.LogWarning(LogCategory, "Extension factory is null, skipping");
+                    continue;
+                }
+
+                try
+                {
+                    var extension = factory.CreateExtension(context);
+                    if (extension == null)
+                    {
+                        logSink.LogError(LogCategory, "Extension factory returned null, skipping");
+                        continue;
+                    }
+
+                    server.RegisterClassFactory(new SingletonExtensionFactory(extension), comWrappers ??= new());
+                }
+                catch (Exception ex)
+                {
+                    logSink.LogError(
+                        LogCategory,
+                        $"Failed to create extension from factory {factory.GetType().Name}",
+                        ex);
+                }
+            }
+        }
+        else
+        {
+            logSink.LogDebug(LogCategory, "No extension factories provided");
+        }
+
+        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
+        {
+            throw new InvalidOperationException("The COM server must be run in MTA thread.");
+        }
+
+        logSink.LogDebug(LogCategory, "Starting COM server");
+        server.Start();
+
+        logSink.LogDebug(LogCategory, "Waiting for the extension to be released or the extension app to close");
+        await WaitForAnyEventAsync(extensionDisposedEvent, appLifeMonitorTerminationEvent);
+
+        logSink.LogDebug(LogCategory, "Extension disposed or app closed, shutting down COM server");
+        server.UnsafeDispose();
+    }
+
     private static void TryEnableEfficiencyMode(ExtensionHostRunnerParameters extensionHostRunnerParameters)
     {
         if (extensionHostRunnerParameters.EnableEfficiencyMode)
         {
-            // Run with low priority
             Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
-
-            // Enable Efficiency Mode (EcoQoS) if supported
             EfficiencyModeHelper.TryEnableProcessEfficiencyMode();
         }
     }
 
-    /// <summary>
-    /// Attempts to create and start an application lifecycle monitor that responds to system shutdown events.
-    /// </summary>
-    /// <param name="appLifeMonitorTerminationEvent">The manual reset event to signal when termination is requested.</param>
-    /// <returns>The created <see cref="AppLifeMonitor"/> instance, or null if creation failed.</returns>
-    private static AppLifeMonitor? TrySetAppLifeMonitor(ManualResetEvent appLifeMonitorTerminationEvent)
+    private static AppLifeMonitor? TrySetAppLifeMonitor(
+        ManualResetEvent appLifeMonitorTerminationEvent,
+        IExtensionHostLogSink logSink)
     {
         try
         {
@@ -169,16 +223,13 @@ public static class ExtensionHostRunner
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            logSink.LogError(LogCategory, ex);
         }
 
         return null;
     }
 
-    /// <summary>
-    /// Attempts to set the shutdown priority for the current process to ensure graceful termination.
-    /// </summary>
-    private static void TrySetShutdownPriority()
+    private static void TrySetShutdownPriority(IExtensionHostLogSink logSink)
     {
         try
         {
@@ -190,15 +241,10 @@ public static class ExtensionHostRunner
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex);
+            logSink.LogError(LogCategory, ex);
         }
     }
 
-    /// <summary>
-    /// Waits for any of the specified wait handles to be signaled asynchronously.
-    /// </summary>
-    /// <param name="waitHandles">The wait handles to monitor for signaling.</param>
-    /// <returns>A task that completes when any of the wait handles is signaled.</returns>
     private static async Task WaitForAnyEventAsync(params WaitHandle[] waitHandles)
     {
         ArgumentNullException.ThrowIfNull(waitHandles);
@@ -206,7 +252,8 @@ public static class ExtensionHostRunner
         {
             throw new ArgumentException("At least one wait handle must be provided.", nameof(waitHandles));
         }
-        if (waitHandles.Any(handle => handle == null))
+
+        if (waitHandles.Any(static handle => handle == null))
         {
             throw new ArgumentException("All wait handles must be non-null.", nameof(waitHandles));
         }
@@ -216,16 +263,16 @@ public static class ExtensionHostRunner
 
         try
         {
-            for (var i = 0; i < waitHandles.Length; i++)
+            for (var index = 0; index < waitHandles.Length; index++)
             {
-                var index = i;
-                waitRegistrations[i] = ThreadPool.RegisterWaitForSingleObject(
-                    waitHandles[i],
+                var resultIndex = index;
+                waitRegistrations[index] = ThreadPool.RegisterWaitForSingleObject(
+                    waitHandles[index],
                     (_, timedOut) =>
                     {
                         if (!timedOut)
                         {
-                            taskCompletionSource.TrySetResult(index);
+                            taskCompletionSource.TrySetResult(resultIndex);
                         }
                     },
                     null,
@@ -237,11 +284,10 @@ public static class ExtensionHostRunner
         }
         finally
         {
-            for (var i = 0; i < waitRegistrations.Length; i++)
+            foreach (var registration in waitRegistrations)
             {
-                waitRegistrations[i]?.Unregister(null);
+                registration?.Unregister(null);
             }
         }
     }
-
 }

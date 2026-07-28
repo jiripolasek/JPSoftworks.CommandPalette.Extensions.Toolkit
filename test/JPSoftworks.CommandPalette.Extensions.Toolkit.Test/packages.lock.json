@@ -107,9 +107,13 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
           "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
+      },
+      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+        "type": "Project"
       },
       "Microsoft.CommandPalette.Extensions": {
         "type": "CentralTransitive",
@@ -233,9 +237,13 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
           "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
+      },
+      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+        "type": "Project"
       },
       "Microsoft.CommandPalette.Extensions": {
         "type": "CentralTransitive",

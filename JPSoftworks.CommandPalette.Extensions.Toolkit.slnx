@@ -1,11 +1,27 @@
 <Solution>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
     <File Path="Directory.Packages.props" />
     <File Path="global.json" />
     <File Path="README.md" />
   </Folder>
+  <Folder Name="/eng/">
+    <File Path="eng/build.ps1" />
+    <File Path="eng/Common.props" />
+    <File Path="eng/Common.targets" />
+    <File Path="eng/Package.props" />
+    <File Path="eng/pack.ps1" />
+    <File Path="eng/publish-local.ps1" />
+    <File Path="eng/verify-aot.ps1" />
+  </Folder>
+  <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.csproj" />
+  <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.csproj" />
+  <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.csproj" />
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />
   <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.csproj" />
+  <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Adapters.Test/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Adapters.Test.csproj" />
+  <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Test/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Test.csproj" />
   <Project Path="test/JPSoftworks.CommandPalette.Extensions.Toolkit.Test/JPSoftworks.CommandPalette.Extensions.Toolkit.Test.csproj" Id="f65fccc4-4bb3-4952-9439-dd858c33d06d" />
 </Solution>

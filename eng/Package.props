@@ -1,0 +1,37 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>0.9.1</VersionPrefix>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
+    <Copyright>(c) Jiri Polasek</Copyright>
+    <Authors>Jiri Polasek</Authors>
+    <RepositoryUrl>https://github.com/jiripolasek/JPSoftworks.CommandPalette.Extensions.Toolkit</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <IsAotCompatible>true</IsAotCompatible>
+    <Deterministic>true</Deterministic>
+
+    <PackageIconSource
+      Condition=" '$(VersionSuffix)' == '' ">$(RepositoryRoot)src\JPSoftworks.CommandPalette.Extensions.Toolkit\icon.png</PackageIconSource>
+    <PackageIconSource
+      Condition=" '$(VersionSuffix)' != '' ">$(RepositoryRoot)src\JPSoftworks.CommandPalette.Extensions.Toolkit\icon-dev.png</PackageIconSource>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildProjectDirectory)\README.md" />
+    <None Include="$(MSBuildProjectDirectory)\README.md"
+          Link="README.md"
+          Pack="true"
+          PackagePath="" />
+    <None Include="$(PackageIconSource)"
+          Link="icon.png"
+          Pack="true"
+          PackagePath="icon.png"
+          CopyToOutputDirectory="Never" />
+  </ItemGroup>
+</Project>

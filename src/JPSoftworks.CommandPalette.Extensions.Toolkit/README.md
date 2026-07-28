@@ -8,9 +8,10 @@ The implementation may change in the future. As Command Palette evolves, so will
 
 ## Compatibility
 
-The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both target frameworks verified through an executable `win-x64` Native AOT publish in CI.
+The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both
+target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes in CI.
 
-The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its runtime package dependencies are limited to the Command Palette SDK and the WinRT server used by the extension host.
+The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its runtime package dependencies are limited to the logging-neutral toolkit contracts, the Command Palette SDK, and the WinRT server used by the extension host.
 
 ## Features
 
@@ -22,8 +23,7 @@ It provides:
 - A message loop that handles OS messages and shutdown requests—helping prevent hangs where the OS might otherwise treat the extension as unresponsive and terminate it.
 - Optional Efficiency Mode to reduce CPU usage when the extension is idle.  
   - Lowers process priority and attempts to enable Windows Efficiency Mode (EcoQoS).
-- A simple logger that writes to a custom log file and to the extension host log.  
-  - See the `Logger` class.
+- Default daily file and Command Palette diagnostics with configurable, logging-neutral sinks.
 - Debug-level logging that can be enabled manually or via a command-line argument.  
   - The `-Debug` argument enables debug-level logging at runtime.
 - Graceful fallback when started without arguments:  
@@ -48,25 +48,58 @@ Usage:
              IsDebug = false,                        // default is false
              EnableEfficiencyMode = true,            // default is true
              ExtensionFactories = [
-                 new DelegateExtensionFactory(manualResetEvent => new MyExtension(manualResetEvent))
+                 new DelegateExtensionFactory(context => new MyExtension(context.ExtensionDisposedEvent))
              ]
          });
  }
 ```
 
-### Logger
+### Diagnostics and logging
 
-`Logger` is a simple logging utility that writes messages to a custom log file and to the extension host log. It supports different log levels and can be used to log debug, info, warning, and error messages.
+The default `RunAsync` overload writes daily files under the extension's local application data directory and forwards
+messages to Command Palette. Debug diagnostics can be enabled with `-Debug` or `ExtensionHostRunnerParameters.IsDebug`.
 
-Debug-level logging can be enabled by passing the `-Debug` argument to the process or manually by settings IsDebug property of `ExtensionHostRunnerParameters`. 
+The runner does not require the extension to adopt a particular application logging abstraction. Its builder can add a
+delegate, trace, or custom sink while preserving the default sinks:
 
-Usage:
 ```csharp
-Logger.LogDebug("This is a debug message.");
-Logger.LogInformation("This is an info message.");
-Logger.LogWarning("This is a warning message.");
-Logger.LogError("This is an error message.");
+var targetLogger = CreateLoggerUsingYourPreferredFramework();
+
+await ExtensionHostRunner
+    .CreateBuilder(args, parameters)
+    .AddLogSink(new DelegateExtensionHostLogSink(entry => targetLogger.Write(entry)))
+    .RunAsync();
 ```
+
+Call `ClearDefaultLogSinks()` before `AddLogSink` to replace the defaults. `TraceExtensionHostLogSink.Instance`,
+`DailyFileExtensionHostLogSink`, and `NullExtensionHostLogSink.Instance` are built into the logging-neutral package.
+`CommandPaletteExtensionHostLogSink.Instance` is built into this package and is included by the default runner.
+
+Optional packages provide bidirectional adapters without making either logging framework a dependency of this package:
+
+```csharp
+// Host diagnostics -> Microsoft.Extensions.Logging
+runnerBuilder.AddLogSink(new MicrosoftLoggerExtensionHostLogSink(logger));
+
+// Host diagnostics -> Serilog
+runnerBuilder.AddLogSink(new SerilogExtensionHostLogSink(Log.Logger));
+```
+
+Application and core-service logs can flow in the other direction through the same context sink:
+
+```csharp
+loggerFactory.AddProvider(new ExtensionHostLoggerProvider(context.LogSink));
+
+var serilogLogger = new LoggerConfiguration()
+    .WriteTo.Sink(new ExtensionHostSerilogSink(context.LogSink))
+    .CreateLogger();
+```
+
+Both adapter packages mark bridge-originated entries, so connecting both directions to the same pipeline does not feed
+the same log back into itself.
+
+The original static `Logger` remains available as an obsolete compatibility facade. Existing calls are forwarded to
+the runner's effective sink, but new code should use `IExtensionHostLogSink` or one of the optional adapters.
 
 ### StartupHelper
 

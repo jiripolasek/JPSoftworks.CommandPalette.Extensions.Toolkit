@@ -1,0 +1,8 @@
+#nullable enable
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.CreateLogger(string! categoryName) -> Microsoft.Extensions.Logging.ILogger!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.Dispose() -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.ExtensionHostLoggerProvider(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink! sink) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.MicrosoftLoggerExtensionHostLogSink(Microsoft.Extensions.Logging.ILogger! logger) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.ExtensionHostLogEntry! entry) -> void

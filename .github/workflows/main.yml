@@ -41,11 +41,12 @@ jobs:
   build-test-pack:
     name: Build & Test
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     env:
       SolutionName: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
-      ProjectPath: src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj
-      AotSmokeTestProjectPath: test/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest/JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.csproj
+      ProjectPath: JPSoftworks.CommandPalette.Extensions.Toolkit.slnx
       BuildConfiguration: Release
 
     steps:
@@ -84,39 +85,10 @@ jobs:
         run: |
           dotnet test $env:SolutionName --configuration $env:BuildConfiguration --no-build --no-restore
 
-      - name: Verify Native AOT and trimming
+      - name: Verify x64 and ARM64 Native AOT and trimming
         shell: pwsh
         run: |
-          dotnet restore $env:AotSmokeTestProjectPath `
-            --runtime win-x64 `
-            -p:PublishAot=true `
-            -p:RestoreLockedMode=false
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          dotnet publish $env:AotSmokeTestProjectPath `
-            --configuration $env:BuildConfiguration `
-            --framework net9.0-windows10.0.22621.0 `
-            --runtime win-x64 `
-            --self-contained true `
-            --no-restore `
-            -p:GeneratePackageOnBuild=false `
-            -p:PublishAot=true `
-            -p:PublishTrimmed=true `
-            -p:PublishSingleFile=false `
-            -p:TrimmerSingleWarn=false
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-          dotnet publish $env:AotSmokeTestProjectPath `
-            --configuration $env:BuildConfiguration `
-            --framework net10.0-windows10.0.22621.0 `
-            --runtime win-x64 `
-            --self-contained true `
-            --no-restore `
-            -p:GeneratePackageOnBuild=false `
-            -p:PublishAot=true `
-            -p:PublishTrimmed=true `
-            -p:PublishSingleFile=false `
-            -p:TrimmerSingleWarn=false
+          & ./eng/verify-aot.ps1 -Configuration $env:BuildConfiguration
       
       - name: Get Version
         id: version
@@ -155,16 +127,17 @@ jobs:
           name: nupkg
           path: artifacts
 
-      - name: Push to GitHub Packages
+      - name: Push packages to GitHub Packages
         shell: pwsh
         run: |
-          
           Write-Host "Checking contents of artifacts folder"
           Get-ChildItem ./artifacts/*.nupkg -ErrorAction SilentlyContinue
+          Get-ChildItem ./artifacts/*.snupkg -ErrorAction SilentlyContinue
 
           dotnet nuget push "artifacts\*.nupkg" `
             --api-key ${{ secrets.GITHUB_TOKEN }} `
-            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json `
+            --no-symbols
 
   # ----------------------------------------------
   # Publish release
@@ -180,14 +153,16 @@ jobs:
           name: nupkg
           path: artifacts
 
-      - name: Push to NuGet.org
+      - name: Push packages and symbols to NuGet.org
         shell: pwsh
         run: |
           Write-Host "Checking contents of artifacts folder"
           Get-ChildItem ./artifacts/*.nupkg -ErrorAction SilentlyContinue
+          Get-ChildItem ./artifacts/*.snupkg -ErrorAction SilentlyContinue
 
           dotnet nuget push "artifacts\*.nupkg" `
             --api-key ${{ secrets.NUGET_API_KEY }} `
+            --symbol-api-key ${{ secrets.NUGET_API_KEY }} `
             --source https://api.nuget.org/v3/index.json
 
       - name: Create GitHub Release
@@ -203,18 +178,19 @@ jobs:
           draft: true
           prerelease: false
 
-      - name: Upload NuGet to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/*.nupkg
-          asset_name: ${{ needs.build-test-pack.outputs.version }}.nupkg
-          asset_content_type: application/octet-stream
+      - name: Upload packages to release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $assetPaths = @(
+            Get-ChildItem ./artifacts -File |
+              Where-Object { $_.Name.EndsWith('.nupkg') -or $_.Name.EndsWith('.snupkg') } |
+              ForEach-Object { $_.FullName }
+          )
 
-      - name: Upload NuGet Symbols to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/*.snupkg
-          asset_name: ${{ needs.build-test-pack.outputs.version }}.snupkg
-          asset_content_type: application/octet-stream
+          if ($assetPaths.Count -eq 0) {
+            throw "No NuGet package assets were found."
+          }
+
+          & gh release upload "v${{ needs.build-test-pack.outputs.version }}" @assetPaths --clobber

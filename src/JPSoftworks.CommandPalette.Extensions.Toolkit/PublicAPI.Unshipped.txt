@@ -1,7 +1,17 @@
 ﻿JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory
-JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.CreateExtension(System.Threading.ManualResetEvent! extensionDisposedEvent) -> Microsoft.CommandPalette.Extensions.IExtension!
-JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.DelegateExtensionFactory(System.Func<System.Threading.ManualResetEvent!, Microsoft.CommandPalette.Extensions.IExtension!>! createExtension) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.CreateExtension(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext! context) -> Microsoft.CommandPalette.Extensions.IExtension!
+JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateExtensionFactory.DelegateExtensionFactory(System.Func<JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext!, Microsoft.CommandPalette.Extensions.IExtension!>! createExtension) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext.ExtensionDisposedEvent.get -> System.Threading.ManualResetEvent!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext.LogSink.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.AddLogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink! sink) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.ClearDefaultLogSinks() -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.RunAsync() -> System.Threading.Tasks.Task!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.EnableEfficiencyMode.get -> bool
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.EnableEfficiencyMode.init -> void
@@ -33,16 +43,12 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBo
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType.OK = 0 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType
 JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper
 JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory
-JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory.CreateExtension(System.Threading.ManualResetEvent! extensionDisposedEvent) -> Microsoft.CommandPalette.Extensions.IExtension!
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger
+JPSoftworks.CommandPalette.Extensions.Toolkit.IExtensionFactory.CreateExtension(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext! context) -> Microsoft.CommandPalette.Extensions.IExtension!
 override JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.Equals(object? obj) -> bool
 override JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.GetHashCode() -> int
 override JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.ToString() -> string!
-static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.operator !=(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? left, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? right) -> bool
-static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.operator ==(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? left, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? right) -> bool
-static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.RunAsync(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> System.Threading.Tasks.Task!
-static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.Show(string! text, string! caption, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType iconType, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType type) -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
-static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync() -> System.Threading.Tasks.Task!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.CreateBuilder(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.CloseAndFlush() -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.Initialize(string! publisherName, string! productName, bool isDebug = false) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogDebug(string! message) -> void
@@ -51,6 +57,12 @@ static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(str
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogError(System.Exception! exception) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogInformation(string! message) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger.LogWarning(string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.operator !=(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? left, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? right) -> bool
+static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.operator ==(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? left, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? right) -> bool
+static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.RunAsync(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> System.Threading.Tasks.Task!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.Show(string! text, string! caption, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.IconType iconType, JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxType type) -> JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.MessageBoxHelper.MessageBoxResult
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync() -> System.Threading.Tasks.Task!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink! logSink) -> System.Threading.Tasks.Task!
 virtual JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.<Clone>$() -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters!
 virtual JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.EqualityContract.get -> System.Type!
 virtual JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.Equals(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters? other) -> bool

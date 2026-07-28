@@ -1,0 +1,8 @@
+<Project>
+  <Target
+    Name="EnsureLocalArtifactsDirectory"
+    BeforeTargets="PrepareForBuild;Pack;Publish"
+    Condition=" '$(UseArtifactsOutput)' == 'true' ">
+    <MakeDir Directories="$(ArtifactsPath)" />
+  </Target>
+</Project>

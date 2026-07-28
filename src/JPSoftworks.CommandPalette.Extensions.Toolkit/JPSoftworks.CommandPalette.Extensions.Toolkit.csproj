@@ -1,22 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<VersionPrefix>0.9.1</VersionPrefix>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<Title>Toolkit for Command Palette</Title>
-		<Copyright>(c) Jiri Polasek</Copyright>
-		<Authors>Jiri Polasek</Authors>
-		<RepositoryUrl>https://github.com/jiripolasek/JPSoftworks.CommandPalette.Extensions.Toolkit</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageIcon>icon.png</PackageIcon>
-		<NeutralLanguage>en-US</NeutralLanguage>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<IncludeSymbols>True</IncludeSymbols>
-		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
-		<IsAotCompatible>true</IsAotCompatible>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<Deterministic>true</Deterministic>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -29,18 +15,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Remove="README.md" />
-		<None Include="README.md" Pack="true" PackagePath="" />
-		<None Include="icon.png" Condition=" '$(VersionSuffix)' == '' ">
-			<Pack>True</Pack>
-			<PackagePath>icon.png</PackagePath>
-			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</None>
-		<None Include="icon-dev.png" Condition=" '$(VersionSuffix)' != '' ">
-			<Pack>True</Pack>
-			<PackagePath>icon.png</PackagePath>
-			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
-		</None>
+		<ProjectReference Include="..\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Test" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -57,5 +36,7 @@
 			<LastGenOutput>Strings.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 	</ItemGroup>
+
+	<Import Project="..\..\eng\Package.props" />
 
 </Project>

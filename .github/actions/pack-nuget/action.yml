@@ -1,11 +1,11 @@
 name: 'Pack NuGet'
 author: 'Jiri Polasek'
 description: >-
-  Determine version suffix from tag/branch and pack the project into artifacts/.
+  Pack the configured project or solution into artifacts/.
   
 inputs:
   projectPath:
-    description: "Path to the project file (e.g. src/ProjectName.csproj)"
+    description: "Path to the project or solution file"
     required: true
   version:
     description: "Version"
@@ -17,10 +17,22 @@ inputs:
     description: "Build configuration (e.g. Release, Debug)"
     default: "Release"
 
+outputs:
+  nupkg-paths:
+    description: "Semicolon-separated paths to the created NuGet packages"
+    value: ${{ steps.pack.outputs.nupkg-paths }}
+  snupkg-paths:
+    description: "Semicolon-separated paths to the created symbol packages"
+    value: ${{ steps.pack.outputs.snupkg-paths }}
+  version:
+    description: "Package version"
+    value: ${{ steps.pack.outputs.version }}
+
 runs:
   using: "composite"
   steps:
     - name: Pack
+      id: pack
       shell: pwsh
       run: |
         $actionDir = "${{ github.action_path }}"
