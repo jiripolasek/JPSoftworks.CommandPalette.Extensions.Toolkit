@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<Title>Toolkit for Command Palette</Title>
+		<Description>Opinionated lifecycle, hosting, startup, and diagnostics utilities for Command Palette extensions.</Description>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
 

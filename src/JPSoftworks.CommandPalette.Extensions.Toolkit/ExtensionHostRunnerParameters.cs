@@ -27,9 +27,15 @@ public record ExtensionHostRunnerParameters
     public required string ProductMoniker { get; init; }
 
     /// <summary>
-    /// Factories for creating extensions.
+    /// Factories for creating extensions with access to the complete host context.
     /// </summary>
-    public required List<IExtensionFactory> ExtensionFactories { get; init; } = [];
+    public List<IHostedExtensionFactory> HostedExtensionFactories { get; init; } = [];
+
+    /// <summary>
+    /// Event-only factories retained for compatibility with previous toolkit releases.
+    /// </summary>
+    [Obsolete("Use HostedExtensionFactories instead.")]
+    public List<IExtensionFactory> ExtensionFactories { get; init; } = [];
 
     /// <summary>
     /// Lowers the process priority and enables QoS Efficiency Mode for the process.

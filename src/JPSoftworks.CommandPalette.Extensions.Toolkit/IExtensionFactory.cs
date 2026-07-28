@@ -9,19 +9,21 @@ using Microsoft.CommandPalette.Extensions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 
 /// <summary>
-/// Creates Command Palette extension instances with access to the process-owned host context.
+/// Creates Command Palette extension instances with access to the process-owned disposal event.
 /// </summary>
+[Obsolete("Use IHostedExtensionFactory instead.")]
 public interface IExtensionFactory
 {
     /// <summary>
     /// Creates a fully initialized extension that is ready for COM registration.
     /// </summary>
-    /// <param name="context">The lifecycle state and diagnostics sink supplied by the extension host.</param>
+    /// <param name="extensionDisposedEvent">
+    /// The event that the extension must signal when it has been disposed.
+    /// </param>
     /// <returns>A new extension instance.</returns>
     /// <remarks>
-    /// The extension must signal <see cref="ExtensionHostContext.ExtensionDisposedEvent"/> when it has been disposed.
-    /// Only composition code should depend on the host context; core services can continue to use their selected
-    /// logging abstraction.
+    /// This is the original factory contract and is retained for compatibility. New code should implement
+    /// <see cref="IHostedExtensionFactory"/> to receive the complete host context.
     /// </remarks>
-    IExtension CreateExtension(ExtensionHostContext context);
+    IExtension CreateExtension(ManualResetEvent extensionDisposedEvent);
 }

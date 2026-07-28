@@ -19,9 +19,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$projectPath = Join-Path `
-    $repositoryRoot `
-    "test\JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest\JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.csproj"
+$repositoryConfig = Import-PowerShellDataFile (Join-Path $PSScriptRoot "Package.config.psd1")
+$projectPath = Join-Path $repositoryRoot $repositoryConfig.AotProjectPath
+$projectName = $repositoryConfig.AotProjectName
 
 foreach ($runtimeIdentifier in $RuntimeIdentifiers) {
     $runtimeArtifactsPath = Join-Path $repositoryRoot "artifacts\aot\$runtimeIdentifier"
@@ -56,10 +56,33 @@ foreach ($runtimeIdentifier in $RuntimeIdentifiers) {
             -p:PublishAot=true `
             -p:PublishTrimmed=true `
             -p:PublishSingleFile=false `
-            -p:TrimmerSingleWarn=false
+            -p:TrimmerSingleWarn=false `
+            -warnaserror
 
         if ($LASTEXITCODE -ne 0) {
             throw "Native AOT publish for '$framework/$runtimeIdentifier' failed with exit code $LASTEXITCODE."
+        }
+
+        $publishPath = Join-Path `
+            $runtimeArtifactsPath `
+            "publish\$projectName\$Configuration\$framework\$runtimeIdentifier"
+        $executablePath = Join-Path $publishPath "$projectName.exe"
+        if (-not (Test-Path -LiteralPath $executablePath -PathType Leaf)) {
+            throw "Native AOT publish for '$framework/$runtimeIdentifier' did not produce '$executablePath'."
+        }
+
+        $managedRuntimeFiles = @(
+            "coreclr.dll",
+            "hostfxr.dll",
+            "$projectName.deps.json"
+        )
+        $unexpectedRuntimeFiles = @(
+            $managedRuntimeFiles |
+                ForEach-Object { Join-Path $publishPath $_ } |
+                Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+        )
+        if ($unexpectedRuntimeFiles.Count -ne 0) {
+            throw "Native AOT publish for '$framework/$runtimeIdentifier' contains managed runtime files: $($unexpectedRuntimeFiles -join ', ')."
         }
     }
 }

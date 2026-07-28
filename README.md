@@ -22,16 +22,16 @@ A set of extensions and utilities for building [Command Palette](https://learn.m
 
 [JPSoftworks.CommandPalette.Extensions.Toolkit](https://www.nuget.org/packages/JPSoftworks.CommandPalette.Extensions.Toolkit/) at Nuget.org.
 
-Optional logging packages:
+Logging packages:
 
-- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging` — framework-neutral contracts and built-in delegate, trace, file, composite, and null sinks.
-- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions` — bidirectional Microsoft.Extensions.Logging adapters.
-- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog` — bidirectional Serilog adapters.
+- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging` — required logging-neutral contracts and built-in delegate, trace, file, composite, and null sinks.
+- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions` — optional bidirectional Microsoft.Extensions.Logging adapters.
+- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog` — optional bidirectional Serilog adapters.
 
 ## Compatibility
 
 The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both
-target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes in CI.
+target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes.
 
 ## Features
 
@@ -67,12 +67,17 @@ Usage:
              ProductMoniker = "MyExtension",
              IsDebug = false,                        // default is false
              EnableEfficiencyMode = true,            // default is true
-             ExtensionFactories = [
-                 new DelegateExtensionFactory(context => new MyExtension(context.ExtensionDisposedEvent))
+             HostedExtensionFactories = [
+                 new DelegateHostedExtensionFactory(context =>
+                     new MyExtension(context.ExtensionDisposedEvent))
              ]
          });
  }
 ```
+
+`IHostedExtensionFactory` is the primary extension-creation contract. It supplies both the disposal event and the
+effective diagnostics sink through `ExtensionHostContext`. The event-only `IExtensionFactory`,
+`DelegateExtensionFactory`, and `ExtensionFactories` members remain available as obsolete compatibility APIs.
 
 ### Diagnostics and logging
 
@@ -108,11 +113,19 @@ runnerBuilder.AddLogSink(new SerilogExtensionHostLogSink(Log.Logger));
 Application and core-service logs can flow in the other direction through the same context sink:
 
 ```csharp
-loggerFactory.AddProvider(new ExtensionHostLoggerProvider(context.LogSink));
-
-var serilogLogger = new LoggerConfiguration()
-    .WriteTo.Sink(new ExtensionHostSerilogSink(context.LogSink))
-    .CreateLogger();
+var parameters = new ExtensionHostRunnerParameters
+{
+    PublisherMoniker = "MyCompany",
+    ProductMoniker = "MyExtension",
+    HostedExtensionFactories =
+    [
+        new DelegateHostedExtensionFactory(context =>
+        {
+            loggerFactory.AddProvider(new ExtensionHostLoggerProvider(context.LogSink));
+            return new MyExtension(context.ExtensionDisposedEvent);
+        }),
+    ],
+};
 ```
 
 Both adapter packages mark bridge-originated entries, so connecting both directions to the same pipeline does not feed
@@ -143,14 +156,18 @@ Repository-local outputs are written beneath the ignored `artifacts` directory:
 
 ```powershell
 .\eng\build.ps1
+.\eng\test.ps1 -NoBuild -NoRestore
 .\eng\pack.ps1
 .\eng\publish-local.ps1
 .\eng\verify-aot.ps1
 ```
 
+Restore operations used by `build.ps1`, `test.ps1`, and `pack.ps1` run in locked mode. Package names, paths, and the
+AOT smoke-test project are declared in `eng\Package.config.psd1`.
 `pack.ps1` produces every toolkit `.nupkg` together with a matching `.snupkg`.
 `publish-local.ps1` copies both package types to the temporary `artifacts\local-feed` NuGet source.
-`verify-aot.ps1` publishes both target frameworks for `win-x64` and `win-arm64` beneath `artifacts\aot`.
+`verify-aot.ps1` treats warnings as errors, publishes both target frameworks for `win-x64` and `win-arm64` beneath
+`artifacts\aot`, and verifies that every output is native rather than framework-dependent.
 
 ## License
 

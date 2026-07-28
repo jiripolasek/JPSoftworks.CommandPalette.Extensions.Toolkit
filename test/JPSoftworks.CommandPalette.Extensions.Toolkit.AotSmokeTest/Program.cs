@@ -30,9 +30,9 @@ internal static class Program
         {
             PublisherMoniker = "JPSoftworks",
             ProductMoniker = "AotSmokeTest",
-            ExtensionFactories =
+            HostedExtensionFactories =
             [
-                new DelegateExtensionFactory(_ => new SmokeTestExtension()),
+                new DelegateHostedExtensionFactory(_ => new SmokeTestExtension()),
             ],
         };
 

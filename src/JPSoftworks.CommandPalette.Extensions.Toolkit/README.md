@@ -9,7 +9,7 @@ The implementation may change in the future. As Command Palette evolves, so will
 ## Compatibility
 
 The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both
-target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes in CI.
+target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes.
 
 The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its runtime package dependencies are limited to the logging-neutral toolkit contracts, the Command Palette SDK, and the WinRT server used by the extension host.
 
@@ -47,12 +47,17 @@ Usage:
              ProductMoniker = "MyExtension",
              IsDebug = false,                        // default is false
              EnableEfficiencyMode = true,            // default is true
-             ExtensionFactories = [
-                 new DelegateExtensionFactory(context => new MyExtension(context.ExtensionDisposedEvent))
+             HostedExtensionFactories = [
+                 new DelegateHostedExtensionFactory(context =>
+                     new MyExtension(context.ExtensionDisposedEvent))
              ]
          });
  }
 ```
+
+`IHostedExtensionFactory` is the primary extension-creation contract. It supplies both the disposal event and the
+effective diagnostics sink through `ExtensionHostContext`. The event-only `IExtensionFactory`,
+`DelegateExtensionFactory`, and `ExtensionFactories` members remain available as obsolete compatibility APIs.
 
 ### Diagnostics and logging
 
@@ -88,11 +93,19 @@ runnerBuilder.AddLogSink(new SerilogExtensionHostLogSink(Log.Logger));
 Application and core-service logs can flow in the other direction through the same context sink:
 
 ```csharp
-loggerFactory.AddProvider(new ExtensionHostLoggerProvider(context.LogSink));
-
-var serilogLogger = new LoggerConfiguration()
-    .WriteTo.Sink(new ExtensionHostSerilogSink(context.LogSink))
-    .CreateLogger();
+var parameters = new ExtensionHostRunnerParameters
+{
+    PublisherMoniker = "MyCompany",
+    ProductMoniker = "MyExtension",
+    HostedExtensionFactories =
+    [
+        new DelegateHostedExtensionFactory(context =>
+        {
+            loggerFactory.AddProvider(new ExtensionHostLoggerProvider(context.LogSink));
+            return new MyExtension(context.ExtensionDisposedEvent);
+        }),
+    ],
+};
 ```
 
 Both adapter packages mark bridge-originated entries, so connecting both directions to the same pipeline does not feed

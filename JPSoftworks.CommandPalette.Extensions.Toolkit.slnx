@@ -11,9 +11,11 @@
     <File Path="eng/build.ps1" />
     <File Path="eng/Common.props" />
     <File Path="eng/Common.targets" />
+    <File Path="eng/Package.config.psd1" />
     <File Path="eng/Package.props" />
     <File Path="eng/pack.ps1" />
     <File Path="eng/publish-local.ps1" />
+    <File Path="eng/test.ps1" />
     <File Path="eng/verify-aot.ps1" />
   </Folder>
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.csproj" />

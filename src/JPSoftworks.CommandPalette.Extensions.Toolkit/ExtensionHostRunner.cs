@@ -61,7 +61,10 @@ public static class ExtensionHostRunner
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.PublisherMoniker);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.ProductMoniker);
+        ArgumentNullException.ThrowIfNull(runParams.HostedExtensionFactories);
+#pragma warning disable CS0618 // The runner preserves the event-only factory contract for binary compatibility.
         ArgumentNullException.ThrowIfNull(runParams.ExtensionFactories);
+#pragma warning restore CS0618
 
         var isExplicitlyDebug = args.Any(static arg => arg == "-Debug");
         var isDebug = runParams.IsDebug || isExplicitlyDebug;
@@ -144,20 +147,23 @@ public static class ExtensionHostRunner
 
         var context = new ExtensionHostContext(extensionDisposedEvent, logSink);
         var server = new ComServer();
+#pragma warning disable CS0618 // The runner preserves the event-only factory contract for binary compatibility.
+        var legacyExtensionFactories = runParams.ExtensionFactories;
+#pragma warning restore CS0618
 
         TrySetShutdownPriority(logSink);
         TryEnableEfficiencyMode(runParams);
 
-        if (runParams.ExtensionFactories.Count > 0)
+        if (runParams.HostedExtensionFactories.Count > 0 || legacyExtensionFactories.Count > 0)
         {
             DefaultComWrappers? comWrappers = null;
 
             logSink.LogDebug(LogCategory, "Creating extensions from factories");
-            foreach (var factory in runParams.ExtensionFactories)
+            foreach (var factory in runParams.HostedExtensionFactories)
             {
                 if (factory == null)
                 {
-                    logSink.LogWarning(LogCategory, "Extension factory is null, skipping");
+                    logSink.LogWarning(LogCategory, "Hosted extension factory is null, skipping");
                     continue;
                 }
 
@@ -166,7 +172,7 @@ public static class ExtensionHostRunner
                     var extension = factory.CreateExtension(context);
                     if (extension == null)
                     {
-                        logSink.LogError(LogCategory, "Extension factory returned null, skipping");
+                        logSink.LogError(LogCategory, "Hosted extension factory returned null, skipping");
                         continue;
                     }
 
@@ -176,7 +182,35 @@ public static class ExtensionHostRunner
                 {
                     logSink.LogError(
                         LogCategory,
-                        $"Failed to create extension from factory {factory.GetType().Name}",
+                        $"Failed to create extension from hosted factory {factory.GetType().Name}",
+                        ex);
+                }
+            }
+
+            foreach (var factory in legacyExtensionFactories)
+            {
+                if (factory == null)
+                {
+                    logSink.LogWarning(LogCategory, "Legacy extension factory is null, skipping");
+                    continue;
+                }
+
+                try
+                {
+                    var extension = factory.CreateExtension(extensionDisposedEvent);
+                    if (extension == null)
+                    {
+                        logSink.LogError(LogCategory, "Legacy extension factory returned null, skipping");
+                        continue;
+                    }
+
+                    server.RegisterClassFactory(new SingletonExtensionFactory(extension), comWrappers ??= new());
+                }
+                catch (Exception ex)
+                {
+                    logSink.LogError(
+                        LogCategory,
+                        $"Failed to create extension from legacy factory {factory.GetType().Name}",
                         ex);
                 }
             }

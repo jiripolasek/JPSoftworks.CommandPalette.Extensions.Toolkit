@@ -3,6 +3,8 @@ param(
     [ValidateNotNullOrEmpty()]
     [string] $Configuration = "Release",
 
+    [switch] $NoBuild,
+
     [switch] $NoRestore
 )
 
@@ -20,23 +22,25 @@ $commonProperties = @(
 if (-not $NoRestore) {
     & dotnet restore $solutionPath --locked-mode @commonProperties
     if ($LASTEXITCODE -ne 0) {
-        throw "Local restore failed with exit code $LASTEXITCODE."
+        throw "Local test restore failed with exit code $LASTEXITCODE."
     }
 }
 
 $arguments = @(
-    "build",
+    "test",
     $solutionPath,
     "--configuration",
     $Configuration,
     "--no-restore"
 )
 
+if ($NoBuild) {
+    $arguments += "--no-build"
+}
+
 $arguments += $commonProperties
 
 & dotnet @arguments
 if ($LASTEXITCODE -ne 0) {
-    throw "Local build failed with exit code $LASTEXITCODE."
+    throw "Local tests failed with exit code $LASTEXITCODE."
 }
-
-Write-Host "Build output: $(Join-Path $repositoryRoot 'artifacts\bin')"
