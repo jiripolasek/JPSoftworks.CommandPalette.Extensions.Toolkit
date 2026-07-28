@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 using System.Globalization;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public sealed class LoggingAdapterTests
     {
         ExtensionHostLogEntry? receivedEntry = null;
         var exception = new InvalidOperationException("Test exception");
-        var sink = new DelegateExtensionHostLogSink(entry => receivedEntry = entry);
+        var sink = new CallbackLogSink(entry => receivedEntry = entry);
         using var provider = new ExtensionHostLoggerProvider(sink);
         var logger = provider.CreateLogger("CoreService");
 
@@ -57,12 +58,12 @@ public sealed class LoggingAdapterTests
         var hostEntries = new List<ExtensionHostLogEntry>();
         IExtensionHostLogSink? hostSink = null;
         using var provider = new ExtensionHostLoggerProvider(
-            new DelegateExtensionHostLogSink(entry => hostSink!.Write(entry)));
+            new CallbackLogSink(entry => hostSink!.Write(entry)));
         var applicationLogger = provider.CreateLogger("CoreService");
         var relayingLogger = new RelayingMicrosoftLogger(applicationLogger);
-        hostSink = new CompositeExtensionHostLogSink(
+        hostSink = new CompositeLogSink(
         [
-            new DelegateExtensionHostLogSink(hostEntries.Add),
+            new CallbackLogSink(hostEntries.Add),
             new MicrosoftLoggerExtensionHostLogSink(relayingLogger),
         ]);
 
@@ -102,7 +103,7 @@ public sealed class LoggingAdapterTests
     public void SerilogAdapterForwardsApplicationEntry()
     {
         ExtensionHostLogEntry? receivedEntry = null;
-        var extensionHostSink = new DelegateExtensionHostLogSink(entry => receivedEntry = entry);
+        var extensionHostSink = new CallbackLogSink(entry => receivedEntry = entry);
         var sink = new ExtensionHostSerilogSink(extensionHostSink);
         using var logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
@@ -130,14 +131,14 @@ public sealed class LoggingAdapterTests
         IExtensionHostLogSink? hostSink = null;
         var recordingSink = new RecordingSerilogSink();
         var extensionHostSink = new ExtensionHostSerilogSink(
-            new DelegateExtensionHostLogSink(entry => hostSink!.Write(entry)));
+            new CallbackLogSink(entry => hostSink!.Write(entry)));
         using var logger = new LoggerConfiguration()
             .WriteTo.Sink(recordingSink)
             .WriteTo.Sink(extensionHostSink)
             .CreateLogger();
-        hostSink = new CompositeExtensionHostLogSink(
+        hostSink = new CompositeLogSink(
         [
-            new DelegateExtensionHostLogSink(hostEntries.Add),
+            new CallbackLogSink(hostEntries.Add),
             new SerilogExtensionHostLogSink(logger),
         ]);
 
@@ -232,6 +233,29 @@ public sealed class LoggingAdapterTests
         public void Emit(LogEvent logEvent)
         {
             this.Events.Add(logEvent);
+        }
+    }
+
+    private sealed class CallbackLogSink(Action<ExtensionHostLogEntry> write) : IExtensionHostLogSink
+    {
+        private readonly Action<ExtensionHostLogEntry> _write = write;
+
+        public void Write(ExtensionHostLogEntry entry)
+        {
+            this._write(entry);
+        }
+    }
+
+    private sealed class CompositeLogSink(IEnumerable<IExtensionHostLogSink> sinks) : IExtensionHostLogSink
+    {
+        private readonly IExtensionHostLogSink[] _sinks = sinks.ToArray();
+
+        public void Write(ExtensionHostLogEntry entry)
+        {
+            foreach (var sink in this._sinks)
+            {
+                sink.Write(entry);
+            }
         }
     }
 

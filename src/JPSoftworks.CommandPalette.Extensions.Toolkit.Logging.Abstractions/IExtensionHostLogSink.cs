@@ -4,7 +4,7 @@
 //
 // ------------------------------------------------------------
 
-namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
 /// Receives diagnostics emitted by an extension host.

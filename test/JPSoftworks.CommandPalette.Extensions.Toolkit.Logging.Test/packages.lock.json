@@ -1,7 +1,7 @@
 {
   "version": 2,
   "dependencies": {
-    "net10.0": {
+    "net10.0-windows10.0.22621": {
       "coverlet.collector": {
         "type": "Direct",
         "requested": "[6.0.2, )",
@@ -54,6 +54,11 @@
           "Newtonsoft.Json": "13.0.1"
         }
       },
+      "Microsoft.Windows.CsWinRT": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
+      },
       "Newtonsoft.Json": {
         "type": "Transitive",
         "resolved": "13.0.1",
@@ -99,11 +104,34 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit": {
+        "type": "Project",
+        "dependencies": {
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
+          "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
+          "Shmuelie.WinRTServer": "[2.2.1, )"
+        }
+      },
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
+      },
+      "Microsoft.CommandPalette.Extensions": {
+        "type": "CentralTransitive",
+        "requested": "[0.9.260303001, )",
+        "resolved": "0.9.260303001",
+        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
+        "dependencies": {
+          "Microsoft.Windows.CsWinRT": "2.2.0"
+        }
+      },
+      "Shmuelie.WinRTServer": {
+        "type": "CentralTransitive",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "Nt+t3cMga8YWXToaTw//CGjO9mTQORc+qSKyrVXZAhnyUWiZ7flhFBTWI1igp+2o2PYl5CCNHYfz9JI4F25GPA=="
       }
     },
-    "net9.0": {
+    "net9.0-windows10.0.22621": {
       "coverlet.collector": {
         "type": "Direct",
         "requested": "[6.0.2, )",
@@ -156,6 +184,11 @@
           "Newtonsoft.Json": "13.0.1"
         }
       },
+      "Microsoft.Windows.CsWinRT": {
+        "type": "Transitive",
+        "resolved": "2.2.0",
+        "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
+      },
       "Newtonsoft.Json": {
         "type": "Transitive",
         "resolved": "13.0.1",
@@ -201,8 +234,31 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit": {
+        "type": "Project",
+        "dependencies": {
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
+          "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
+          "Shmuelie.WinRTServer": "[2.2.1, )"
+        }
+      },
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
+      },
+      "Microsoft.CommandPalette.Extensions": {
+        "type": "CentralTransitive",
+        "requested": "[0.9.260303001, )",
+        "resolved": "0.9.260303001",
+        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
+        "dependencies": {
+          "Microsoft.Windows.CsWinRT": "2.2.0"
+        }
+      },
+      "Shmuelie.WinRTServer": {
+        "type": "CentralTransitive",
+        "requested": "[2.2.1, )",
+        "resolved": "2.2.1",
+        "contentHash": "Nt+t3cMga8YWXToaTw//CGjO9mTQORc+qSKyrVXZAhnyUWiZ7flhFBTWI1igp+2o2PYl5CCNHYfz9JI4F25GPA=="
       }
     }
   }

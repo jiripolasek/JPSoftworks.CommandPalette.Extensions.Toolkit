@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 using System.Globalization;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Serilog.Core;
 using Serilog.Events;
 

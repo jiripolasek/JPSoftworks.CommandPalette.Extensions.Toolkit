@@ -22,9 +22,10 @@ A set of extensions and utilities for building [Command Palette](https://learn.m
 
 [JPSoftworks.CommandPalette.Extensions.Toolkit](https://www.nuget.org/packages/JPSoftworks.CommandPalette.Extensions.Toolkit/) at Nuget.org.
 
-Logging packages:
+The main toolkit package includes the built-in delegate, trace, daily-file, composite, null, and Command Palette
+diagnostic sinks. Shared contracts and optional adapters are packaged separately:
 
-- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging` — required logging-neutral contracts and built-in delegate, trace, file, composite, and null sinks.
+- `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions` — required, dependency-free logging contracts.
 - `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions` — optional bidirectional Microsoft.Extensions.Logging adapters.
 - `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog` — optional bidirectional Serilog adapters.
 
@@ -97,8 +98,10 @@ await ExtensionHostRunner
 ```
 
 Call `ClearDefaultLogSinks()` before `AddLogSink` to replace the defaults. `TraceExtensionHostLogSink.Instance`,
-`DailyFileExtensionHostLogSink`, and `NullExtensionHostLogSink.Instance` are built into the logging-neutral package.
-`CommandPaletteExtensionHostLogSink.Instance` is built into the main toolkit and is included by the default runner.
+`DailyFileExtensionHostLogSink`, `NullExtensionHostLogSink.Instance`, and
+`CommandPaletteExtensionHostLogSink.Instance` are built into the main toolkit and included by the default runner as
+appropriate. The `IExtensionHostLogSink`, `ExtensionHostLogEntry`, and `ExtensionHostLogLevel` contracts live in the
+`JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions` namespace.
 
 Optional adapter packages remove the need for handwritten delegates:
 

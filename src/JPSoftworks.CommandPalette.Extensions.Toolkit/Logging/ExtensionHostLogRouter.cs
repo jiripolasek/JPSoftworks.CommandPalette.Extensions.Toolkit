@@ -4,6 +4,8 @@
 //
 // ------------------------------------------------------------
 
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
+
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposable

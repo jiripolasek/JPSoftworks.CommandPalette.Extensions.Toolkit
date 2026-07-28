@@ -11,7 +11,9 @@ The implementation may change in the future. As Command Palette evolves, so will
 The toolkit targets .NET 9 and .NET 10 on Windows. It is marked as Native AOT-compatible and trimmable, with both
 target frameworks verified through executable `win-x64` and `win-arm64` Native AOT publishes.
 
-The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its runtime package dependencies are limited to the logging-neutral toolkit contracts, the Command Palette SDK, and the WinRT server used by the extension host.
+The package does not pin a Windows SDK package version and does not depend on the Windows App SDK or WebView2. Its
+runtime package dependencies are limited to `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions`, the
+Command Palette SDK, and the WinRT server used by the extension host.
 
 ## Features
 
@@ -77,8 +79,10 @@ await ExtensionHostRunner
 ```
 
 Call `ClearDefaultLogSinks()` before `AddLogSink` to replace the defaults. `TraceExtensionHostLogSink.Instance`,
-`DailyFileExtensionHostLogSink`, and `NullExtensionHostLogSink.Instance` are built into the logging-neutral package.
-`CommandPaletteExtensionHostLogSink.Instance` is built into this package and is included by the default runner.
+`DailyFileExtensionHostLogSink`, `NullExtensionHostLogSink.Instance`, and
+`CommandPaletteExtensionHostLogSink.Instance` are built into this package and included by the default runner as
+appropriate. The `IExtensionHostLogSink`, `ExtensionHostLogEntry`, and `ExtensionHostLogLevel` contracts live in the
+`JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions` namespace.
 
 Optional packages provide bidirectional adapters without making either logging framework a dependency of this package:
 

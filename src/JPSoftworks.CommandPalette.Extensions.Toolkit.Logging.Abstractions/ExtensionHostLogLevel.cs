@@ -4,7 +4,7 @@
 //
 // ------------------------------------------------------------
 
-namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
 /// Identifies the severity of an extension host diagnostic entry.

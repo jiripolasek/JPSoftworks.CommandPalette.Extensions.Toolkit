@@ -4,9 +4,9 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateHostedExtensionFactory.Cre
 JPSoftworks.CommandPalette.Extensions.Toolkit.DelegateHostedExtensionFactory.DelegateHostedExtensionFactory(System.Func<JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext!, Microsoft.CommandPalette.Extensions.IExtension!>! createExtension) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext.ExtensionDisposedEvent.get -> System.Threading.ManualResetEvent!
-JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext.LogSink.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext.LogSink.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder
-JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.AddLogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink! sink) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.AddLogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.ClearDefaultLogSinks() -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.RunAsync() -> System.Threading.Tasks.Task!
 JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.HostedExtensionFactories.get -> System.Collections.Generic.List<JPSoftworks.CommandPalette.Extensions.Toolkit.IHostedExtensionFactory!>!
@@ -14,7 +14,23 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters.Host
 JPSoftworks.CommandPalette.Extensions.Toolkit.IHostedExtensionFactory
 JPSoftworks.CommandPalette.Extensions.Toolkit.IHostedExtensionFactory.CreateExtension(JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostContext! context) -> Microsoft.CommandPalette.Extensions.IExtension!
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CompositeExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CompositeExtensionHostLogSink.CompositeExtensionHostLogSink(System.Collections.Generic.IEnumerable<JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink!>! sinks) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CompositeExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DailyFileExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DailyFileExtensionHostLogSink.DailyFileExtensionHostLogSink(string! baseFilePath) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DailyFileExtensionHostLogSink.Dispose() -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DailyFileExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DelegateExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DelegateExtensionHostLogSink.DelegateExtensionHostLogSink(System.Action<JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry!>! write) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.DelegateExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunner.CreateBuilder(string![]! args, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerParameters! runParams) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteExtensionHostLogSink!
-static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.IExtensionHostLogSink! logSink) -> System.Threading.Tasks.Task!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullExtensionHostLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullExtensionHostLogSink!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceExtensionHostLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceExtensionHostLogSink!
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! logSink) -> System.Threading.Tasks.Task!

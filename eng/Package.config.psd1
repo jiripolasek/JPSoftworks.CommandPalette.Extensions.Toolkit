@@ -6,7 +6,7 @@
 
     PackageIds = @(
         "JPSoftworks.CommandPalette.Extensions.Toolkit"
-        "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging"
+        "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions"
         "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions"
         "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog"
     )

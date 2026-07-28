@@ -6,6 +6,7 @@
 
 using System.Diagnostics;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Resources;
 using Windows.ApplicationModel;
 using Windows.Management.Deployment;

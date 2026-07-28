@@ -34,7 +34,7 @@
         "resolved": "2.2.0",
         "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
       }
     },
@@ -71,7 +71,7 @@
         "resolved": "2.2.0",
         "contentHash": "R8MDVawukHrKgYCFgYaoLfbAna/FrImEFRxDK9k8ITbrXv3KLE5uN6tRqrNV83H4MFdqJ/uiA/hg1cSsXkl0vw=="
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
       }
     }

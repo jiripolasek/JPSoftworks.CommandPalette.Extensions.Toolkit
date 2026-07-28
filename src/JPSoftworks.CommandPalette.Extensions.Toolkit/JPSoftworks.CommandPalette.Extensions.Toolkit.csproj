@@ -16,7 +16,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.csproj" />
+		<ProjectReference Include="..\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -104,20 +104,20 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.microsoftextensions": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.10, )"
         }
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.serilog": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
           "Serilog": "[4.4.0, )"
         }
       },
@@ -245,20 +245,20 @@
           "xunit.extensibility.core": "[2.9.2]"
         }
       },
-      "jpsoftworks.commandpalette.extensions.toolkit.logging": {
+      "jpsoftworks.commandpalette.extensions.toolkit.logging.abstractions": {
         "type": "Project"
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.microsoftextensions": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.10, )"
         }
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.serilog": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
           "Serilog": "[4.4.0, )"
         }
       },

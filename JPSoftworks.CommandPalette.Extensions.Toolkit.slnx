@@ -18,7 +18,7 @@
     <File Path="eng/test.ps1" />
     <File Path="eng/verify-aot.ps1" />
   </Folder>
-  <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.csproj" />
+  <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.csproj" />
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.csproj" />
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.csproj" />
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit/JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />

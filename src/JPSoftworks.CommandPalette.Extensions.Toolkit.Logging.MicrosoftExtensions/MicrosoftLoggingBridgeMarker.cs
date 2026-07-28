@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 using System.Runtime.CompilerServices;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 

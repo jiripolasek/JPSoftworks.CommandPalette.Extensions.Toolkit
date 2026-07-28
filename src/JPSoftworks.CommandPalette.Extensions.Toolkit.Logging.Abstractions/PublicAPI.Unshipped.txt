@@ -1,0 +1,23 @@
+#nullable enable
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.Category.get -> string!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.EventId.get -> int
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.Exception.get -> System.Exception?
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.ExtensionHostLogEntry(System.DateTimeOffset timestamp, JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel level, string! category, int eventId, string! message, System.Exception? exception = null) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.Level.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.Message.get -> string!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry.Timestamp.get -> System.DateTimeOffset
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Debug = 0 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Error = 3 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Information = 1 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Warning = 2 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogDebug(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogError(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogError(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message, System.Exception! exception) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogError(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, System.Exception! exception) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogInformation(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogWarning(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message) -> void

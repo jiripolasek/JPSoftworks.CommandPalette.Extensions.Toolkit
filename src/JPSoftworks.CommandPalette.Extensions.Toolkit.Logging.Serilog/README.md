@@ -2,6 +2,8 @@
 
 This package bridges logging-neutral Command Palette extension host diagnostics and Serilog without making Serilog a
 dependency of the main toolkit.
+It depends only on `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions`, not on the main toolkit
+package.
 
 Forward runner diagnostics to an existing Serilog logger:
 

@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
-    <Title>Logging primitives for Command Palette extensions</Title>
-    <Description>Logging-neutral diagnostics contracts and built-in sinks for Command Palette extension hosts.</Description>
+    <Title>Logging abstractions for Command Palette extension hosts</Title>
+    <Description>Dependency-free diagnostics contracts for Command Palette extension hosts and logging adapters.</Description>
   </PropertyGroup>
 
   <ItemGroup>

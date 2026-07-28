@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Shmuelie.WinRTServer;
 using WinRT;
 

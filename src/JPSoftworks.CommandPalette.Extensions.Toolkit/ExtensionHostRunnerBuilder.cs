@@ -4,7 +4,7 @@
 //
 // ------------------------------------------------------------
 
-using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 
