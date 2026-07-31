@@ -14,7 +14,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 /// <example>
 /// <code>
 /// var factory = new DelegateHostedExtensionFactory(context =>
-///     new MyExtension(context.ExtensionDisposedEvent, context.LogSink));
+///     new MyExtension(context.ExtensionDisposedEvent));
 /// </code>
 /// </example>
 public sealed class DelegateHostedExtensionFactory : IHostedExtensionFactory

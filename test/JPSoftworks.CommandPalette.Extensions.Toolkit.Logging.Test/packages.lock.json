@@ -107,7 +107,7 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
           "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
@@ -237,7 +237,7 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
           "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }

@@ -11,24 +11,13 @@ using Serilog.Events;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 
-/// <summary>
-/// Forwards Serilog events to an extension host diagnostic sink.
-/// </summary>
-/// <remarks>
-/// The supplied extension host sink is caller-owned. Serilog verbose events are represented as extension host
-/// debug events, and fatal events as error events.
-/// </remarks>
-public sealed class ExtensionHostSerilogSink : ILogEventSink
+internal sealed class ExtensionHostSerilogSinkCore : ILogEventSink
 {
     private const string DefaultCategory = "Serilog";
     private const string EventIdPropertyName = "EventId";
     private readonly IExtensionHostLogSink _sink;
 
-    /// <summary>
-    /// Initializes a Serilog sink that writes to <paramref name="sink"/>.
-    /// </summary>
-    /// <param name="sink">The target extension host sink.</param>
-    public ExtensionHostSerilogSink(IExtensionHostLogSink sink)
+    public ExtensionHostSerilogSinkCore(IExtensionHostLogSink sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
         this._sink = sink;

@@ -9,32 +9,36 @@ using Microsoft.Extensions.Logging;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 
-/// <summary>
-/// Creates Microsoft.Extensions.Logging loggers that forward application diagnostics to an extension host sink.
-/// </summary>
-/// <remarks>
-/// The supplied extension host sink is caller-owned and is not disposed by this provider.
-/// Microsoft trace events are represented as extension host debug events, and critical events as error events.
-/// </remarks>
-public sealed class ExtensionHostLoggerProvider : ILoggerProvider
+internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
 {
     private readonly IExtensionHostLogSink _sink;
+    private readonly LogLevel _minimumLevel;
 
-    /// <summary>
-    /// Initializes a provider that writes to <paramref name="sink"/>.
-    /// </summary>
-    /// <param name="sink">The target extension host sink.</param>
-    public ExtensionHostLoggerProvider(IExtensionHostLogSink sink)
+    public ExtensionHostLoggerProviderCore(IExtensionHostLogSink sink)
+        : this(sink, LogLevel.Trace)
+    {
+    }
+
+    public ExtensionHostLoggerProviderCore(IExtensionHostLogSink sink, LogLevel minimumLevel)
     {
         ArgumentNullException.ThrowIfNull(sink);
+        if (minimumLevel is < LogLevel.Trace or > LogLevel.None)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(minimumLevel),
+                minimumLevel,
+                "The minimum level must be a defined Microsoft logging level.");
+        }
+
         this._sink = sink;
+        this._minimumLevel = minimumLevel;
     }
 
     /// <inheritdoc />
     public ILogger CreateLogger(string categoryName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(categoryName);
-        return new ExtensionHostLogger(categoryName, this._sink);
+        return new ExtensionHostLogger(categoryName, this._sink, this._minimumLevel);
     }
 
     /// <inheritdoc />
@@ -46,11 +50,13 @@ public sealed class ExtensionHostLoggerProvider : ILoggerProvider
     {
         private readonly string _categoryName;
         private readonly IExtensionHostLogSink _sink;
+        private readonly LogLevel _minimumLevel;
 
-        public ExtensionHostLogger(string categoryName, IExtensionHostLogSink sink)
+        public ExtensionHostLogger(string categoryName, IExtensionHostLogSink sink, LogLevel minimumLevel)
         {
             this._categoryName = categoryName;
             this._sink = sink;
+            this._minimumLevel = minimumLevel;
         }
 
         public IDisposable? BeginScope<TState>(TState state)
@@ -61,7 +67,7 @@ public sealed class ExtensionHostLoggerProvider : ILoggerProvider
 
         public bool IsEnabled(LogLevel logLevel)
         {
-            return logLevel != LogLevel.None;
+            return logLevel >= this._minimumLevel && logLevel < LogLevel.None;
         }
 
         public void Log<TState>(
@@ -74,11 +80,6 @@ public sealed class ExtensionHostLoggerProvider : ILoggerProvider
             ArgumentNullException.ThrowIfNull(formatter);
 
             if (!this.IsEnabled(logLevel))
-            {
-                return;
-            }
-
-            if (state is ExtensionHostMicrosoftLogState)
             {
                 return;
             }

@@ -1,0 +1,100 @@
+# Extension hosting and lifecycle
+
+`ExtensionHostRunner` provides the common process and COM-server behavior needed by Command Palette extensions.
+
+## What the runner owns
+
+- The COM server message loop and class-factory registration.
+- Extension disposal and host-process lifetime monitoring.
+- Process shutdown priority so Command Palette can release the extension first during system shutdown.
+- Optional process priority reduction and Windows Efficiency Mode (EcoQoS).
+- Direct-launch fallback for Start menu, taskbar, and Microsoft Store certification scenarios.
+- Default daily-file and Command Palette diagnostics.
+
+## Basic hosting
+
+```csharp
+[MTAThread]
+public static async Task Main(string[] args)
+{
+    await ExtensionHostRunner
+        .CreateBuilder(
+            args,
+            new ExtensionHostRunnerParameters
+            {
+                PublisherMoniker = "MyCompany",
+                ProductMoniker = "MyExtension",
+            })
+        .AddHostedExtensionFactory(context =>
+            new MyExtension(context.ExtensionDisposedEvent))
+        .RunAsync();
+}
+```
+
+`PublisherMoniker` and `ProductMoniker` must each be a valid, single path segment. They identify the extension and
+form part of its canonical local-application-data path.
+
+`EnableEfficiencyMode` defaults to `true`. `IsDebug` defaults to `false`; the `-Debug` command-line argument also
+enables debug diagnostics.
+
+## Hosted extension factories
+
+The runner builder accepts either an `IHostedExtensionFactory` or a delegate:
+
+```csharp
+runner.AddHostedExtensionFactory(context =>
+    new MyExtension(context.ExtensionDisposedEvent));
+```
+
+`ExtensionHostContext` supplies the process-owned disposal event. The extension must signal it when the extension is
+disposed so the runner can stop the COM server cleanly.
+
+For reusable factory objects, implement `IHostedExtensionFactory` or use `DelegateHostedExtensionFactory`:
+
+```csharp
+var factory = new DelegateHostedExtensionFactory(context =>
+    new MyExtension(context.ExtensionDisposedEvent));
+```
+
+The event-only `IExtensionFactory`, `DelegateExtensionFactory`, and
+`ExtensionHostRunnerParameters.ExtensionFactories` APIs remain available for binary compatibility, but are obsolete.
+
+## Resolved host configuration
+
+Applications that construct a custom logging pipeline should resolve host policy once and share the resulting
+configuration with the runner and logging adapters:
+
+```csharp
+var host = ExtensionHostConfiguration.Resolve(args, parameters);
+var runner = ExtensionHostRunner.CreateBuilder(host);
+```
+
+`ExtensionHostConfiguration` is an immutable token. It keeps argument parsing and canonical path construction inside
+the Toolkit instead of making every extension duplicate those conventions.
+
+See [Diagnostics and logging](logging.md) for complete Microsoft.Extensions.Logging and Serilog examples.
+
+## Direct launch
+
+When the process is not registered as a COM server, the runner delegates to `StartupHelper`. The helper can open
+Command Palette or prompt the user to install PowerToys. This makes direct executable launches useful instead of
+leaving an apparently unresponsive background process.
+
+## Process lifetime
+
+The runner starts the COM server on an MTA thread and waits until either:
+
+- the hosted extension signals its disposal event; or
+- the monitored application lifetime requests termination.
+
+It then unregisters the COM server and closes diagnostics. Caller-owned logging factories, loggers, and custom sinks
+remain owned by the application.
+
+## Supporting utilities
+
+- `StartupHelper` handles direct application launches.
+- `ShutdownHelper` adjusts process shutdown priority.
+- `AppLifeMonitor` observes application lifetime termination.
+- `EfficiencyModeHelper` enables process Efficiency Mode where supported.
+
+[Back to the project README](../README.md)

@@ -4,8 +4,6 @@
 //
 // ------------------------------------------------------------
 
-using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
-
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Test;
 
 public sealed class ExtensionHostRunnerBuilderTests
@@ -17,6 +15,9 @@ public sealed class ExtensionHostRunnerBuilderTests
 
         Assert.Throws<ArgumentNullException>(() => ExtensionHostRunner.CreateBuilder(null!, parameters));
         Assert.Throws<ArgumentNullException>(() => ExtensionHostRunner.CreateBuilder([], null!));
+        Assert.Throws<ArgumentNullException>(
+            () => ExtensionHostRunner.CreateBuilder((ExtensionHostConfiguration)null!));
+        Assert.Throws<ArgumentNullException>(() => ExtensionHostConfiguration.Resolve(null!, parameters));
     }
 
     [Fact]
@@ -25,6 +26,87 @@ public sealed class ExtensionHostRunnerBuilderTests
         var builder = ExtensionHostRunner.CreateBuilder([], CreateParameters());
 
         Assert.Throws<ArgumentNullException>(() => builder.AddLogSink(null!));
+    }
+
+    [Fact]
+    public void AddHostedExtensionFactoryRejectsNull()
+    {
+        var builder = ExtensionHostRunner.CreateBuilder([], CreateParameters());
+
+        Assert.Throws<ArgumentNullException>(
+            () => builder.AddHostedExtensionFactory((IHostedExtensionFactory)null!));
+        Assert.Throws<ArgumentNullException>(
+            () => builder.AddHostedExtensionFactory(
+                (Func<ExtensionHostContext, Microsoft.CommandPalette.Extensions.IExtension>)null!));
+    }
+
+    [Fact]
+    public void AddHostedExtensionFactoryAcceptsDelegate()
+    {
+        var builder = ExtensionHostRunner.CreateBuilder([], CreateParameters());
+
+        var result = builder.AddHostedExtensionFactory(_ => new TestExtension());
+
+        Assert.Same(builder, result);
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    public void ConfigurationResolvesEffectiveHostPolicy(
+        bool parameterIsDebug,
+        bool argumentIsDebug,
+        bool expectedIsDebug)
+    {
+        var args = argumentIsDebug ? new[] { "-Debug" } : [];
+        var configuration = ExtensionHostConfiguration.Resolve(
+            args,
+            CreateParameters(isDebug: parameterIsDebug));
+
+        Assert.Equal(expectedIsDebug, configuration.IsDebug);
+        var logDirectoryPath = Path.GetDirectoryName(configuration.LogFilePath);
+        Assert.NotNull(logDirectoryPath);
+        Assert.EndsWith(
+            Path.Combine("JPSoftworks", "Test"),
+            logDirectoryPath,
+            StringComparison.Ordinal);
+        Assert.Equal(
+            Path.Combine(logDirectoryPath, "log.txt"),
+            configuration.LogFilePath);
+        Assert.NotNull(ExtensionHostRunner.CreateBuilder(configuration));
+    }
+
+    [Fact]
+    public void ConfigurationSnapshotsArgumentsAndRunnerParameters()
+    {
+        var args = new[] { "-Debug" };
+        var originalFactory = new DelegateHostedExtensionFactory(_ => new TestExtension());
+        var parameters = CreateParameters();
+        parameters.HostedExtensionFactories.Add(originalFactory);
+
+        var configuration = ExtensionHostConfiguration.Resolve(args, parameters);
+
+        args[0] = "-RegisterProcessAsComServer";
+        parameters.HostedExtensionFactories.Clear();
+        parameters.HostedExtensionFactories.Add(
+            new DelegateHostedExtensionFactory(_ => new TestExtension()));
+
+        Assert.Equal("-Debug", Assert.Single(configuration.Arguments));
+        var snapshot = configuration.CreateRunnerParameters();
+        Assert.Same(originalFactory, Assert.Single(snapshot.HostedExtensionFactories));
+    }
+
+    [Theory]
+    [InlineData(".")]
+    [InlineData("..")]
+    [InlineData(@"Publisher\Product")]
+    [InlineData("Publisher/Product")]
+    public void CreateBuilderRejectsInvalidPublisherPathSegment(string publisherMoniker)
+    {
+        var parameters = CreateParameters() with { PublisherMoniker = publisherMoniker };
+
+        Assert.Throws<ArgumentException>(() => ExtensionHostRunner.CreateBuilder([], parameters));
     }
 
     [Fact]
@@ -65,7 +147,7 @@ public sealed class ExtensionHostRunnerBuilderTests
     public void DelegateHostedExtensionFactoryForwardsContext()
     {
         using var disposalEvent = new ManualResetEvent(false);
-        var context = new ExtensionHostContext(disposalEvent, NullExtensionHostLogSink.Instance);
+        var context = new ExtensionHostContext(disposalEvent);
         ExtensionHostContext? receivedContext = null;
         var extension = new TestExtension();
         var factory = new DelegateHostedExtensionFactory(hostContext =>
@@ -80,13 +162,14 @@ public sealed class ExtensionHostRunnerBuilderTests
         Assert.Same(extension, result);
     }
 
-    private static ExtensionHostRunnerParameters CreateParameters()
+    private static ExtensionHostRunnerParameters CreateParameters(bool isDebug = false)
     {
         return new ExtensionHostRunnerParameters
         {
             PublisherMoniker = "JPSoftworks",
             ProductMoniker = "Test",
             HostedExtensionFactories = [],
+            IsDebug = isDebug,
         };
     }
 

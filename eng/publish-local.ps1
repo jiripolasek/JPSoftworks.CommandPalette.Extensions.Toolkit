@@ -18,11 +18,21 @@ $packagePropsPath = Join-Path $repositoryRoot $repositoryConfig.PackagePropsPath
 
 if (-not $Version) {
     [xml] $packageProps = Get-Content -Raw -LiteralPath $packagePropsPath
-    $Version = [string](
+    $versionPrefix = [string](
         $packageProps.Project.PropertyGroup |
             ForEach-Object { $_.VersionPrefix } |
             Where-Object { $_ } |
             Select-Object -First 1)
+    $versionSuffix = [string](
+        $packageProps.Project.PropertyGroup |
+            ForEach-Object { $_.VersionSuffix } |
+            Where-Object { $_ } |
+            Select-Object -First 1)
+    $Version = if ($versionSuffix) {
+        "$versionPrefix-$versionSuffix"
+    } else {
+        $versionPrefix
+    }
 }
 
 if ([string]::IsNullOrWhiteSpace($Version)) {

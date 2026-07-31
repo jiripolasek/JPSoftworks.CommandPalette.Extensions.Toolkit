@@ -5,15 +5,16 @@
 // ------------------------------------------------------------
 
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
+using Microsoft.CommandPalette.Extensions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 
 /// <summary>
 /// Configures and runs an extension host while retaining the toolkit's default behavior unless explicitly replaced.
 /// </summary>
-public sealed class ExtensionHostRunnerBuilder
+public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
 {
-    private readonly string[] _args;
+    private readonly ExtensionHostConfiguration _configuration;
     private readonly ExtensionHostRunnerParameters _parameters;
     private readonly List<IExtensionHostLogSink> _additionalLogSinks = [];
 
@@ -21,11 +22,36 @@ public sealed class ExtensionHostRunnerBuilder
     private int _hasRun;
 
     internal ExtensionHostRunnerBuilder(
-        string[] args,
-        ExtensionHostRunnerParameters parameters)
+        ExtensionHostConfiguration configuration)
     {
-        this._args = args;
-        this._parameters = parameters;
+        this._configuration = configuration;
+        this._parameters = configuration.CreateRunnerParameters();
+    }
+
+    /// <summary>
+    /// Adds a hosted extension factory.
+    /// </summary>
+    /// <param name="factory">The factory to add.</param>
+    /// <returns>This builder.</returns>
+    public ExtensionHostRunnerBuilder AddHostedExtensionFactory(IHostedExtensionFactory factory)
+    {
+        ArgumentNullException.ThrowIfNull(factory);
+        this.ThrowIfAlreadyRun();
+        this._parameters.HostedExtensionFactories.Add(factory);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a delegate-backed hosted extension factory.
+    /// </summary>
+    /// <param name="createExtension">The function that creates an extension from its host context.</param>
+    /// <returns>This builder.</returns>
+    public ExtensionHostRunnerBuilder AddHostedExtensionFactory(
+        Func<ExtensionHostContext, IExtension> createExtension)
+    {
+        ArgumentNullException.ThrowIfNull(createExtension);
+        return this.AddHostedExtensionFactory(
+            new DelegateHostedExtensionFactory(createExtension));
     }
 
     /// <summary>
@@ -67,10 +93,20 @@ public sealed class ExtensionHostRunnerBuilder
         }
 
         return ExtensionHostRunner.RunCoreAsync(
-            this._args,
+            this._configuration,
             this._parameters,
             this._includeDefaultLogSinks,
             [.. this._additionalLogSinks]);
+    }
+
+    void IExtensionHostLoggingBuilder.AddHostLogSink(IExtensionHostLogSink sink)
+    {
+        this.AddLogSink(sink);
+    }
+
+    void IExtensionHostLoggingBuilder.ClearDefaultLogSinks()
+    {
+        this.ClearDefaultLogSinks();
     }
 
     private void ThrowIfAlreadyRun()

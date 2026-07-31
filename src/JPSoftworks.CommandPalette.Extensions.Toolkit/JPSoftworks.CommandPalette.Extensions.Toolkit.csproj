@@ -21,6 +21,8 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Test" />
+		<InternalsVisibleTo Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions" />
+		<InternalsVisibleTo Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog" />
 	</ItemGroup>
 
 	<ItemGroup>

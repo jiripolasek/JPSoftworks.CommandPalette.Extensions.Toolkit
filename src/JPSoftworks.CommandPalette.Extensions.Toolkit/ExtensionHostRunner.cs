@@ -36,9 +36,19 @@ public static class ExtensionHostRunner
         string[] args,
         ExtensionHostRunnerParameters runParams)
     {
-        ArgumentNullException.ThrowIfNull(args);
-        ArgumentNullException.ThrowIfNull(runParams);
-        return new ExtensionHostRunnerBuilder(args, runParams);
+        return CreateBuilder(ExtensionHostConfiguration.Resolve(args, runParams));
+    }
+
+    /// <summary>
+    /// Creates an extension host runner builder from a resolved configuration.
+    /// </summary>
+    /// <param name="configuration">The resolved host configuration.</param>
+    /// <returns>A builder initialized with the toolkit's default behavior.</returns>
+    public static ExtensionHostRunnerBuilder CreateBuilder(
+        ExtensionHostConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        return new ExtensionHostRunnerBuilder(configuration);
     }
 
     /// <summary>
@@ -55,11 +65,12 @@ public static class ExtensionHostRunner
     }
 
     internal static async Task RunCoreAsync(
-        string[] args,
+        ExtensionHostConfiguration configuration,
         ExtensionHostRunnerParameters runParams,
         bool includeDefaultLogSinks,
         IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
     {
+        ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.PublisherMoniker);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.ProductMoniker);
         ArgumentNullException.ThrowIfNull(runParams.HostedExtensionFactories);
@@ -67,16 +78,19 @@ public static class ExtensionHostRunner
         ArgumentNullException.ThrowIfNull(runParams.ExtensionFactories);
 #pragma warning restore CS0618
 
-        var isExplicitlyDebug = args.Any(static arg => arg == "-Debug");
-        var isDebug = runParams.IsDebug || isExplicitlyDebug;
-        var isComServer = args.Any(static arg => arg == "-RegisterProcessAsComServer");
+        var isComServer = configuration.Arguments.Contains(
+            "-RegisterProcessAsComServer",
+            StringComparer.Ordinal);
 
-        using var logSink = CreateLogSink(runParams, includeDefaultLogSinks, additionalLogSinks, isDebug);
-        LegacyLoggerBridge.UseSink(logSink, isDebug);
+        using var logSink = CreateLogSink(configuration, includeDefaultLogSinks, additionalLogSinks);
+        LegacyLoggerBridge.UseSink(logSink, configuration.IsDebug);
 
         try
         {
             logSink.LogDebug(LogCategory, "Diagnostics initialized");
+            logSink.LogInformation(
+                LogCategory,
+                isComServer ? "Starting extension host in COM-server mode" : "Starting extension host in direct-launch mode");
 
             if (isComServer)
             {
@@ -99,10 +113,9 @@ public static class ExtensionHostRunner
     }
 
     private static ExtensionHostLogRouter CreateLogSink(
-        ExtensionHostRunnerParameters runParams,
+        ExtensionHostConfiguration configuration,
         bool includeDefaultLogSinks,
-        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks,
-        bool isDebug)
+        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
     {
         List<IExtensionHostLogSink> sinks = [];
         List<IDisposable> ownedResources = [];
@@ -111,15 +124,7 @@ public static class ExtensionHostRunner
         {
             try
             {
-                var localAppData = Environment.GetFolderPath(
-                    Environment.SpecialFolder.LocalApplicationData,
-                    Environment.SpecialFolderOption.DoNotVerify);
-                var logFilePath = Path.Combine(
-                    localAppData,
-                    runParams.PublisherMoniker,
-                    runParams.ProductMoniker,
-                    "log.txt");
-                var fileSink = new DailyFileExtensionHostLogSink(logFilePath);
+                var fileSink = new DailyFileExtensionHostLogSink(configuration.LogFilePath);
                 sinks.Add(fileSink);
                 ownedResources.Add(fileSink);
             }
@@ -133,7 +138,7 @@ public static class ExtensionHostRunner
 
         sinks.AddRange(additionalLogSinks);
 
-        return new ExtensionHostLogRouter(sinks, ownedResources, isDebug);
+        return new ExtensionHostLogRouter(sinks, ownedResources, configuration.IsDebug);
     }
 
     private static async Task RunComServerAsync(
@@ -146,7 +151,7 @@ public static class ExtensionHostRunner
         using ManualResetEvent appLifeMonitorTerminationEvent = new(false);
         using var appLifeMonitor = TrySetAppLifeMonitor(appLifeMonitorTerminationEvent, logSink);
 
-        var context = new ExtensionHostContext(extensionDisposedEvent, logSink);
+        var context = new ExtensionHostContext(extensionDisposedEvent);
         var server = new ComServer();
 #pragma warning disable CS0618 // The runner preserves the event-only factory contract for binary compatibility.
         var legacyExtensionFactories = runParams.ExtensionFactories;

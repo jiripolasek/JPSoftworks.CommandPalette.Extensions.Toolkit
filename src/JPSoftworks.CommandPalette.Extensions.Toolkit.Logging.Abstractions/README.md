@@ -26,3 +26,6 @@ composite, null, and Command Palette sinks. Framework-specific adapters are avai
 
 These contracts are an integration boundary for extension-host diagnostics. Application and core-service projects
 should continue to use whichever logging abstraction best fits them.
+
+`IExtensionHostLoggingBuilder` is the small composition contract used by optional adapter packages. Host builders
+implement it without depending on a particular logging framework.

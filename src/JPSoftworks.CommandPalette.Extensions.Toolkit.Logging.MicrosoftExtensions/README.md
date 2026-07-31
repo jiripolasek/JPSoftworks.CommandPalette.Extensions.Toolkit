@@ -1,26 +1,42 @@
 # Microsoft.Extensions.Logging adapter
 
-This package bridges logging-neutral Command Palette extension host diagnostics and
-`Microsoft.Extensions.Logging` without making that abstraction a dependency of the main toolkit.
-It depends only on `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions`, not on the main toolkit
-package.
+This package bridges Command Palette extension host diagnostics and `Microsoft.Extensions.Logging` without making
+that abstraction a dependency of the main toolkit. The extension owns and disposes its `ILoggerFactory`.
 
-Forward runner diagnostics to an existing logger:
+Use one application-owned factory for runner and extension diagnostics:
 
 ```csharp
-await ExtensionHostRunner
-    .CreateBuilder(args, parameters)
-    .AddLogSink(new MicrosoftLoggerExtensionHostLogSink(logger))
+var parameters = new ExtensionHostRunnerParameters
+{
+    PublisherMoniker = "MyCompany",
+    ProductMoniker = "MyExtension",
+};
+
+var host = ExtensionHostConfiguration.Resolve(args, parameters);
+using var loggerFactory = LoggerFactory.Create(builder =>
+    builder
+        .AddDailyFile(host)
+        .AddCommandPalette(host));
+
+await ExtensionHostRunner.CreateBuilder(host)
+    .AddHostedExtensionFactory(context =>
+        new MyExtension(
+            context.ExtensionDisposedEvent,
+            loggerFactory))
+    .UseMicrosoftExtensionsLogging(loggerFactory)
     .RunAsync();
 ```
 
-Forward application logs to the sink supplied through `ExtensionHostContext`:
+`ExtensionHostConfiguration.Resolve` applies the Toolkit's `-Debug` convention and canonical local-app-data log path
+once. `AddDailyFile` and `AddCommandPalette` consume that immutable configuration, register only the destinations the
+application selected, and apply the effective level. The factory owns and disposes providers registered by these
+extensions.
 
-```csharp
-using var provider = new ExtensionHostLoggerProvider(context.LogSink);
-loggerFactory.AddProvider(provider);
-```
+`UseMicrosoftExtensionsLogging` replaces the Toolkit's default sinks and forwards host diagnostics into the supplied
+factory while preserving categories. Explicitly added runner sinks remain active, and `ILoggerFactory` fans each
+event out to all registered destinations.
 
-Trace and critical levels are mapped to the logging-neutral debug and error levels respectively.
-Bridge markers prevent an entry from feeding back when both adapters are connected to the same logging pipeline.
-The sink and logger passed to the adapters remain caller-owned.
+The concrete `DailyFileLoggerProvider` and `CommandPaletteLoggerProvider` types remain available for advanced use.
+Provider instances passed directly to `AddProvider` remain caller-owned and should be disposed after the factory.
+Trace and critical levels map to the Toolkit's debug and error levels respectively.
+Bridge markers bound accidental feedback when both adapters are connected to the same logging pipeline.

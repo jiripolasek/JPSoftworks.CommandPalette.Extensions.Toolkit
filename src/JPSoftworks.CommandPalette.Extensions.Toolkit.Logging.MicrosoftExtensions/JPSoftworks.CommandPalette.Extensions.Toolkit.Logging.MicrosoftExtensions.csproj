@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net9.0-windows10.0.22621.0;net10.0-windows10.0.22621.0</TargetFrameworks>
     <Title>Microsoft.Extensions.Logging adapter for Command Palette extension hosts</Title>
     <Description>Bidirectional adapters between Command Palette extension host diagnostics and Microsoft.Extensions.Logging.</Description>
   </PropertyGroup>
@@ -11,12 +11,31 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions\JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.csproj" />
+    <ProjectReference Include="..\JPSoftworks.CommandPalette.Extensions.Toolkit\JPSoftworks.CommandPalette.Extensions.Toolkit.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Adapters.Test" />
+  </ItemGroup>
+
+  <!--
+    Visual Studio can execute this task in an MSBuild worker that still applies
+    legacy MAX_PATH handling even when long paths are enabled system-wide. The
+    default editorconfig name repeats this project's long name and exceeds that
+    limit, so shorten only this generated file without changing output paths.
+  -->
+  <Target
+    Name="UseShortGeneratedMSBuildEditorConfigFile"
+    BeforeTargets="GenerateMSBuildEditorConfigFileShouldRun">
+    <PropertyGroup>
+      <GeneratedMSBuildEditorConfigFile>$(IntermediateOutputPath)GeneratedMSBuildEditorConfig.editorconfig</GeneratedMSBuildEditorConfigFile>
+    </PropertyGroup>
+  </Target>
 
   <Import Project="..\..\eng\Package.props" />
 

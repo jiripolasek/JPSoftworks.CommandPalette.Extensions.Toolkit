@@ -1,7 +1,11 @@
 #nullable enable
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.ExtensionHostSerilogSink
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.ExtensionHostSerilogSink.Emit(Serilog.Events.LogEvent! logEvent) -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.ExtensionHostSerilogSink.ExtensionHostSerilogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink.SerilogExtensionHostLogSink(Serilog.ILogger! logger) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLoggingBuilderExtensions
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLoggingBuilderExtensions.UseSerilog<TBuilder>(this TBuilder! builder, Serilog.ILogger! logger) -> TBuilder!
+Serilog.CommandPaletteLoggerConfigurationExtensions
+static Serilog.CommandPaletteLoggerConfigurationExtensions.CommandPalette(this Serilog.Configuration.LoggerSinkConfiguration! sinkConfiguration, Serilog.Events.LogEventLevel restrictedToMinimumLevel = Serilog.Events.LogEventLevel.Verbose) -> Serilog.LoggerConfiguration!
+Serilog.ExtensionHostLoggerConfigurationExtensions
+static Serilog.ExtensionHostLoggerConfigurationExtensions.DailyFile(this Serilog.Configuration.LoggerSinkConfiguration! sinkConfiguration, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostConfiguration! configuration, Serilog.Events.LogEventLevel restrictedToMinimumLevel = Serilog.Events.LogEventLevel.Verbose) -> Serilog.LoggerConfiguration!
+static Serilog.ExtensionHostLoggerConfigurationExtensions.FromExtensionHost(this Serilog.Configuration.LoggerMinimumLevelConfiguration! minimumLevelConfiguration, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostConfiguration! configuration) -> Serilog.LoggerConfiguration!

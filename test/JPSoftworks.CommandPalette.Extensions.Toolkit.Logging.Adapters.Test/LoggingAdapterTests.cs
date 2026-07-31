@@ -5,6 +5,7 @@
 // ------------------------------------------------------------
 
 using System.Globalization;
+using JPSoftworks.CommandPalette.Extensions.Toolkit;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
@@ -34,12 +35,113 @@ public sealed class LoggingAdapterTests
     }
 
     [Fact]
-    public void MicrosoftProviderForwardsApplicationEntry()
+    public void MicrosoftFactorySinkPreservesExtensionHostCategory()
+    {
+        using var loggerFactory = new RecordingMicrosoftLoggerFactory();
+        var exception = new InvalidOperationException("Test exception");
+        var sink = new MicrosoftLoggerExtensionHostLogSink(loggerFactory);
+
+        sink.Write(CreateEntry(exception));
+
+        var logger = Assert.Single(loggerFactory.Loggers);
+        Assert.Equal("TestCategory", logger.Key);
+        var entry = Assert.Single(logger.Value.Entries);
+        Assert.Equal(LogLevel.Warning, entry.Level);
+        Assert.Equal(42, entry.EventId.Id);
+        Assert.Equal("Test message", entry.Message);
+        Assert.Same(exception, entry.Exception);
+    }
+
+    [Fact]
+    public void UseMicrosoftExtensionsLoggingOnlyForwardsHostDiagnostics()
+    {
+        var builder = new RecordingHostLoggingBuilder();
+        using var loggerFactory = new RecordingMicrosoftLoggerFactory();
+
+        var result = builder.UseMicrosoftExtensionsLogging(loggerFactory);
+
+        Assert.Same(builder, result);
+        Assert.True(builder.DefaultLogSinksCleared);
+        Assert.IsType<MicrosoftLoggerExtensionHostLogSink>(Assert.Single(builder.Sinks));
+        Assert.Empty(loggerFactory.Providers);
+    }
+
+    [Fact]
+    public void LoggerFactoryLeavesRegisteredProviderInstancesCallerOwned()
+    {
+        var provider = new RecordingDisposableLoggerProvider();
+
+        using (LoggerFactory.Create(builder => builder.AddProvider(provider)))
+        {
+        }
+
+        Assert.False(provider.IsDisposed);
+
+        provider.Dispose();
+
+        Assert.True(provider.IsDisposed);
+    }
+
+    [Fact]
+    public void UseSerilogOnlyForwardsHostDiagnostics()
+    {
+        var builder = new RecordingHostLoggingBuilder();
+        using var logger = new LoggerConfiguration().CreateLogger();
+
+        var result = builder.UseSerilog(logger);
+
+        Assert.Same(builder, result);
+        Assert.True(builder.DefaultLogSinksCleared);
+        Assert.IsType<SerilogExtensionHostLogSink>(Assert.Single(builder.Sinks));
+    }
+
+    [Fact]
+    public void CommandPaletteSerilogConfigurationAddsDestination()
+    {
+        using var logger = new LoggerConfiguration()
+            .WriteTo.CommandPalette()
+            .CreateLogger();
+
+        Assert.NotNull(logger);
+    }
+
+    [Fact]
+    public void MicrosoftDestinationsApplyResolvedHostMinimumLevel()
+    {
+        using var debugFactory = LoggerFactory.Create(
+            builder => builder.AddCommandPalette(
+                CreateConfiguration($"Debug-{Guid.NewGuid():N}", isDebug: true)));
+        using var releaseFactory = LoggerFactory.Create(
+            builder => builder.AddCommandPalette(
+                CreateConfiguration($"Release-{Guid.NewGuid():N}", isDebug: false)));
+
+        Assert.True(debugFactory.CreateLogger("Application").IsEnabled(LogLevel.Debug));
+        Assert.False(releaseFactory.CreateLogger("Application").IsEnabled(LogLevel.Debug));
+        Assert.True(releaseFactory.CreateLogger("Application").IsEnabled(LogLevel.Information));
+    }
+
+    [Fact]
+    public void SerilogMinimumLevelUsesResolvedHostPolicy()
+    {
+        var recordingSink = new RecordingSerilogSink();
+        using var logger = new LoggerConfiguration()
+            .MinimumLevel.FromExtensionHost(
+                CreateConfiguration($"SerilogDebug-{Guid.NewGuid():N}", isDebug: true))
+            .WriteTo.Sink(recordingSink)
+            .CreateLogger();
+
+        logger.Debug("Debug message");
+
+        Assert.Equal(LogEventLevel.Debug, Assert.Single(recordingSink.Events).Level);
+    }
+
+    [Fact]
+    public void MicrosoftProviderCoreForwardsApplicationEntry()
     {
         ExtensionHostLogEntry? receivedEntry = null;
         var exception = new InvalidOperationException("Test exception");
         var sink = new CallbackLogSink(entry => receivedEntry = entry);
-        using var provider = new ExtensionHostLoggerProvider(sink);
+        using var provider = new ExtensionHostLoggerProviderCore(sink);
         var logger = provider.CreateLogger("CoreService");
 
         logger.LogCritical(new EventId(17), exception, "Failed item {ItemId}", 42);
@@ -53,29 +155,163 @@ public sealed class LoggingAdapterTests
     }
 
     [Fact]
-    public void MicrosoftAdaptersAvoidBidirectionalFeedback()
+    public void MicrosoftProviderCoreAppliesMinimumLevel()
     {
-        var hostEntries = new List<ExtensionHostLogEntry>();
-        IExtensionHostLogSink? hostSink = null;
-        using var provider = new ExtensionHostLoggerProvider(
-            new CallbackLogSink(entry => hostSink!.Write(entry)));
-        var applicationLogger = provider.CreateLogger("CoreService");
-        var relayingLogger = new RelayingMicrosoftLogger(applicationLogger);
-        hostSink = new CompositeLogSink(
-        [
-            new CallbackLogSink(hostEntries.Add),
-            new MicrosoftLoggerExtensionHostLogSink(relayingLogger),
-        ]);
+        var receivedEntries = new List<ExtensionHostLogEntry>();
+        var sink = new CallbackLogSink(receivedEntries.Add);
+        using var provider = new ExtensionHostLoggerProviderCore(sink, LogLevel.Information);
+        var logger = provider.CreateLogger("CoreService");
 
-        applicationLogger.LogInformation("Application message");
+        logger.LogDebug("Debug message");
+        logger.LogInformation("Information message");
 
-        Assert.Single(hostEntries);
-        Assert.Empty(relayingLogger.Entries);
+        Assert.False(logger.IsEnabled(LogLevel.Debug));
+        Assert.True(logger.IsEnabled(LogLevel.Information));
+        var entry = Assert.Single(receivedEntries);
+        Assert.Equal(ExtensionHostLogLevel.Information, entry.Level);
+        Assert.Equal("Information message", entry.Message);
+    }
 
-        hostSink.Write(CreateEntry(new InvalidOperationException("Test exception")));
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(7)]
+    public void MicrosoftProvidersRejectUnknownMinimumLevel(int value)
+    {
+        var coreException = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new ExtensionHostLoggerProviderCore(
+                new CallbackLogSink(_ => { }),
+                (LogLevel)value));
+        var commandPaletteException = Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CommandPaletteLoggerProvider((LogLevel)value));
 
-        Assert.Equal(2, hostEntries.Count);
-        Assert.Single(relayingLogger.Entries);
+        Assert.Equal("minimumLevel", coreException.ParamName);
+        Assert.Equal("minimumLevel", commandPaletteException.ParamName);
+    }
+
+    [Fact]
+    public void MicrosoftProviderCoreReceivesForwardedHostEntry()
+    {
+        var receivedEntries = new List<ExtensionHostLogEntry>();
+        using var provider = new ExtensionHostLoggerProviderCore(
+            new CallbackLogSink(receivedEntries.Add));
+        using var loggerFactory = new ProviderMicrosoftLoggerFactory(provider);
+        var hostSink = new MicrosoftLoggerExtensionHostLogSink(loggerFactory);
+        var exception = new InvalidOperationException("Test exception");
+
+        hostSink.Write(CreateEntry(exception));
+
+        var entry = Assert.Single(receivedEntries);
+        Assert.Equal(ExtensionHostLogLevel.Warning, entry.Level);
+        Assert.Equal("TestCategory", entry.Category);
+        Assert.Equal(42, entry.EventId);
+        Assert.Equal("Test message", entry.Message);
+        Assert.Same(exception, entry.Exception);
+    }
+
+    [Fact]
+    public void DailyFileProviderWritesAndOwnsItsDestination()
+    {
+        var directoryPath = Path.Combine(
+            Path.GetTempPath(),
+            $"CmdPalToolkitLoggingTest-{Guid.NewGuid():N}");
+        var baseFilePath = Path.Combine(directoryPath, "log.txt");
+
+        try
+        {
+            using (var provider = new DailyFileLoggerProvider(baseFilePath))
+            {
+                var logger = provider.CreateLogger("CoreService");
+                logger.LogCritical(new EventId(17), "Failed item {ItemId}", 42);
+            }
+
+            var dailyFilePath = Path.Combine(
+                directoryPath,
+                $"log{DateTime.Now:yyyyMMdd}.txt");
+            var contents = File.ReadAllText(dailyFilePath);
+
+            Assert.Contains(
+                "[ERR] CoreService: Failed item 42",
+                contents,
+                StringComparison.Ordinal);
+        }
+        finally
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void MicrosoftDailyFileDestinationUsesCanonicalPathAndIsFactoryOwned()
+    {
+        var productMoniker = $"LoggingAdapterMicrosoft-{Guid.NewGuid():N}";
+        var directoryPath = GetLogDirectoryPath(productMoniker);
+
+        try
+        {
+            var configuration = CreateConfiguration(productMoniker);
+            using (var loggerFactory = LoggerFactory.Create(
+                       builder => builder.AddDailyFile(configuration)))
+            {
+                loggerFactory
+                    .CreateLogger("CoreService")
+                    .LogInformation("Microsoft destination message");
+            }
+
+            var contents = File.ReadAllText(GetDailyLogFilePath(directoryPath));
+            Assert.Contains(
+                "[INF] CoreService: Microsoft destination message",
+                contents,
+                StringComparison.Ordinal);
+
+            Directory.Delete(directoryPath, recursive: true);
+            Assert.False(Directory.Exists(directoryPath));
+        }
+        finally
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public void SerilogDailyFileDestinationUsesCanonicalPathAndIsLoggerOwned()
+    {
+        var productMoniker = $"LoggingAdapterSerilog-{Guid.NewGuid():N}";
+        var directoryPath = GetLogDirectoryPath(productMoniker);
+
+        try
+        {
+            var configuration = CreateConfiguration(productMoniker);
+            using (var logger = new LoggerConfiguration()
+                       .MinimumLevel.FromExtensionHost(configuration)
+                       .WriteTo.DailyFile(configuration)
+                       .CreateLogger())
+            {
+                logger.ForContext(Constants.SourceContextPropertyName, "CoreService")
+                    .Information("Serilog destination message");
+            }
+
+            var contents = File.ReadAllText(GetDailyLogFilePath(directoryPath));
+            Assert.Contains(
+                "[INF] CoreService: Serilog destination message",
+                contents,
+                StringComparison.Ordinal);
+
+            Directory.Delete(directoryPath, recursive: true);
+            Assert.False(Directory.Exists(directoryPath));
+        }
+        finally
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -104,7 +340,7 @@ public sealed class LoggingAdapterTests
     {
         ExtensionHostLogEntry? receivedEntry = null;
         var extensionHostSink = new CallbackLogSink(entry => receivedEntry = entry);
-        var sink = new ExtensionHostSerilogSink(extensionHostSink);
+        var sink = new ExtensionHostSerilogSinkCore(extensionHostSink);
         using var logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
             .WriteTo.Sink(sink)
@@ -130,7 +366,7 @@ public sealed class LoggingAdapterTests
         var hostEntries = new List<ExtensionHostLogEntry>();
         IExtensionHostLogSink? hostSink = null;
         var recordingSink = new RecordingSerilogSink();
-        var extensionHostSink = new ExtensionHostSerilogSink(
+        var extensionHostSink = new ExtensionHostSerilogSinkCore(
             new CallbackLogSink(entry => hostSink!.Write(entry)));
         using var logger = new LoggerConfiguration()
             .WriteTo.Sink(recordingSink)
@@ -170,6 +406,37 @@ public sealed class LoggingAdapterTests
         return Assert.IsType<T>(value.Value);
     }
 
+    private static ExtensionHostConfiguration CreateConfiguration(
+        string productMoniker,
+        bool isDebug = false)
+    {
+        return ExtensionHostConfiguration.Resolve(
+            [],
+            new ExtensionHostRunnerParameters
+            {
+                PublisherMoniker = "JPSoftworks",
+                ProductMoniker = productMoniker,
+                IsDebug = isDebug,
+            });
+    }
+
+    private static string GetLogDirectoryPath(string productMoniker)
+    {
+        return Path.Combine(
+            Environment.GetFolderPath(
+                Environment.SpecialFolder.LocalApplicationData,
+                Environment.SpecialFolderOption.DoNotVerify),
+            "JPSoftworks",
+            productMoniker);
+    }
+
+    private static string GetDailyLogFilePath(string directoryPath)
+    {
+        return Path.Combine(
+            directoryPath,
+            $"log{DateTime.Now:yyyyMMdd}.txt");
+    }
+
     private sealed class RecordingMicrosoftLogger : Microsoft.Extensions.Logging.ILogger
     {
         public List<MicrosoftLogEntry> Entries { get; } = [];
@@ -196,33 +463,78 @@ public sealed class LoggingAdapterTests
         }
     }
 
-    private sealed class RelayingMicrosoftLogger(Microsoft.Extensions.Logging.ILogger target)
-        : Microsoft.Extensions.Logging.ILogger
+    private sealed class RecordingMicrosoftLoggerFactory : ILoggerFactory
     {
-        private readonly Microsoft.Extensions.Logging.ILogger _target = target;
+        public Dictionary<string, RecordingMicrosoftLogger> Loggers { get; } = [];
 
-        public List<MicrosoftLogEntry> Entries { get; } = [];
+        public List<ILoggerProvider> Providers { get; } = [];
 
-        public IDisposable? BeginScope<TState>(TState state)
-            where TState : notnull
+        public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName)
         {
-            return null;
+            return this.Loggers.TryGetValue(categoryName, out var logger)
+                ? logger
+                : this.Loggers[categoryName] = new();
         }
 
-        public bool IsEnabled(LogLevel logLevel)
+        public void AddProvider(ILoggerProvider provider)
         {
-            return this._target.IsEnabled(logLevel);
+            ArgumentNullException.ThrowIfNull(provider);
+            this.Providers.Add(provider);
         }
 
-        public void Log<TState>(
-            LogLevel logLevel,
-            EventId eventId,
-            TState state,
-            Exception? exception,
-            Func<TState, Exception?, string> formatter)
+        public void Dispose()
         {
-            this.Entries.Add(new MicrosoftLogEntry(logLevel, eventId, formatter(state, exception), exception));
-            this._target.Log(logLevel, eventId, state, exception, formatter);
+        }
+    }
+
+    private sealed class RecordingHostLoggingBuilder : IExtensionHostLoggingBuilder
+    {
+        public bool DefaultLogSinksCleared { get; private set; }
+
+        public List<IExtensionHostLogSink> Sinks { get; } = [];
+
+        public void AddHostLogSink(IExtensionHostLogSink sink)
+        {
+            this.Sinks.Add(sink);
+        }
+
+        public void ClearDefaultLogSinks()
+        {
+            this.DefaultLogSinksCleared = true;
+        }
+    }
+
+    private sealed class ProviderMicrosoftLoggerFactory(ILoggerProvider provider) : ILoggerFactory
+    {
+        private readonly ILoggerProvider _provider = provider;
+
+        public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName)
+        {
+            return this._provider.CreateLogger(categoryName);
+        }
+
+        public void AddProvider(ILoggerProvider addedProvider)
+        {
+            throw new NotSupportedException();
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private sealed class RecordingDisposableLoggerProvider : ILoggerProvider
+    {
+        public bool IsDisposed { get; private set; }
+
+        public Microsoft.Extensions.Logging.ILogger CreateLogger(string categoryName)
+        {
+            return Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+        }
+
+        public void Dispose()
+        {
+            this.IsDisposed = true;
         }
     }
 

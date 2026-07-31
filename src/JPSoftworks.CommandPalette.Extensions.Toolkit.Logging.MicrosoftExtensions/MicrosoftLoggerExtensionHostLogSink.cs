@@ -6,6 +6,7 @@
 
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 
@@ -14,7 +15,9 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 /// </summary>
 public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
 {
-    private readonly ILogger _logger;
+    private readonly ILogger? _logger;
+    private readonly ILoggerFactory? _loggerFactory;
+    private readonly ConcurrentDictionary<string, ILogger>? _loggers;
 
     /// <summary>
     /// Initializes a sink that writes to <paramref name="logger"/>.
@@ -24,6 +27,19 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
     {
         ArgumentNullException.ThrowIfNull(logger);
         this._logger = logger;
+    }
+
+    /// <summary>
+    /// Initializes a sink that writes each host category to a matching logger created by
+    /// <paramref name="loggerFactory"/>.
+    /// </summary>
+    /// <param name="loggerFactory">The target application-owned logger factory.</param>
+    /// <remarks>The factory and the loggers it creates remain caller-owned.</remarks>
+    public MicrosoftLoggerExtensionHostLogSink(ILoggerFactory loggerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(loggerFactory);
+        this._loggerFactory = loggerFactory;
+        this._loggers = new(StringComparer.Ordinal);
     }
 
     /// <inheritdoc />
@@ -36,8 +52,15 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
             return;
         }
 
-        var state = new ExtensionHostMicrosoftLogState(entry.Category, entry.Message);
-        this._logger.Log(
+        var preservesCategory = this._loggerFactory is not null;
+        var logger = preservesCategory
+            ? this._loggers!.GetOrAdd(entry.Category, this._loggerFactory!.CreateLogger)
+            : this._logger!;
+        var state = new ExtensionHostMicrosoftLogState(
+            entry.Category,
+            entry.Message,
+            includeCategoryInMessage: !preservesCategory);
+        logger.Log(
             ToMicrosoftLogLevel(entry.Level),
             new EventId(entry.EventId),
             state,

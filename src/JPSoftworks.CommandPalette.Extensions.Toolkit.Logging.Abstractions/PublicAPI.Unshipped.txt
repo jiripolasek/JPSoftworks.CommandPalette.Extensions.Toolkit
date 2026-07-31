@@ -13,6 +13,9 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHost
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Information = 1 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel.Warning = 2 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogLevel
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLoggingBuilder
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLoggingBuilder.AddHostLogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLoggingBuilder.ClearDefaultLogSinks() -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogSinkExtensions.LogDebug(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink, string! category, string! message) -> void

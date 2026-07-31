@@ -1,8 +1,20 @@
 #nullable enable
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.CreateLogger(string! categoryName) -> Microsoft.Extensions.Logging.ILogger!
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.Dispose() -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.ExtensionHostLoggerProvider.ExtensionHostLoggerProvider(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionHostLogSink! sink) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.CommandPaletteLoggerProvider
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.CommandPaletteLoggerProvider.CommandPaletteLoggerProvider() -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.CommandPaletteLoggerProvider.CommandPaletteLoggerProvider(Microsoft.Extensions.Logging.LogLevel minimumLevel) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.CommandPaletteLoggerProvider.CreateLogger(string! categoryName) -> Microsoft.Extensions.Logging.ILogger!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.CommandPaletteLoggerProvider.Dispose() -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.CreateLogger(string! categoryName) -> Microsoft.Extensions.Logging.ILogger!
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.DailyFileLoggerProvider(string! baseFilePath) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.DailyFileLoggerProvider(string! baseFilePath, Microsoft.Extensions.Logging.LogLevel minimumLevel) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.Dispose() -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.MicrosoftLoggerExtensionHostLogSink(Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.MicrosoftLoggerExtensionHostLogSink(Microsoft.Extensions.Logging.ILogger! logger) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftExtensionsLoggingBuilderExtensions
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftExtensionsLoggingBuilderExtensions.UseMicrosoftExtensionsLogging<TBuilder>(this TBuilder! builder, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> TBuilder!
+Microsoft.Extensions.Logging.ExtensionHostLoggingBuilderExtensions
+static Microsoft.Extensions.Logging.ExtensionHostLoggingBuilderExtensions.AddCommandPalette(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostConfiguration! configuration) -> Microsoft.Extensions.Logging.ILoggingBuilder!
+static Microsoft.Extensions.Logging.ExtensionHostLoggingBuilderExtensions.AddDailyFile(this Microsoft.Extensions.Logging.ILoggingBuilder! builder, JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostConfiguration! configuration) -> Microsoft.Extensions.Logging.ILoggingBuilder!
