@@ -153,7 +153,7 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Microsoft.CommandPalette.Extensions": "[0.12.260812002, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
@@ -164,16 +164,16 @@
       "jpsoftworks.commandpalette.extensions.toolkit.logging.microsoftextensions": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.9.2, )",
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.12.0-preview.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Microsoft.Extensions.Logging": "[10.0.10, )"
         }
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.serilog": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.9.2, )",
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.12.0-preview.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Serilog": "[4.4.0, )"
         }
       },
@@ -351,7 +351,7 @@
       "jpsoftworks.commandpalette.extensions.toolkit": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
@@ -362,16 +362,16 @@
       "jpsoftworks.commandpalette.extensions.toolkit.logging.microsoftextensions": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.9.2, )",
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.12.0-preview.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Microsoft.Extensions.Logging": "[9.0.18, )"
         }
       },
       "jpsoftworks.commandpalette.extensions.toolkit.logging.serilog": {
         "type": "Project",
         "dependencies": {
-          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.9.2, )",
-          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit": "[0.12.0-preview.1, )",
+          "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.12.0-preview.1, )",
           "Serilog": "[4.4.0, )"
         }
       },

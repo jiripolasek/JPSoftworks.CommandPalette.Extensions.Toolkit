@@ -3,6 +3,7 @@
     PackagePropsPath = "eng\Package.props"
     PackageOutputPath = "artifacts\packages"
     LocalFeedPath = "artifacts\local-feed"
+    NuGetSource = "https://api.nuget.org/v3/index.json"
 
     PackageIds = @(
         "JPSoftworks.CommandPalette.Extensions.Toolkit"
