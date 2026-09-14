@@ -72,6 +72,20 @@ var runner = ExtensionHostRunner.CreateBuilder(host);
 `ExtensionHostConfiguration` is an immutable token. It keeps argument parsing and canonical path construction inside
 the Toolkit instead of making every extension duplicate those conventions.
 
+Extensions that need to supply already-resolved policy or a custom log location can construct the configuration
+directly:
+
+```csharp
+var host = new ExtensionHostConfiguration(
+    args,
+    parameters with { IsDebug = useDebugDiagnostics },
+    customLogFilePath);
+```
+
+Direct construction snapshots the arguments and factory collections, uses `ExtensionHostRunnerParameters.IsDebug`
+exactly as supplied, and does not parse `-Debug` or replace the supplied log path. All resolved values remain
+available through public getters.
+
 See [Diagnostics and logging](logging.md) for complete Microsoft.Extensions.Logging and Serilog examples.
 
 ## Direct launch

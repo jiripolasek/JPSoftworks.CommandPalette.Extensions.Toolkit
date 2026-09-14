@@ -97,16 +97,59 @@ public sealed class ExtensionHostRunnerBuilderTests
         Assert.Same(originalFactory, Assert.Single(snapshot.HostedExtensionFactories));
     }
 
+    [Fact]
+    public void ConfigurationCanBeConstructedFromExplicitValues()
+    {
+        var args = new[] { "-Debug" };
+        var originalFactory = new DelegateHostedExtensionFactory(_ => new TestExtension());
+        var parameters = CreateParameters(isDebug: false) with
+        {
+            EnableEfficiencyMode = false,
+            HostedExtensionFactories = [originalFactory],
+        };
+        var logFilePath = Path.Combine("CustomLogs", "host.log");
+
+        var configuration = new ExtensionHostConfiguration(args, parameters, logFilePath);
+
+        args[0] = "-RegisterProcessAsComServer";
+        parameters.HostedExtensionFactories.Clear();
+
+        Assert.Equal("-Debug", Assert.Single(configuration.Arguments));
+        Assert.False(configuration.IsDebug);
+        Assert.Equal(logFilePath, configuration.LogFilePath);
+        Assert.Equal(parameters.PublisherMoniker, configuration.PublisherMoniker);
+        Assert.Equal(parameters.ProductMoniker, configuration.ProductMoniker);
+        Assert.False(configuration.EnableEfficiencyMode);
+        Assert.Same(
+            originalFactory,
+            Assert.Single(configuration.CreateRunnerParameters().HostedExtensionFactories));
+        Assert.NotNull(ExtensionHostRunner.CreateBuilder(configuration));
+    }
+
+    [Fact]
+    public void ConfigurationConstructorRejectsInvalidInputs()
+    {
+        var parameters = CreateParameters();
+
+        Assert.Throws<ArgumentNullException>(
+            () => new ExtensionHostConfiguration(null!, parameters, "log.txt"));
+        Assert.Throws<ArgumentNullException>(
+            () => new ExtensionHostConfiguration([], null!, "log.txt"));
+        Assert.Throws<ArgumentException>(
+            () => new ExtensionHostConfiguration([], parameters, " "));
+    }
+
     [Theory]
     [InlineData(".")]
     [InlineData("..")]
     [InlineData(@"Publisher\Product")]
     [InlineData("Publisher/Product")]
-    public void CreateBuilderRejectsInvalidPublisherPathSegment(string publisherMoniker)
+    public void ConfigurationRejectsInvalidPublisherPathSegment(string publisherMoniker)
     {
         var parameters = CreateParameters() with { PublisherMoniker = publisherMoniker };
 
         Assert.Throws<ArgumentException>(() => ExtensionHostRunner.CreateBuilder([], parameters));
+        Assert.Throws<ArgumentException>(() => new ExtensionHostConfiguration([], parameters, "log.txt"));
     }
 
     [Fact]

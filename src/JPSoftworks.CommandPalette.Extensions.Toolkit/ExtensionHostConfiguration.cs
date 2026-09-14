@@ -7,7 +7,7 @@
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 
 /// <summary>
-/// Represents the immutable, resolved configuration for one extension host run.
+/// Represents the immutable configuration for one extension host run.
 /// </summary>
 public sealed class ExtensionHostConfiguration
 {
@@ -18,13 +18,43 @@ public sealed class ExtensionHostConfiguration
     private readonly IExtensionFactory[] _extensionFactories;
 #pragma warning restore CS0618
 
+    /// <summary>
+    /// Initializes an extension host configuration from explicitly supplied values.
+    /// </summary>
+    /// <param name="arguments">Command-line arguments passed to the application.</param>
+    /// <param name="parameters">Configuration parameters for running the server.</param>
+    /// <param name="logFilePath">The base path used by the Toolkit's daily file diagnostics.</param>
+    /// <remarks>
+    /// This constructor uses <see cref="ExtensionHostRunnerParameters.IsDebug"/> and
+    /// <paramref name="logFilePath"/> exactly as supplied. Use <see cref="Resolve"/> to apply the Toolkit's
+    /// <c>-Debug</c> convention and canonical local-application-data log path.
+    /// </remarks>
+    public ExtensionHostConfiguration(
+        IEnumerable<string> arguments,
+        ExtensionHostRunnerParameters parameters,
+        string logFilePath)
+        : this(arguments, parameters, parameters?.IsDebug ?? false, logFilePath)
+    {
+    }
+
     private ExtensionHostConfiguration(
-        string[] arguments,
+        IEnumerable<string> arguments,
         ExtensionHostRunnerParameters parameters,
         bool isDebug,
         string logFilePath)
     {
-        this.Arguments = arguments;
+        ArgumentNullException.ThrowIfNull(arguments);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(parameters.HostedExtensionFactories);
+#pragma warning disable CS0618 // Validate the compatibility contract.
+        ArgumentNullException.ThrowIfNull(parameters.ExtensionFactories);
+#pragma warning restore CS0618
+        ArgumentException.ThrowIfNullOrWhiteSpace(logFilePath);
+
+        ValidatePathSegment(parameters.PublisherMoniker, nameof(parameters.PublisherMoniker));
+        ValidatePathSegment(parameters.ProductMoniker, nameof(parameters.ProductMoniker));
+
+        this.Arguments = Array.AsReadOnly<string>([.. arguments]);
         this.PublisherMoniker = parameters.PublisherMoniker;
         this.ProductMoniker = parameters.ProductMoniker;
         this.EnableEfficiencyMode = parameters.EnableEfficiencyMode;
@@ -36,20 +66,35 @@ public sealed class ExtensionHostConfiguration
         this.LogFilePath = logFilePath;
     }
 
-    internal string[] Arguments { get; }
+    /// <summary>
+    /// Gets a snapshot of the command-line arguments for this host run.
+    /// </summary>
+    public IReadOnlyList<string> Arguments { get; }
 
     /// <summary>
     /// Gets whether debug diagnostics are enabled for this host run.
     /// </summary>
     public bool IsDebug { get; }
 
-    internal string LogFilePath { get; }
+    /// <summary>
+    /// Gets the base path used by the Toolkit's daily file diagnostics.
+    /// </summary>
+    public string LogFilePath { get; }
 
-    internal string PublisherMoniker { get; }
+    /// <summary>
+    /// Gets the non-display, path-safe publisher identifier.
+    /// </summary>
+    public string PublisherMoniker { get; }
 
-    internal string ProductMoniker { get; }
+    /// <summary>
+    /// Gets the non-display, path-safe product identifier.
+    /// </summary>
+    public string ProductMoniker { get; }
 
-    internal bool EnableEfficiencyMode { get; }
+    /// <summary>
+    /// Gets whether the host lowers process priority and enables Efficiency Mode.
+    /// </summary>
+    public bool EnableEfficiencyMode { get; }
 
     /// <summary>
     /// Resolves command-line and runner parameters into one immutable host configuration.
@@ -63,10 +108,6 @@ public sealed class ExtensionHostConfiguration
     {
         ArgumentNullException.ThrowIfNull(args);
         ArgumentNullException.ThrowIfNull(parameters);
-        ArgumentNullException.ThrowIfNull(parameters.HostedExtensionFactories);
-#pragma warning disable CS0618 // Validate the compatibility contract.
-        ArgumentNullException.ThrowIfNull(parameters.ExtensionFactories);
-#pragma warning restore CS0618
 
         ValidatePathSegment(parameters.PublisherMoniker, nameof(parameters.PublisherMoniker));
         ValidatePathSegment(parameters.ProductMoniker, nameof(parameters.ProductMoniker));
