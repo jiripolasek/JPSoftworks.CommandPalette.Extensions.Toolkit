@@ -80,33 +80,7 @@ daily rolling files, and Command Palette diagnostics. Pass `-Debug` or set
 
 - [Extension hosting and lifecycle](docs/extension-hosting.md)
 - [Diagnostics and logging](docs/logging.md)
-
-## Local development
-
-Repository-local outputs are written beneath the ignored `artifacts` directory:
-
-```powershell
-.\eng\build.ps1
-.\eng\test.ps1 -NoBuild -NoRestore
-.\eng\pack.ps1
-.\eng\publish-local.ps1
-.\eng\publish-nuget.ps1
-.\eng\verify-aot.ps1
-```
-
-Restore operations used by `build.ps1`, `test.ps1`, and `pack.ps1` run in locked mode. Package names, paths, and the
-AOT smoke-test project are declared in `eng\Package.config.psd1`. `pack.ps1` produces every Toolkit `.nupkg` together
-with a matching `.snupkg`, and `publish-local.ps1` copies both package types to `artifacts\local-feed`.
-
-`publish-nuget.ps1` validates the complete package set and asks for confirmation before publishing it to NuGet.org.
-It uses the `NUGET_API_KEY` environment variable or an API key already configured for NuGet.org. Each `.nupkg` and
-`.snupkg` is pushed separately; duplicate versions are skipped so an interrupted release can resume missing uploads.
-Environment keys and `-PromptForApiKey` require NuGet 7.6 or newer (`dotnet nuget --version`); older clients can use
-configured NuGet API keys. Pass `-PromptForApiKey` to enter a key for packages and symbols without storing it in shell
-history or NuGet configuration. The script restores the previous key environment variables when it finishes.
-
-`verify-aot.ps1` treats warnings as errors, publishes both target frameworks for `win-x64` and `win-arm64` beneath
-`artifacts\aot`, and verifies that every output is native rather than framework-dependent.
+- [Building and releasing the Toolkit](eng/README.md)
 
 ## License
 

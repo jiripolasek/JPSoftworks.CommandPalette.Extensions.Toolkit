@@ -4,6 +4,10 @@
     PackageOutputPath = "artifacts\packages"
     LocalFeedPath = "artifacts\local-feed"
     NuGetSource = "https://api.nuget.org/v3/index.json"
+    GitHubRepository = "jiripolasek/JPSoftworks.CommandPalette.Extensions.Toolkit"
+    GitHubSource = "https://nuget.pkg.github.com/jiripolasek/index.json"
+    ReleaseBranch = "master"
+    DevelopmentBranch = "next"
 
     PackageIds = @(
         "JPSoftworks.CommandPalette.Extensions.Toolkit"

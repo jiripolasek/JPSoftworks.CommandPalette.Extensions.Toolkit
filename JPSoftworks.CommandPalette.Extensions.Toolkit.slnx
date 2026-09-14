@@ -11,12 +11,25 @@
     <File Path="eng/build.ps1" />
     <File Path="eng/Common.props" />
     <File Path="eng/Common.targets" />
+    <File Path="eng/get-version.ps1" />
     <File Path="eng/Package.config.psd1" />
     <File Path="eng/Package.props" />
     <File Path="eng/pack.ps1" />
+    <File Path="eng/Packaging.psm1" />
+    <File Path="eng/prepare-publish.ps1" />
+    <File Path="eng/publish-github.ps1" />
     <File Path="eng/publish-local.ps1" />
+    <File Path="eng/publish-nuget.ps1" />
+    <File Path="eng/publish-release.ps1" />
+    <File Path="eng/README.md" />
+    <File Path="eng/set-version.ps1" />
+    <File Path="eng/tag-release.ps1" />
     <File Path="eng/test.ps1" />
+    <File Path="eng/test-publishing.ps1" />
+    <File Path="eng/test-versioning.ps1" />
     <File Path="eng/verify-aot.ps1" />
+    <File Path="eng/verify-release.ps1" />
+    <File Path="eng/Versioning.psm1" />
   </Folder>
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.csproj" />
   <Project Path="src/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions/JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.csproj" />

@@ -9,35 +9,18 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Import-Module (Join-Path $PSScriptRoot "Versioning.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "Packaging.psm1") -Force
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $repositoryConfig = Import-PowerShellDataFile (Join-Path $PSScriptRoot "Package.config.psd1")
-$packagePath = Join-Path $repositoryRoot $repositoryConfig.PackageOutputPath
 $feedPath = Join-Path $repositoryRoot $repositoryConfig.LocalFeedPath
-$packagePropsPath = Join-Path $repositoryRoot $repositoryConfig.PackagePropsPath
 
 if (-not $Version) {
-    [xml] $packageProps = Get-Content -Raw -LiteralPath $packagePropsPath
-    $versionPrefix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionPrefix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $versionSuffix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionSuffix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $Version = if ($versionSuffix) {
-        "$versionPrefix-$versionSuffix"
-    } else {
-        $versionPrefix
-    }
+    $Version = & (Join-Path $PSScriptRoot "get-version.ps1")
 }
 
-if ([string]::IsNullOrWhiteSpace($Version)) {
-    throw "Package version could not be resolved from '$packagePropsPath'."
-}
+$Version = (ConvertTo-ToolkitVersion $Version).Version
 
 if (-not $NoPack) {
     $packArguments = @{
@@ -48,32 +31,13 @@ if (-not $NoPack) {
     & (Join-Path $PSScriptRoot "pack.ps1") @packArguments
 }
 
-$packages = @(
-    $repositoryConfig.PackageIds |
-        ForEach-Object { Join-Path $packagePath "$_.$Version.nupkg" }
-)
-$symbolPackages = @(
-    $repositoryConfig.PackageIds |
-        ForEach-Object { Join-Path $packagePath "$_.$Version.snupkg" }
-)
-$missingOutputs = @(
-    $packages + $symbolPackages |
-        Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
-)
-if ($missingOutputs.Count -ne 0) {
-    throw "Expected package outputs were not found: $($missingOutputs -join ', ')."
-}
+$packages = @(Get-ToolkitPackages -Version $Version -IncludeSymbols)
 
 New-Item -ItemType Directory -Path $feedPath -Force | Out-Null
 
 foreach ($package in $packages) {
-    Copy-Item -LiteralPath $package -Destination $feedPath -Force
-    Write-Host "Published package: $(Split-Path -Leaf $package)"
-}
-
-foreach ($symbolPackage in $symbolPackages) {
-    Copy-Item -LiteralPath $symbolPackage -Destination $feedPath -Force
-    Write-Host "Published symbols: $(Split-Path -Leaf $symbolPackage)"
+    Copy-Item -LiteralPath $package.Path -Destination $feedPath -Force
+    Write-Host "Published: $(Split-Path -Leaf $package.Path)"
 }
 
 Write-Host "Local NuGet feed: $feedPath"

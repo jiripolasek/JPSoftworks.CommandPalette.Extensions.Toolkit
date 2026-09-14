@@ -1,0 +1,105 @@
+name: Validate
+
+on:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Stable or preview.N tag to validate; empty for a CI build.
+        type: string
+        default: ''
+    outputs:
+      version:
+        description: Version of the uploaded packages.
+        value: ${{ jobs.build.outputs.version }}
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: 'true'
+  DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+  ContinuousIntegrationBuild: 'true'
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  build:
+    name: Build, test, and pack
+    runs-on: windows-2025
+    timeout-minutes: 30
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          cache-scope: build
+      - name: Resolve package version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release-tag }}
+        run: |
+          if ($env:RELEASE_TAG) {
+            $version = ./eng/verify-release.ps1 -Tag $env:RELEASE_TAG
+          } else {
+            $version = ./eng/get-version.ps1 -CiBuild $env:GITHUB_RUN_NUMBER
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+      - name: Test release scripts
+        run: |
+          ./eng/test-versioning.ps1
+          ./eng/test-publishing.ps1
+      - name: Build with locked dependencies
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: ./eng/build.ps1 -Version $env:PACKAGE_VERSION
+      - name: Run tests for both target frameworks
+        run: ./eng/test.ps1 -NoBuild -NoRestore -ResultsDirectory artifacts/test-results
+      - name: Pack all four packages and symbols
+        env:
+          PACKAGE_VERSION: ${{ steps.version.outputs.version }}
+        run: ./eng/pack.ps1 -Version $env:PACKAGE_VERSION -NoBuild -NoRestore
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: packages
+          path: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 30
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: test-results
+          path: artifacts/test-results/**/*.trx
+          if-no-files-found: ignore
+          overwrite: true
+          retention-days: 14
+
+  aot:
+    name: Native AOT (${{ matrix.runtime }})
+    runs-on: windows-2025
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: [win-x64, win-arm64]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+        with:
+          cache-scope: aot-${{ matrix.runtime }}
+      - name: Publish and verify both target frameworks
+        env:
+          AOT_RUNTIME: ${{ matrix.runtime }}
+        run: ./eng/verify-aot.ps1 -RuntimeIdentifiers $env:AOT_RUNTIME

@@ -5,7 +5,9 @@ param(
 
     [switch] $NoBuild,
 
-    [switch] $NoRestore
+    [switch] $NoRestore,
+
+    [string] $ResultsDirectory
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,6 +38,10 @@ $arguments = @(
 
 if ($NoBuild) {
     $arguments += "--no-build"
+}
+
+if ($ResultsDirectory) {
+    $arguments += @("--logger", "trx", "--results-directory", $ResultsDirectory)
 }
 
 $arguments += $commonProperties

@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release
+    if: github.repository == 'jiripolasek/JPSoftworks.CommandPalette.Extensions.Toolkit'
+    uses: ./.github/workflows/validate.yml
+    with:
+      release-tag: ${{ github.ref_name }}
+
+  publish:
+    name: Publish to NuGet.org
+    needs: validate
+    runs-on: windows-2025
+    timeout-minutes: 45
+    environment: nuget
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-dotnet
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: packages
+          path: artifacts/packages
+      - name: Check release and publishing configuration
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+          NUGET_USER: ${{ vars.NUGET_USER }}
+        run: |
+          $version = ./eng/verify-release.ps1 -Tag $env:RELEASE_TAG
+          if ($version -cne $env:PACKAGE_VERSION) { throw 'The package version does not match the release.' }
+          if (-not $env:NUGET_USER) { throw 'Set the NUGET_USER variable to the NuGet.org profile name.' }
+      - name: Authenticate with NuGet.org
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER }}
+      - uses: ./.github/actions/prepare-publish
+        id: upload
+        with:
+          target: nuget
+          version: ${{ needs.validate.outputs.version }}
+      - name: Publish validated packages and symbols
+        shell: pwsh
+        env:
+          PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          NUGET_SYMBOL_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+          PUBLISH_PROGRESS_PATH: ${{ steps.upload.outputs.progress-path }}
+        run: ./eng/publish-nuget.ps1 -Version $env:PACKAGE_VERSION -NoPack -ProgressPath $env:PUBLISH_PROGRESS_PATH -Confirm:$false
+      - name: Save confirmed upload progress
+        if: always() && steps.upload.outcome == 'success'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: upload-nuget-progress-${{ github.run_attempt }}
+          path: ${{ steps.upload.outputs.progress-path }}
+          if-no-files-found: error
+          retention-days: 30
+
+  github-release:
+    name: Publish GitHub release
+    needs: [validate, publish]
+    runs-on: windows-2025
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.run_id }}
+          name: upload-nuget
+          path: artifacts/upload-nuget
+      - name: Attach packages and publish release notes
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          PACKAGE_VERSION: ${{ needs.validate.outputs.version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          Import-Module ./eng/Packaging.psm1 -Force
+          Initialize-ToolkitPublishState -Version $env:PACKAGE_VERSION -Target nuget -StatePath artifacts/upload-nuget/state.json -RequireExisting | Out-Null
+          ./eng/publish-release.ps1 -Tag $env:RELEASE_TAG -Confirm:$false

@@ -11,39 +11,19 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+Import-Module (Join-Path $PSScriptRoot "Versioning.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "Packaging.psm1") -Force
 
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $repositoryConfig = Import-PowerShellDataFile (Join-Path $PSScriptRoot "Package.config.psd1")
 $solutionPath = Join-Path $repositoryRoot $repositoryConfig.SolutionPath
 $packagePath = Join-Path $repositoryRoot $repositoryConfig.PackageOutputPath
-$packagePropsPath = Join-Path $repositoryRoot $repositoryConfig.PackagePropsPath
-
-if ($NoBuild -and $Version) {
-    throw "-NoBuild cannot be combined with -Version because the existing assemblies may have a different version."
-}
 
 if (-not $Version) {
-    [xml] $packageProps = Get-Content -Raw -LiteralPath $packagePropsPath
-    $versionPrefix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionPrefix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $versionSuffix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionSuffix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $Version = if ($versionSuffix) {
-        "$versionPrefix-$versionSuffix"
-    } else {
-        $versionPrefix
-    }
+    $Version = & (Join-Path $PSScriptRoot "get-version.ps1")
 }
 
-if ([string]::IsNullOrWhiteSpace($Version)) {
-    throw "Package version could not be resolved from '$packagePropsPath'."
-}
+$versionProperties = @(Get-ToolkitVersionProperties -Version $Version)
 
 New-Item -ItemType Directory -Path $packagePath -Force | Out-Null
 Get-ChildItem -LiteralPath $packagePath -File |
@@ -67,14 +47,14 @@ $arguments = @(
     $solutionPath,
     "--configuration",
     $Configuration,
-    "--no-restore",
-    "-p:Version=$Version"
+    "--no-restore"
 )
 
 if ($NoBuild) {
     $arguments += "--no-build"
 }
 
+$arguments += $versionProperties
 $arguments += $commonProperties
 
 & dotnet @arguments
@@ -82,21 +62,39 @@ if ($LASTEXITCODE -ne 0) {
     throw "Local pack failed with exit code $LASTEXITCODE."
 }
 
-$expectedPackages = @(
-    $repositoryConfig.PackageIds |
-        ForEach-Object { Join-Path $packagePath "$_.$Version.nupkg" }
-)
-$expectedSymbolPackages = @(
-    $repositoryConfig.PackageIds |
-        ForEach-Object { Join-Path $packagePath "$_.$Version.snupkg" }
-)
+$packages = @(Get-ToolkitPackages -Version $Version -IncludeSymbols)
+$expectedPackages = @($packages | Where-Object { -not $_.IsSymbolPackage } | ForEach-Object { $_.Path })
+$expectedSymbolPackages = @($packages | Where-Object { $_.IsSymbolPackage } | ForEach-Object { $_.Path })
 
-$missingOutputs = @(
-    $expectedPackages + $expectedSymbolPackages |
-        Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
-)
-if ($missingOutputs.Count -ne 0) {
-    throw "Local pack did not produce the expected outputs: $($missingOutputs -join ', ')."
+if ($NoBuild) {
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $inspectionPath = Join-Path $packagePath (([guid]::NewGuid().ToString('N')) + '.dll')
+    try {
+        foreach ($package in $expectedPackages) {
+            $archive = [IO.Compression.ZipFile]::OpenRead($package)
+            try {
+                foreach ($entry in $archive.Entries) {
+                    if ($entry.FullName -notlike 'lib/*.dll') {
+                        continue
+                    }
+                    [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $inspectionPath, $true)
+                    $builtVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($inspectionPath).ProductVersion
+                    if ([string]::IsNullOrWhiteSpace($builtVersion) -or $builtVersion.Split('+')[0] -cne $Version) {
+                        throw "Assembly '$($entry.FullName)' was built as '$builtVersion', but the package version is '$Version'. Run pack.ps1 without -NoBuild."
+                    }
+                }
+            } finally {
+                $archive.Dispose()
+            }
+        }
+    } catch {
+        $expectedPackages + $expectedSymbolPackages | ForEach-Object { Remove-Item -LiteralPath $_ -Force }
+        throw
+    } finally {
+        if (Test-Path -LiteralPath $inspectionPath) {
+            Remove-Item -LiteralPath $inspectionPath -Force
+        }
+    }
 }
 
 Write-Host "Packages:"

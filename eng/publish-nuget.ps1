@@ -7,54 +7,40 @@ param(
 
     [switch] $NoPack,
 
+    [switch] $Resume,
+
+    [string] $ProgressPath,
+
     [switch] $PromptForApiKey
 )
 
 $ErrorActionPreference = "Stop"
+Import-Module (Join-Path $PSScriptRoot "Versioning.psm1") -Force
+Import-Module (Join-Path $PSScriptRoot "Packaging.psm1") -Force
 
-$repositoryRoot = Split-Path -Parent $PSScriptRoot
 $repositoryConfig = Import-PowerShellDataFile (Join-Path $PSScriptRoot "Package.config.psd1")
-$packagePath = Join-Path $repositoryRoot $repositoryConfig.PackageOutputPath
-$packagePropsPath = Join-Path $repositoryRoot $repositoryConfig.PackagePropsPath
 $nugetSource = $repositoryConfig.NuGetSource
 
 if (-not $Version) {
-    [xml] $packageProps = Get-Content -Raw -LiteralPath $packagePropsPath
-    $versionPrefix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionPrefix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $versionSuffix = [string](
-        $packageProps.Project.PropertyGroup |
-            ForEach-Object { $_.VersionSuffix } |
-            Where-Object { $_ } |
-            Select-Object -First 1)
-    $Version = if ($versionSuffix) {
-        "$versionPrefix-$versionSuffix"
-    } else {
-        $versionPrefix
-    }
+    $Version = & (Join-Path $PSScriptRoot "get-version.ps1")
 }
 
-if ([string]::IsNullOrWhiteSpace($Version)) {
-    throw "Package version could not be resolved from '$packagePropsPath'."
-}
+$Version = (Get-ToolkitReleaseInfo -Version $Version).Version
+if ($Resume -and -not $NoPack) { throw 'Resuming requires -NoPack to reuse the original packages.' }
+if ($ProgressPath -and -not $NoPack) { throw 'Upload progress requires -NoPack to reuse the original packages.' }
+if ($Resume -and $ProgressPath) { throw 'Do not combine -Resume with -ProgressPath.' }
 
 if ([string]::IsNullOrWhiteSpace($nugetSource)) {
     throw "The NuGet publishing source is not configured."
 }
 
 if ($PromptForApiKey -or $env:NUGET_API_KEY -or $env:NUGET_SYMBOL_API_KEY) {
-    $nugetVersionOutput = & dotnet nuget --version
-    if ($LASTEXITCODE -ne 0) {
-        throw "Could not determine the NuGet client version."
-    }
+    Assert-ToolkitNuGetEnvironmentKeySupport
+}
 
-    $nugetVersionMatch = [regex]::Match(($nugetVersionOutput -join "`n"), "(?m)^\s*(?:NuGet Command Line\s+)?(\d+\.\d+\.\d+)")
-    if (-not $nugetVersionMatch.Success -or [version] $nugetVersionMatch.Groups[1].Value -lt [version] "7.6.0") {
-        throw "Environment and prompted API keys require NuGet 7.6 or newer. Update the .NET SDK, or use a configured NuGet API key without these options."
-    }
+if (-not $NoPack -and $WhatIfPreference) {
+    [void] $PSCmdlet.ShouldProcess($Version, 'Build, pack, and publish packages')
+    return
 }
 
 if (-not $NoPack) {
@@ -66,52 +52,8 @@ if (-not $NoPack) {
     & (Join-Path $PSScriptRoot "pack.ps1") @packArguments
 }
 
-$packages = @(
-    foreach ($packageId in $repositoryConfig.PackageIds) {
-        foreach ($extension in ".nupkg", ".snupkg") {
-            [pscustomobject]@{
-                Id = $packageId
-                Path = Join-Path $packagePath "$packageId.$Version$extension"
-                IsSymbolPackage = $extension -eq ".snupkg"
-            }
-        }
-    }
-)
-$missingOutputs = @(
-    $packages |
-        ForEach-Object { $_.Path } |
-        Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
-)
-if ($missingOutputs.Count -ne 0) {
-    throw "Expected package outputs were not found: $($missingOutputs -join ', ')."
-}
-
-Add-Type -AssemblyName System.IO.Compression.FileSystem
-
-foreach ($package in $packages) {
-    $archive = [System.IO.Compression.ZipFile]::OpenRead($package.Path)
-    try {
-        $nuspecEntry = @($archive.Entries | Where-Object { $_.FullName -like "*.nuspec" })
-        if ($nuspecEntry.Count -ne 1) {
-            throw "Expected exactly one .nuspec in '$($package.Path)'."
-        }
-
-        $reader = [System.IO.StreamReader]::new($nuspecEntry[0].Open())
-        try {
-            [xml] $nuspec = $reader.ReadToEnd()
-        } finally {
-            $reader.Dispose()
-        }
-
-        $packageId = [string] $nuspec.package.metadata.id
-        $packageVersion = [string] $nuspec.package.metadata.version
-        if ($packageId -ne $package.Id -or $packageVersion -ne $Version) {
-            throw "Unexpected package identity '$packageId $packageVersion' in '$($package.Path)'. Expected '$($package.Id) $Version'."
-        }
-    } finally {
-        $archive.Dispose()
-    }
-}
+$packages = @(Get-ToolkitPackages -Version $Version -IncludeSymbols)
+$progress = if ($ProgressPath) { Read-ToolkitPublishProgress -Version $Version -Target nuget -Packages $packages -Paths $ProgressPath }
 
 $packageIdentities = @(
     $repositoryConfig.PackageIds |
@@ -155,17 +97,22 @@ try {
             "--source",
             $nugetSource,
             "--timeout",
-            "600",
-            "--skip-duplicate"
+            "600"
         )
 
+        $name = Split-Path -Leaf $package.Path
+        if ($Resume -or ($progress -and $progress.PushedPackages.Contains($name))) { $arguments += "--skip-duplicate" }
         if (-not $package.IsSymbolPackage) {
             $arguments += "--no-symbols"
         }
 
         & dotnet @arguments
         if ($LASTEXITCODE -ne 0) {
-            throw "NuGet.org publish failed for '$($package.Path)' with exit code $LASTEXITCODE. Re-run the script to resume; already published versions will be skipped."
+            throw "NuGet.org publish failed for '$($package.Path)' with exit code $LASTEXITCODE. Check the client error and resolve any version conflict before retrying."
+        }
+        if ($progress) {
+            [void] $progress.PushedPackages.Add($name)
+            Save-ToolkitPublishProgress -Progress $progress -Path $ProgressPath
         }
     }
 
