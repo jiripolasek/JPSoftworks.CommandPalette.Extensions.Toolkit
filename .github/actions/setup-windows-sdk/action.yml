@@ -1,0 +1,30 @@
+name: Set up Windows SDK metadata
+description: Install the Windows SDK 10.0.22621.0 metadata required by CsWinRT.
+runs:
+  using: composite
+  steps:
+    - name: Ensure Windows SDK 10.0.22621.0 metadata is installed
+      shell: pwsh
+      run: |
+        $platform = "${env:ProgramFiles(x86)}/Windows Kits/10/Platforms/UAP/10.0.22621.0/Platform.xml"
+        if (Test-Path -LiteralPath $platform) {
+          Write-Host 'Windows SDK 10.0.22621.0 metadata is already installed.'
+          return
+        }
+
+        $installer = Join-Path $env:RUNNER_TEMP 'winsdksetup-22621.exe'
+        # Windows SDK 10.0.22621.5040 servicing release.
+        Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/?linkid=2311806' -OutFile $installer
+        $expectedHash = '007085E9B90637F0EB0F041F9CCE0D64E2C5DD3DE17E1B6976A92DBC46E100C5'
+        if ((Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash -ne $expectedHash) {
+          throw 'The Windows SDK installer checksum does not match.'
+        }
+
+        $process = Start-Process -FilePath $installer -WindowStyle Hidden -Wait -PassThru `
+          -ArgumentList '/quiet', '/norestart', '/features', 'OptionId.UWPManaged'
+        if ($process.ExitCode -notin 0, 3010) {
+          throw "Windows SDK installation failed with exit code $($process.ExitCode)."
+        }
+        if (-not (Test-Path -LiteralPath $platform)) {
+          throw "Windows SDK installation did not provide '$platform'."
+        }

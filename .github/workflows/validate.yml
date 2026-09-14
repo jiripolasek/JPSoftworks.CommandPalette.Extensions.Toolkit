@@ -39,6 +39,7 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
         with:
           cache-scope: build
+      - uses: ./.github/actions/setup-windows-sdk
       - name: Resolve package version
         id: version
         env:
@@ -99,6 +100,7 @@ jobs:
       - uses: ./.github/actions/setup-dotnet
         with:
           cache-scope: aot-${{ matrix.runtime }}
+      - uses: ./.github/actions/setup-windows-sdk
       - name: Publish and verify both target frameworks
         env:
           AOT_RUNTIME: ${{ matrix.runtime }}

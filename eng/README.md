@@ -126,6 +126,10 @@ NuGet caches, keyed by the lock files and SDK setup action, so one job cannot ex
 When caching is enabled, the setup action defaults `NUGET_PACKAGES` to `artifacts/nuget` in the workspace and
 preserves an existing caller-supplied value. Restore and cache operations therefore use the same directory.
 
+Validation also installs the Windows SDK 10.0.22621.0 metadata required by CsWinRT when it is missing from
+the runner. The setup action uses the checksum-pinned 10.0.22621.5040 installer and its UWP Managed Apps
+feature. Native AOT uses the runner's existing C++ build tools.
+
 The `packages` artifact contains all four `.nupkg` and four `.snupkg` files and is retained for 30 days.
 Publishing downloads that artifact without rebuilding. GitHub Packages receives `.nupkg` files; symbols
 remain available in the artifact. TRX test results are retained for 14 days, including failed test runs.
