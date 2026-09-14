@@ -34,6 +34,8 @@ requires an explicit `-Version` and rejects stable and `preview.N` release ident
 
 `verify-aot.ps1` treats warnings as errors, publishes both target frameworks for `win-x64` and `win-arm64` beneath
 `artifacts\aot`, and verifies that every output is native rather than framework-dependent.
+Use `-ArtifactsPath` to select a shorter output root when the checkout path would exceed the native linker's
+path length limit. CI uses the runner's temporary directory for these outputs.
 
 ## Version management
 

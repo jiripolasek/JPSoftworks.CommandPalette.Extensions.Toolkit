@@ -13,6 +13,9 @@ param(
     [ValidateSet("win-x64", "win-arm64")]
     [string[]] $RuntimeIdentifiers = @("win-x64", "win-arm64"),
 
+    [ValidateNotNullOrEmpty()]
+    [string] $ArtifactsPath = (Join-Path (Split-Path -Parent $PSScriptRoot) "artifacts\aot"),
+
     [switch] $NoRestore
 )
 
@@ -22,9 +25,10 @@ $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $repositoryConfig = Import-PowerShellDataFile (Join-Path $PSScriptRoot "Package.config.psd1")
 $projectPath = Join-Path $repositoryRoot $repositoryConfig.AotProjectPath
 $projectName = $repositoryConfig.AotProjectName
+$ArtifactsPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ArtifactsPath)
 
 foreach ($runtimeIdentifier in $RuntimeIdentifiers) {
-    $runtimeArtifactsPath = Join-Path $repositoryRoot "artifacts\aot\$runtimeIdentifier"
+    $runtimeArtifactsPath = Join-Path $ArtifactsPath $runtimeIdentifier
     $artifactsProperty = "-p:ArtifactsPath=$runtimeArtifactsPath\"
 
     if (-not $NoRestore) {

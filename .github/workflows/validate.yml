@@ -104,4 +104,4 @@ jobs:
       - name: Publish and verify both target frameworks
         env:
           AOT_RUNTIME: ${{ matrix.runtime }}
-        run: ./eng/verify-aot.ps1 -RuntimeIdentifiers $env:AOT_RUNTIME
+        run: ./eng/verify-aot.ps1 -RuntimeIdentifiers $env:AOT_RUNTIME -ArtifactsPath "$env:RUNNER_TEMP/aot"
