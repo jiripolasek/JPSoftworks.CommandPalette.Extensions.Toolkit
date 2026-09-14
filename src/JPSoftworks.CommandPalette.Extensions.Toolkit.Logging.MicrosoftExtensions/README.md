@@ -30,7 +30,10 @@ await ExtensionHostRunner.CreateBuilder(host)
 `ExtensionHostConfiguration.Resolve` applies the Toolkit's `-Debug` convention and canonical local-app-data log path
 once. `AddDailyFile` and `AddCommandPalette` consume that immutable configuration, register only the destinations the
 application selected, and apply the effective level. The factory owns and disposes providers registered by these
-extensions.
+extensions. The providers accept every Microsoft logging level internally, leaving the registered Microsoft logging
+filters as the single effective level policy and allowing later provider-specific filters to override it.
+Use `ExtensionHostConfiguration.IsDebug` when application policy needs the resolved state instead of parsing
+`-Debug` again.
 
 `UseMicrosoftExtensionsLogging` replaces the Toolkit's default sinks and forwards host diagnostics into the supplied
 factory while preserving categories. Explicitly added runner sinks remain active, and `ILoggerFactory` fans each

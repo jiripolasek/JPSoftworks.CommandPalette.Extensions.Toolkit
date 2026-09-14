@@ -63,7 +63,10 @@ await ExtensionHostRunner.CreateBuilder(host)
 
 `AddDailyFile` and `AddCommandPalette` apply the resolved debug policy and register only the destinations selected by
 the application. The `ILoggerFactory` owns providers registered through these methods and fans each event out to all
-of them.
+of them. Their providers accept every Microsoft logging level internally, so later provider-specific `AddFilter`
+rules can replace the resolved minimum without being blocked by a second provider-level threshold.
+The resolved state is available through `ExtensionHostConfiguration.IsDebug`; consumers should not parse `-Debug`
+again.
 
 `UseMicrosoftExtensionsLogging` replaces the runner's default sinks and forwards host diagnostics into the same
 factory while preserving categories. Explicitly added runner sinks remain active.

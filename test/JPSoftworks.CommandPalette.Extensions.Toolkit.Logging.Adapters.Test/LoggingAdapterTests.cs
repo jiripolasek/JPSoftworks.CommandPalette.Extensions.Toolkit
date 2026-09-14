@@ -121,6 +121,27 @@ public sealed class LoggingAdapterTests
     }
 
     [Fact]
+    public void MicrosoftDestinationFiltersCanLowerResolvedHostMinimumLevel()
+    {
+        var configuration = CreateConfiguration(
+            $"FilterOverride-{Guid.NewGuid():N}",
+            isDebug: false);
+        using var commandPaletteFactory = LoggerFactory.Create(
+            builder => builder
+                .AddCommandPalette(configuration)
+                .AddFilter<CommandPaletteLoggerProvider>(
+                    static (_, level) => level >= LogLevel.Trace));
+        using var dailyFileFactory = LoggerFactory.Create(
+            builder => builder
+                .AddDailyFile(configuration)
+                .AddFilter<DailyFileLoggerProvider>(
+                    static (_, level) => level >= LogLevel.Trace));
+
+        Assert.True(commandPaletteFactory.CreateLogger("Application").IsEnabled(LogLevel.Trace));
+        Assert.True(dailyFileFactory.CreateLogger("Application").IsEnabled(LogLevel.Trace));
+    }
+
+    [Fact]
     public void SerilogMinimumLevelUsesResolvedHostPolicy()
     {
         var recordingSink = new RecordingSerilogSink();

@@ -38,7 +38,10 @@ public sealed class ExtensionHostConfiguration
 
     internal string[] Arguments { get; }
 
-    internal bool IsDebug { get; }
+    /// <summary>
+    /// Gets whether debug diagnostics are enabled for this host run.
+    /// </summary>
+    public bool IsDebug { get; }
 
     internal string LogFilePath { get; }
 

@@ -30,7 +30,7 @@ public static class ExtensionHostLoggingBuilderExtensions
 
         var minimumLevel = GetMinimumLevel(configuration);
         builder.Services.AddSingleton<ILoggerProvider>(
-            _ => new DailyFileLoggerProvider(configuration.LogFilePath, minimumLevel));
+            _ => new DailyFileLoggerProvider(configuration.LogFilePath));
         builder.AddFilter<DailyFileLoggerProvider>(
             (_, level) => level >= minimumLevel);
         return builder;
@@ -51,7 +51,7 @@ public static class ExtensionHostLoggingBuilderExtensions
 
         var minimumLevel = GetMinimumLevel(configuration);
         builder.Services.AddSingleton<ILoggerProvider>(
-            _ => new CommandPaletteLoggerProvider(minimumLevel));
+            _ => new CommandPaletteLoggerProvider());
         builder.AddFilter<CommandPaletteLoggerProvider>(
             (_, level) => level >= minimumLevel);
         return builder;
