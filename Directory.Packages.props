@@ -4,7 +4,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="4.14.0" />
-    <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.9.260303001" />
+    <!-- SDK 0.12 requires .NET 10; preserve .NET 9 compatibility with SDK 0.9. -->
+    <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.9.260303001"
+                    Condition=" '$(TargetFramework)' == 'net9.0-windows10.0.22621.0' " />
+    <PackageVersion Include="Microsoft.CommandPalette.Extensions" Version="0.12.260812002"
+                    Condition=" '$(TargetFramework)' == 'net10.0-windows10.0.22621.0' " />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="9.0.18"
                     Condition=" '$(TargetFramework)' == 'net9.0-windows10.0.22621.0' " />
     <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10"

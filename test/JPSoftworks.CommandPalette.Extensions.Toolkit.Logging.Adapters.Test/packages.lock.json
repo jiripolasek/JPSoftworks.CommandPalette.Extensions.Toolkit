@@ -154,7 +154,7 @@
         "type": "Project",
         "dependencies": {
           "JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions": "[0.9.2, )",
-          "Microsoft.CommandPalette.Extensions": "[0.9.260303001, )",
+          "Microsoft.CommandPalette.Extensions": "[0.12.260812002, )",
           "Shmuelie.WinRTServer": "[2.2.1, )"
         }
       },
@@ -179,9 +179,9 @@
       },
       "Microsoft.CommandPalette.Extensions": {
         "type": "CentralTransitive",
-        "requested": "[0.9.260303001, )",
-        "resolved": "0.9.260303001",
-        "contentHash": "D7nGAJBkgd9dMUDHvaj19wdqsvV//oHZR94RDMoHa2WD1u7C9TYtgR2yxT+MDJ5CQMtOs1VRLL9pEFqiQXvuFA==",
+        "requested": "[0.12.260812002, )",
+        "resolved": "0.12.260812002",
+        "contentHash": "XqzE3P0X9KI7GBT6491k3OD7BzNuFdYek8TiCzweq8O81pYlE0AdZH2SB8gEFpCKhwRciOcHMu0agsW+h0yJww==",
         "dependencies": {
           "Microsoft.Windows.CsWinRT": "2.2.0"
         }

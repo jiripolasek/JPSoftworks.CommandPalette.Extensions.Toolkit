@@ -44,6 +44,11 @@ An opinionated set of hosting, lifecycle, startup, and diagnostics utilities for
 The Toolkit targets .NET 9 and .NET 10 on Windows. It is Native AOT-compatible and trimmable, with `win-x64` and
 `win-arm64` publishes verified for both target frameworks.
 
+> [!NOTE]
+> `Microsoft.CommandPalette.Extensions` is selected per target framework: .NET 9 uses `0.9.260303001`, and .NET 10
+> uses `0.12.260812002`. The `0.12.260812002` package advertises a .NET 8 target, but its toolkit assembly requires
+> .NET 10. Keeping the older SDK for .NET 9 preserves compatibility with existing .NET 9 extensions.
+
 The main package does not pin a Windows SDK package version and does not depend on Windows App SDK, WebView2,
 Microsoft.Extensions.Logging, or Serilog.
 
