@@ -20,6 +20,14 @@ internal static class Program
     [MTAThread]
     private static async Task Main(string[] args)
     {
+        if (args.Contains("--exercise-com-lifetime", StringComparer.Ordinal)
+            || args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal))
+        {
+            await ComLifetimeSmokeTest.RunAsync(args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal));
+            Console.WriteLine("COM lifetime smoke test passed.");
+            return;
+        }
+
         if (args.Contains("--exercise-legacy-logger", StringComparer.Ordinal))
         {
             ExerciseLegacyLogger();

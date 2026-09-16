@@ -14,12 +14,12 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// </summary>
 public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisposable
 {
-    private readonly object _syncRoot = new();
     private readonly string _baseFilePath;
+    private readonly Lock _syncRoot = new();
 
     private DateOnly _fileDate;
-    private StreamWriter? _writer;
     private bool _isDisposed;
+    private StreamWriter? _writer;
 
     /// <summary>
     /// Initializes a daily rolling file sink.
@@ -32,6 +32,22 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseFilePath);
         this._baseFilePath = Path.GetFullPath(baseFilePath);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        lock (this._syncRoot)
+        {
+            if (this._isDisposed)
+            {
+                return;
+            }
+
+            this._writer?.Dispose();
+            this._writer = null;
+            this._isDisposed = true;
+        }
     }
 
     /// <inheritdoc />
@@ -60,22 +76,6 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        lock (this._syncRoot)
-        {
-            if (this._isDisposed)
-            {
-                return;
-            }
-
-            this._writer?.Dispose();
-            this._writer = null;
-            this._isDisposed = true;
-        }
-    }
-
     private static string GetLevelName(ExtensionHostLogLevel level)
     {
         return level switch
@@ -84,7 +84,7 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
             ExtensionHostLogLevel.Information => "INF",
             ExtensionHostLogLevel.Warning => "WRN",
             ExtensionHostLogLevel.Error => "ERR",
-            _ => level.ToString(),
+            _ => level.ToString()
         };
     }
 

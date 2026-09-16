@@ -10,10 +10,10 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposable
 {
-    private readonly object _syncRoot = new();
-    private readonly CompositeExtensionHostLogSink _sink;
-    private readonly IDisposable[] _ownedResources;
     private readonly bool _isDebugEnabled;
+    private readonly IDisposable[] _ownedResources;
+    private readonly CompositeExtensionHostLogSink _sink;
+    private readonly Lock _syncRoot = new();
 
     private bool _isDisposed;
 
@@ -25,24 +25,6 @@ internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposabl
         this._sink = new CompositeExtensionHostLogSink(sinks);
         this._ownedResources = ownedResources.ToArray();
         this._isDebugEnabled = isDebugEnabled;
-    }
-
-    public void Write(ExtensionHostLogEntry entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-
-        if (entry.Level == ExtensionHostLogLevel.Debug && !this._isDebugEnabled)
-        {
-            return;
-        }
-
-        lock (this._syncRoot)
-        {
-            if (!this._isDisposed)
-            {
-                this._sink.Write(entry);
-            }
-        }
     }
 
     public void Dispose()
@@ -67,6 +49,24 @@ internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposabl
             }
 
             this._isDisposed = true;
+        }
+    }
+
+    public void Write(ExtensionHostLogEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        if (entry.Level == ExtensionHostLogLevel.Debug && !this._isDebugEnabled)
+        {
+            return;
+        }
+
+        lock (this._syncRoot)
+        {
+            if (!this._isDisposed)
+            {
+                this._sink.Write(entry);
+            }
         }
     }
 }
