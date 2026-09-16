@@ -352,6 +352,112 @@ public sealed class ExtensionClassFactoryTests
         Assert.Equal(2, attempts);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ForcedTeardownDisposesAllActiveInstancesEvenWhenOneThrows(bool throwOnDispose)
+    {
+        var suspensions = 0;
+        var lifetime = new ExtensionHostLifetime(() => suspensions++);
+        var failure = new InvalidOperationException("Disposal failed.");
+        var inner = new TestExtension(() =>
+        {
+            if (throwOnDispose)
+            {
+                throw failure;
+            }
+        });
+        var other = new OtherExtension();
+        using var firstFactory = new ExtensionClassFactory(_ => inner, lifetime);
+        using var secondFactory = new ExtensionClassFactory(_ => other, lifetime);
+        var first = firstFactory.Activate();
+        var second = secondFactory.Activate();
+
+        lifetime.Drain();
+        firstFactory.Dispose();
+        secondFactory.Dispose();
+        if (throwOnDispose)
+        {
+            var exception = Assert.Throws<AggregateException>(lifetime.DisposeActiveExtensions);
+            Assert.Same(failure, Assert.Single(exception.InnerExceptions));
+        }
+        else
+        {
+            lifetime.DisposeActiveExtensions();
+        }
+
+        Assert.Equal(1, inner.DisposeCount);
+        Assert.Equal(1, other.DisposeCount);
+        Assert.Throws<ObjectDisposedException>(() => first.GetProvider(default));
+        Assert.Throws<ObjectDisposedException>(() => second.GetProvider(default));
+        first.Dispose();
+        second.Dispose();
+        lifetime.DisposeActiveExtensions();
+        Assert.Equal(1, inner.DisposeCount);
+        Assert.Equal(1, other.DisposeCount);
+        Assert.Equal(1, suspensions);
+    }
+
+    [Fact]
+    public void ForcedDisposalDoesNotHoldTheActivationGateWhileCallingExtensionCode()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        using var factory = new ExtensionClassFactory(_ => new TestExtension(() =>
+        {
+            var activation = Task.Run(() => Assert.Throws<COMException>(() => lifetime.AcquireReference()));
+            Assert.True(activation.Wait(Timeout));
+        }), lifetime);
+        factory.Activate();
+
+        lifetime.Drain();
+        lifetime.DisposeActiveExtensions();
+    }
+
+    [Fact]
+    public async Task ForcedTeardownWaitsForConcurrentClientDisposal()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        var disposing = NewSignal();
+        using var finishDisposal = new ManualResetEventSlim();
+        var inner = new TestExtension(() =>
+        {
+            disposing.TrySetResult();
+            Assert.True(finishDisposal.Wait(Timeout));
+        });
+        using var factory = new ExtensionClassFactory(_ => inner, lifetime);
+        var extension = factory.Activate();
+        var clientDisposal = Task.Run(extension.Dispose);
+        Task? teardown = null;
+        try
+        {
+            await disposing.Task.WaitAsync(Timeout);
+            lifetime.Drain();
+            var teardownStarted = NewSignal();
+            teardown = Task.Run(() =>
+            {
+                teardownStarted.SetResult();
+                lifetime.DisposeActiveExtensions();
+            });
+            await teardownStarted.Task.WaitAsync(Timeout);
+            await Task.WhenAny(teardown, Task.Delay(TimeSpan.FromMilliseconds(100)));
+            Assert.False(teardown.IsCompleted);
+        }
+        finally
+        {
+            finishDisposal.Set();
+        }
+
+        await Task.WhenAll(clientDisposal, teardown!).WaitAsync(Timeout);
+        Assert.Equal(1, inner.DisposeCount);
+    }
+
+    [Fact]
+    public void ActiveDisposalRequiresDrainingFirst()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        Assert.Throws<InvalidOperationException>(lifetime.DisposeActiveExtensions);
+    }
+
     private static TaskCompletionSource NewSignal() => new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     [Guid("7740310E-51C0-4B81-B356-60EAE8DEAE7F")]

@@ -20,10 +20,22 @@ internal static class Program
     [MTAThread]
     private static async Task Main(string[] args)
     {
+        if (args.Contains("--exercise-com-shutdown", StringComparer.Ordinal))
+        {
+            ComShutdownSmokeTest.Run(
+                args.Contains("--legacy-factory", StringComparer.Ordinal),
+                args.Contains("--end-session", StringComparer.Ordinal),
+                args.Contains("--throw-on-dispose", StringComparer.Ordinal));
+            Console.WriteLine("COM shutdown smoke test passed.");
+            return;
+        }
+
         if (args.Contains("--exercise-com-lifetime", StringComparer.Ordinal)
             || args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal))
         {
-            await ComLifetimeSmokeTest.RunAsync(args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal));
+            ComLifetimeSmokeTest.Run(
+                args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal),
+                args.Contains("--enable-efficiency-mode", StringComparer.Ordinal));
             Console.WriteLine("COM lifetime smoke test passed.");
             return;
         }

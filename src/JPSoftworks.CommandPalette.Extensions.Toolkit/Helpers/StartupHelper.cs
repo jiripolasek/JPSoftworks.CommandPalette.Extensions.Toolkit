@@ -4,6 +4,7 @@
 // 
 // ------------------------------------------------------------
 
+using System.ComponentModel;
 using System.Diagnostics;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
@@ -49,11 +50,18 @@ public static class StartupHelper
         catch (Exception ex)
         {
             logSink.LogError(LogCategory, ex);
-            MessageBoxHelper.Show(
-                Strings.UserExperienceHelper_GeneralErrorOnStart!,
-                Strings.UserExperienceHelper_ErrorCaption!,
-                MessageBoxHelper.IconType.Error,
-                MessageBoxHelper.MessageBoxType.OK);
+            try
+            {
+                MessageBoxHelper.Show(
+                    Strings.UserExperienceHelper_GeneralErrorOnStart!,
+                    Strings.UserExperienceHelper_ErrorCaption!,
+                    MessageBoxHelper.IconType.Error,
+                    MessageBoxHelper.MessageBoxType.OK);
+            }
+            catch (Win32Exception displayException)
+            {
+                logSink.LogError(LogCategory, displayException);
+            }
         }
     }
 
@@ -63,26 +71,14 @@ public static class StartupHelper
         // 1. We are not running as a COM server, so we can show a message box.
         // 2. We can check if PowerToys Command Palette is installed.
 
-        var (retailCommandPalettePackage, devCommandPalettePackage) = FindCommandPaletteApps(logSink);
+        var (retailCommandPalettePackage, devCommandPalettePackage) = FindCommandPaletteApps(new PackagedCommandPaletteAppCatalog(), logSink);
 
         if (retailCommandPalettePackage != null || devCommandPalettePackage != null)
         {
-            var started = false;
-            try
-            {
-                if (retailCommandPalettePackage != null)
-                {
-                    started = await StartCommandPalette(retailCommandPalettePackage);
-                }
-                else if (devCommandPalettePackage != null)
-                {
-                    started = await StartCommandPalette(devCommandPalettePackage);
-                }
-            }
-            catch (Exception ex)
-            {
-                logSink.LogError(LogCategory, ex);
-            }
+            var started = await TryStartCommandPaletteAsync(
+                retailCommandPalettePackage,
+                devCommandPalettePackage,
+                logSink);
 
             if (!started)
             {
@@ -112,35 +108,95 @@ public static class StartupHelper
         }
     }
 
-    private static async Task<bool> StartCommandPalette(Package package)
+    internal static async Task<bool> TryStartCommandPaletteAsync(
+        ICommandPaletteApp? retailApp,
+        ICommandPaletteApp? devApp,
+        IExtensionHostLogSink logSink)
     {
-        var appEntries = await package.GetAppListEntriesAsync()! ?? [];
-        if (appEntries.Count > 0 && appEntries[0] != null)
+        return await TryStartAsync(retailApp, logSink) || await TryStartAsync(devApp, logSink);
+    }
+
+    private static async Task<bool> TryStartAsync(ICommandPaletteApp? app, IExtensionHostLogSink logSink)
+    {
+        if (app == null)
         {
-            return await appEntries[0]!.LaunchAsync()!;
+            return false;
+        }
+
+        try
+        {
+            return await app.LaunchAsync();
+        }
+        catch (Exception ex)
+        {
+            logSink.LogError(LogCategory, ex);
         }
 
         return false;
     }
 
-    private static PackageDetectionResult FindCommandPaletteApps(IExtensionHostLogSink logSink)
+    internal static PackageDetectionResult FindCommandPaletteApps(ICommandPaletteAppCatalog catalog, IExtensionHostLogSink logSink)
     {
-        try
+        List<Exception>? discoveryErrors = null;
+        var retailApp = TryFind(catalog.FindRetailApp);
+        var devApp = TryFind(catalog.FindDevApp);
+        if (discoveryErrors != null)
         {
-            var packageManager = new PackageManager();
-            var retailPackage = packageManager.FindPackagesForUser("", CommandPalettePackageFamilyName)
-                ?.FirstOrDefault();
-            var devPackage = packageManager.FindPackagesForUser("", CommandPaletteDevPackageFamilyName)
-                ?.FirstOrDefault();
+            if (retailApp == null && devApp == null)
+            {
+                throw new AggregateException("Could not determine whether Command Palette is installed.", discoveryErrors);
+            }
 
-            return new PackageDetectionResult(retailPackage, devPackage);
+            foreach (var error in discoveryErrors)
+            {
+                logSink.LogError(LogCategory, error);
+            }
         }
-        catch (Exception ex)
+
+        return new PackageDetectionResult(retailApp, devApp);
+
+        ICommandPaletteApp? TryFind(Func<ICommandPaletteApp?> find)
         {
-            logSink.LogError(LogCategory, ex);
-            return new PackageDetectionResult(null, null);
+            try
+            {
+                return find();
+            }
+            catch (Exception ex)
+            {
+                (discoveryErrors ??= []).Add(ex);
+                return null;
+            }
         }
     }
 
-    private record struct PackageDetectionResult(Package? RetailPackage, Package? DevPackage);
+    internal readonly record struct PackageDetectionResult(ICommandPaletteApp? RetailApp, ICommandPaletteApp? DevApp);
+
+    private sealed class PackagedCommandPaletteAppCatalog : ICommandPaletteAppCatalog
+    {
+        private PackageManager? _packageManager;
+
+        public ICommandPaletteApp? FindRetailApp() => this.FindApp(CommandPalettePackageFamilyName);
+
+        public ICommandPaletteApp? FindDevApp() => this.FindApp(CommandPaletteDevPackageFamilyName);
+
+        private ICommandPaletteApp? FindApp(string familyName)
+        {
+            var package = (this._packageManager ??= new PackageManager()).FindPackagesForUser("", familyName)?.FirstOrDefault();
+            return package == null ? null : new PackagedCommandPaletteApp(package);
+        }
+    }
+
+    private sealed class PackagedCommandPaletteApp(Package package) : ICommandPaletteApp
+    {
+        public async Task<bool> LaunchAsync()
+        {
+            var appEntries = await package.GetAppListEntriesAsync()! ?? [];
+            if (appEntries.Count > 0 && appEntries[0] != null)
+            {
+                return await appEntries[0]!.LaunchAsync()!;
+            }
+
+            return false;
+        }
+    }
 }

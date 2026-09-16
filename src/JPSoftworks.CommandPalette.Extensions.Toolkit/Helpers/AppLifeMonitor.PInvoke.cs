@@ -74,14 +74,12 @@ internal sealed partial class AppLifeMonitor
 
 
         [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static partial bool SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
+        internal static partial nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
 
 
 
         [LibraryImport("user32.dll", EntryPoint = "SetClassLongPtrW", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        internal static partial bool SetClassLongPtr(nint hWnd, int nIndex, nint dwNewLong);
+        internal static partial nuint SetClassLongPtr(nint hWnd, int nIndex, nint dwNewLong);
 
 
 

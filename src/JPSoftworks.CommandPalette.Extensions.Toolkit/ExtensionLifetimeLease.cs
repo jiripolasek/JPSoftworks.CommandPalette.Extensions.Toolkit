@@ -9,7 +9,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 internal sealed class ExtensionLifetimeLease(ExtensionHostLifetime lifetime) : IDisposable
 {
     private readonly Lock _gate = new();
-    private bool _active;
+    private HostedExtension? _extension;
     private bool _disposed;
 
     internal ManualResetEvent DisposedEvent { get; } = new(false);
@@ -26,30 +26,31 @@ internal sealed class ExtensionLifetimeLease(ExtensionHostLifetime lifetime) : I
             this._disposed = true;
             try
             {
-                if (this._active)
+                if (this._extension != null)
                 {
-                    lifetime.ReleaseReference();
+                    lifetime.ReleaseReference(this._extension);
                 }
             }
             finally
             {
+                this._extension = null;
                 this.DisposedEvent.Dispose();
             }
         }
     }
 
-    internal void Activate()
+    internal void Activate(HostedExtension extension)
     {
         lock (this._gate)
         {
             ObjectDisposedException.ThrowIf(this._disposed, this);
-            if (this._active)
+            if (this._extension != null)
             {
                 return;
             }
 
-            lifetime.AcquireReference();
-            this._active = true;
+            lifetime.AcquireReference(extension);
+            this._extension = extension;
         }
     }
 }

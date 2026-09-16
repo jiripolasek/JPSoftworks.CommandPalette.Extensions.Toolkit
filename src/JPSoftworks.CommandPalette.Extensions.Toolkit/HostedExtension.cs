@@ -79,7 +79,7 @@ internal sealed partial class HostedExtension : IExtension
         lock (this._gate)
         {
             ObjectDisposedException.ThrowIf(this._extension is null || this._lease.DisposedEvent.WaitOne(0), this);
-            this._lease.Activate();
+            this._lease.Activate(this);
         }
     }
 }

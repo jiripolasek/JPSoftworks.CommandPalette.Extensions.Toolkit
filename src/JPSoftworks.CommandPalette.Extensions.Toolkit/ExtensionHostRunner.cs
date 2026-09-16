@@ -82,35 +82,50 @@ public static class ExtensionHostRunner
             "-RegisterProcessAsComServer",
             StringComparer.Ordinal);
 
-        using var logSink = CreateLogSink(configuration, includeDefaultLogSinks, additionalLogSinks);
-        LegacyLoggerBridge.UseSink(logSink, configuration.IsDebug);
-
+        var appLifeMonitorTermination = isComServer ? new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously) : null;
+        AppLifeMonitor? appLifeMonitor = null;
         try
         {
-            logSink.LogDebug(LogCategory, "Diagnostics initialized");
-            logSink.LogInformation(
-                LogCategory,
-                isComServer
-                    ? "Starting extension host in COM-server mode"
-                    : "Starting extension host in direct-launch mode");
+            using var logSink = CreateLogSink(configuration, includeDefaultLogSinks, additionalLogSinks);
+            LegacyLoggerBridge.UseSink(logSink, configuration.IsDebug);
 
-            if (isComServer)
+            try
             {
-                await RunComServerAsync(runParams, logSink);
+                logSink.LogDebug(LogCategory, "Diagnostics initialized");
+                logSink.LogInformation(
+                    LogCategory,
+                    isComServer
+                        ? "Starting extension host in COM-server mode"
+                        : "Starting extension host in direct-launch mode");
+
+                if (isComServer)
+                {
+                    if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
+                    {
+                        throw new InvalidOperationException("The COM server must be run in MTA thread.");
+                    }
+
+                    appLifeMonitor = TrySetAppLifeMonitor(appLifeMonitorTermination!, logSink);
+                    await RunComServerAsync(runParams, logSink, appLifeMonitorTermination!.Task);
+                }
+                else
+                {
+                    await StartupHelper.HandleDirectLaunchAsync(logSink);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await StartupHelper.HandleDirectLaunchAsync(logSink);
+                logSink.LogError(LogCategory, "Unhandled fatal exception", ex);
             }
-        }
-        catch (Exception ex)
-        {
-            logSink.LogError(LogCategory, "Unhandled fatal exception", ex);
+            finally
+            {
+                logSink.LogDebug(LogCategory, "Done");
+                LegacyLoggerBridge.CloseAndFlush();
+            }
         }
         finally
         {
-            logSink.LogDebug(LogCategory, "Done");
-            LegacyLoggerBridge.CloseAndFlush();
+            appLifeMonitor?.Dispose();
         }
     }
 
@@ -145,17 +160,10 @@ public static class ExtensionHostRunner
 
     private static async Task RunComServerAsync(
         ExtensionHostRunnerParameters runParams,
-        IExtensionHostLogSink logSink)
+        IExtensionHostLogSink logSink,
+        Task appLifeMonitorTermination)
     {
         logSink.LogDebug(LogCategory, "Running as COM server");
-
-        if (Thread.CurrentThread.GetApartmentState() != ApartmentState.MTA)
-        {
-            throw new InvalidOperationException("The COM server must be run in MTA thread.");
-        }
-
-        using ManualResetEvent appLifeMonitorTerminationEvent = new(false);
-        using var appLifeMonitor = TrySetAppLifeMonitor(appLifeMonitorTerminationEvent, logSink);
 
         var server = new ComServer();
         var lifetime = new ExtensionHostLifetime();
@@ -167,7 +175,7 @@ public static class ExtensionHostRunner
         try
         {
             TrySetShutdownPriority(logSink);
-            TryEnableEfficiencyMode(runParams);
+            TryEnableEfficiencyMode(runParams, logSink);
 
             DefaultComWrappers? comWrappers = null;
 
@@ -224,7 +232,7 @@ public static class ExtensionHostRunner
             server.Start();
 
             logSink.LogDebug(LogCategory, "Waiting for all extensions to be disposed or the extension app to close");
-            await WaitForShutdownAsync(lifetime.Shutdown, appLifeMonitorTerminationEvent);
+            await WaitForShutdownAsync(lifetime.Shutdown, appLifeMonitorTermination);
 
             logSink.LogDebug(LogCategory, "Shutting down COM server");
 
@@ -278,33 +286,55 @@ public static class ExtensionHostRunner
                             logSink.LogError(LogCategory, "Failed to dispose an unused extension instance", ex);
                         }
                     }
+
+                    try
+                    {
+                        lifetime.DisposeActiveExtensions();
+                    }
+                    catch (Exception ex)
+                    {
+                        logSink.LogError(LogCategory, "Failed to dispose active extension instances", ex);
+                    }
                 }
             }
         }
     }
 
-    private static void TryEnableEfficiencyMode(ExtensionHostRunnerParameters extensionHostRunnerParameters)
+    private static void TryEnableEfficiencyMode(
+        ExtensionHostRunnerParameters extensionHostRunnerParameters,
+        IExtensionHostLogSink logSink)
     {
         if (extensionHostRunnerParameters.EnableEfficiencyMode)
         {
-            Process.GetCurrentProcess().PriorityClass = ProcessPriorityClass.Idle;
+            try
+            {
+                using var process = Process.GetCurrentProcess();
+                process.PriorityClass = ProcessPriorityClass.Idle;
+            }
+            catch (Exception ex)
+            {
+                logSink.LogError(LogCategory, "Failed to lower the process priority", ex);
+            }
+
             EfficiencyModeHelper.TryEnableProcessEfficiencyMode();
         }
     }
 
     private static AppLifeMonitor? TrySetAppLifeMonitor(
-        ManualResetEvent appLifeMonitorTerminationEvent,
+        TaskCompletionSource appLifeMonitorTermination,
         IExtensionHostLogSink logSink)
     {
+        AppLifeMonitor? appLifeMonitor = null;
         try
         {
-            var appLifeMonitor = new AppLifeMonitor();
+            appLifeMonitor = new AppLifeMonitor();
+            appLifeMonitor.ExitRequested += (_, _) => appLifeMonitorTermination.TrySetResult();
             appLifeMonitor.StartMonitoring();
-            appLifeMonitor.ExitRequested += (_, _) => appLifeMonitorTerminationEvent.Set();
             return appLifeMonitor;
         }
         catch (Exception ex)
         {
+            appLifeMonitor?.Dispose();
             logSink.LogError(LogCategory, ex);
         }
 
@@ -319,7 +349,7 @@ public static class ExtensionHostRunner
             // to allow host CmdPal to shut down before us. This has two effects:
             //    1. It allows CmdPal to release us, and we then shut down naturally.
             //    2. System won't shut us down before CmdPal, so if user cancels shutdown and CmdPal is still running, we are too.
-            ShutdownHelper.TrySetShutdownPriority(0x200);
+            ShutdownHelper.SetShutdownPriority(0x200);
         }
         catch (Exception ex)
         {
@@ -327,24 +357,9 @@ public static class ExtensionHostRunner
         }
     }
 
-    private static async Task WaitForShutdownAsync(Task shutdown, WaitHandle appTermination)
+    private static async Task WaitForShutdownAsync(Task shutdown, Task appTermination)
     {
-        var termination = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        var registration = ThreadPool.RegisterWaitForSingleObject(
-            appTermination,
-            (_, _) => termination.TrySetResult(),
-            null,
-            Timeout.Infinite,
-            true);
-
-        try
-        {
-            var completed = await Task.WhenAny(shutdown, termination.Task);
-            await completed;
-        }
-        finally
-        {
-            registration.Unregister(null);
-        }
+        var completed = await Task.WhenAny(shutdown, appTermination);
+        await completed;
     }
 }

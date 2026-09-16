@@ -4,6 +4,9 @@
 // 
 // ------------------------------------------------------------
 
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers;
 
 
@@ -17,13 +20,36 @@ internal sealed partial class AppLifeMonitor : IDisposable
     private static readonly Lazy<IntPtr> DefWindowProcAddress = new(() => PInvoke.GetProcAddress(PInvoke.GetModuleHandle("user32.dll"), "DefWindowProcW"));
 
     private readonly Lock _syncLock = new();
-    private readonly ManualResetEvent _threadProcInitialized = new(false);
+    private readonly TaskCompletionSource _initialization = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _shutdownCompleted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly string _className;
+    private readonly TimeSpan _shutdownTimeout;
 
     private volatile bool _disposed;
     private nint _hwnd;
     private Thread? _messageLoopThread;
     private uint _nativeThreadId;
     private PInvoke.WindowProc? _windowProc;
+    private ushort _classAtom;
+
+    public AppLifeMonitor()
+        : this($"AppLifeMonitor_{Guid.NewGuid():N}")
+    {
+    }
+
+    internal AppLifeMonitor(string className)
+        : this(className, TimeSpan.FromSeconds(4))
+    {
+    }
+
+    internal AppLifeMonitor(string className, TimeSpan shutdownTimeout)
+    {
+        this._className = className;
+        this._shutdownTimeout = shutdownTimeout;
+    }
+
+    /// <summary>Acknowledges host cleanup before the monitor thread is joined.</summary>
+    internal void CompleteShutdown() => this._shutdownCompleted.TrySetResult();
 
     public void Dispose()
     {
@@ -32,38 +58,26 @@ internal sealed partial class AppLifeMonitor : IDisposable
             return;
         }
 
-        try
+        lock (this._syncLock)
         {
-            lock (this._syncLock)
+            if (this._disposed)
             {
-                if (this._disposed)
-                {
-                    return;
-                }
-
-                this._disposed = true;
-
-                if (this._nativeThreadId != nint.Zero)
-                {
-                    PInvoke.PostThreadMessage(this._nativeThreadId, PInvoke.WM_QUIT, 0, 0);
-                }
-
-                // Wait up to 5 s for the loop to exit
-                if (this._messageLoopThread?.IsAlive == true &&
-                    !this._messageLoopThread.Join(TimeSpan.FromSeconds(5)))
-                {
-                    // Failed to stop the message loop
-                }
-
-                this._messageLoopThread = null;
-                this._nativeThreadId = 0u;
-                // don't clear the _windowProc here, it will be cleared in CleanupWindow
-                // this._messageLoopThread.Join might have timed out and the window might still be valid
+                return;
             }
-        }
-        finally
-        {
-            this._threadProcInitialized.Dispose();
+
+            this._disposed = true;
+            this.CompleteShutdown();
+
+            if (this._messageLoopThread?.IsAlive == true)
+            {
+                PInvoke.PostThreadMessage(this._nativeThreadId, PInvoke.WM_QUIT, 0, 0);
+                if (Thread.CurrentThread != this._messageLoopThread)
+                {
+                    this._messageLoopThread.Join(TimeSpan.FromSeconds(5));
+                }
+            }
+
+            // CleanupWindow owns the callback until the native window and class are gone.
         }
     }
 
@@ -71,29 +85,19 @@ internal sealed partial class AppLifeMonitor : IDisposable
 
     public void StartMonitoring()
     {
-        ObjectDisposedException.ThrowIf(this._disposed, this);
-
-        if (this._messageLoopThread != null)
-        {
-            return;
-        }
-
         lock (this._syncLock)
         {
-            if (this._messageLoopThread != null)
+            ObjectDisposedException.ThrowIf(this._disposed, this);
+
+            if (this._messageLoopThread == null)
             {
-                return;
+                // MTA prevents the shutdown acknowledgement wait from dispatching nested messages.
+                this._messageLoopThread = new(this.MessageLoopThread) { IsBackground = true, Name = "AppLifeMonitor Thread" };
+                this._messageLoopThread.SetApartmentState(ApartmentState.MTA);
+                this._messageLoopThread.Start();
             }
 
-            // Run mini message loop to observe application lifecycle events.
-            // This will allow us to exit gracefully when the system or updater asks us to.
-            this._messageLoopThread = new(this.MessageLoopThread) { IsBackground = true, Name = "AppLifeMonitor Thread" };
-            this._messageLoopThread.SetApartmentState(ApartmentState.STA);
-            this._messageLoopThread.Start();
-
-            // make sure the thread is initialized before we return
-            // also make sure this it set even if the thread fails to initialize to unblock the caller
-            this._threadProcInitialized.WaitOne();
+            this._initialization.Task.GetAwaiter().GetResult();
         }
     }
 
@@ -101,19 +105,21 @@ internal sealed partial class AppLifeMonitor : IDisposable
 
     private void MessageLoopThread()
     {
-        string className = $"AppLifeMonitor_{Guid.NewGuid():N}";
+        var initialized = false;
 
         try
         {
             this._nativeThreadId = PInvoke.GetCurrentThreadId();
-            this.InitializeWindow(className);
-            this._threadProcInitialized.Set();
+            this.InitializeWindow();
+            initialized = true;
+            this._initialization.SetResult();
 
             if (this._hwnd != nint.Zero)
             {
                 while (true)
                 {
-                    var result = PInvoke.GetMessage(out PInvoke.MSG msg, this._hwnd, 0, 0);
+                    // Include thread messages so Dispose can stop the loop with WM_QUIT.
+                    var result = PInvoke.GetMessage(out PInvoke.MSG msg, nint.Zero, 0, 0);
                     if (result == nint.Zero)
                     {
                         break; // WM_QUIT received, exit the loop
@@ -129,42 +135,53 @@ internal sealed partial class AppLifeMonitor : IDisposable
                 }
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            this._threadProcInitialized.Set();
+            this._initialization.TrySetException(ex);
         }
-
-        this.SignalTermination();
-        this.CleanupWindow(className);
+        finally
+        {
+            try
+            {
+                this.CleanupWindow();
+            }
+            finally
+            {
+                if (initialized)
+                {
+                    this.SignalTermination();
+                }
+            }
+        }
     }
 
 
 
-    private void InitializeWindow(string className)
+    private void InitializeWindow()
     {
         this._windowProc = this.WndProc;
-        var wndClass = new PInvoke.WndClass { lpfnWndProc = this._windowProc, hInstance = PInvoke.GetModuleHandle(null), lpszClassName = className };
+        var wndClass = new PInvoke.WndClass { lpfnWndProc = this._windowProc, hInstance = PInvoke.GetModuleHandle(null), lpszClassName = this._className };
 
-        var classAtom = PInvoke.RegisterClass(in wndClass);
-        if (classAtom == nint.Zero)
+        this._classAtom = PInvoke.RegisterClass(in wndClass);
+        if (this._classAtom == 0)
         {
+            var error = Marshal.GetLastPInvokeError();
             this._windowProc = null;
-            return;
+            throw new Win32Exception(error, "Failed to register the application lifetime monitor window class.");
         }
 
-        // don't make this message window, it wouldn't receive WM_QUERYENDSESSION and WM_ENDSESSION messages
-        this._hwnd = PInvoke.CreateWindowEx(0, className, "AppLifeMonitor", PInvoke.WS_POPUP, 0, 0, 0, 0, 0, nint.Zero, wndClass.hInstance, nint.Zero);
+        // Message-only windows do not receive session shutdown messages.
+        this._hwnd = PInvoke.CreateWindowEx(0, this._className, "AppLifeMonitor", PInvoke.WS_POPUP, 0, 0, 0, 0, 0, nint.Zero, wndClass.hInstance, nint.Zero);
+        if (this._hwnd == nint.Zero)
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), "Failed to create the application lifetime monitor window.");
+        }
     }
 
 
 
-    private void CleanupWindow(string className)
+    private void CleanupWindow()
     {
-        if (this._hwnd == nint.Zero)
-        {
-            return;
-        }
-
         var hwnd = this._hwnd;
         this._hwnd = nint.Zero;
 
@@ -175,16 +192,15 @@ internal sealed partial class AppLifeMonitor : IDisposable
             PInvoke.SetClassLongPtr(hwnd, PInvoke.GCL_WNDPROC, DefWindowProcAddress.Value);
         }
 
-        // If the window is still valid, try to destroy it gracefully.
-        // If that fails, post a close message to it. If that also fails, unregister the class.
+        // Keep the callback rooted if native teardown fails.
         if (PInvoke.IsWindow(hwnd) && !PInvoke.DestroyWindow(hwnd))
         {
-            PInvoke.PostMessage(hwnd, PInvoke.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+            return;
         }
-        else
+
+        if (this._classAtom != 0 && PInvoke.UnregisterClass(this._className, PInvoke.GetModuleHandle(null)))
         {
-            var hInstance = PInvoke.GetModuleHandle(null);
-            PInvoke.UnregisterClass(className, hInstance);
+            this._classAtom = 0;
             this._windowProc = null;
         }
     }
@@ -217,9 +233,10 @@ internal sealed partial class AppLifeMonitor : IDisposable
                 if (wParam != nint.Zero)
                 {
                     this.SignalTermination();
+                    this._shutdownCompleted.Task.Wait(this._shutdownTimeout);
                 }
 
-                break;
+                return 0;
         }
 
         return PInvoke.DefWindowProc(hWnd, msg, wParam, lParam);

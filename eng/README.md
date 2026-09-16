@@ -19,6 +19,11 @@ Restore operations used by `build.ps1`, `test.ps1`, and `pack.ps1` run in locked
 AOT smoke-test project are declared in `eng\Package.config.psd1`. `pack.ps1` produces every Toolkit `.nupkg` together
 with a matching `.snupkg`, and `publish-local.ps1` copies both package types to `artifacts\local-feed`.
 
+`test.ps1` also runs the managed COM lifetime and shutdown smoke tests for both target frameworks. Shutdown tests
+cover hosted and legacy factories, window-close and end-session messages, and throwing disposal callbacks. Each
+case runs in its own process and sends messages only to that process's monitor window; no system shutdown occurs.
+Lifetime tests verify the lowered process priority, then restore normal priority before the timed COM checks.
+
 `publish-nuget.ps1` validates the complete package set and asks for confirmation before publishing it to NuGet.org.
 It accepts stable versions and exact lowercase `preview.N` prereleases; other prerelease suffixes are rejected.
 It uses the `NUGET_API_KEY` environment variable or an API key already configured for NuGet.org. Each `.nupkg` and

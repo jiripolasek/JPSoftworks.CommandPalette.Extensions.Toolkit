@@ -101,6 +101,10 @@ When the process is not registered as a COM server, the runner delegates to `Sta
 Command Palette or prompt the user to install PowerToys. This makes direct executable launches useful instead of
 leaving an apparently unresponsive background process.
 
+Retail and development packages are discovered independently, with retail preferred for launch. Discovery errors
+do not discard a package found in the other channel. If neither channel produces a package and either query fails,
+the helper reports an error rather than prompting installation; a failed retail launch still falls back to dev.
+
 ## Process lifetime
 
 The runner starts the COM server on an MTA thread and waits until either:
@@ -118,7 +122,15 @@ already acquired class factory are rejected while draining. COM can route a subs
 process, as described in [Microsoft's COM server lifetime guidance](https://learn.microsoft.com/en-us/windows/win32/com/out-of-process-server-implementation-helpers).
 
 Application termination also closes the gate and suspends COM before unregistering factories. The runner then
-closes diagnostics. Caller-owned logging factories, loggers, and custom sinks remain owned by the application.
+disposes any remaining active and prepared instances sequentially, continuing cleanup if an instance throws.
+Concurrent client disposal and forced teardown share the wrapper's exactly-once disposal path.
+
+During `WM_ENDSESSION`, the monitor waits for extension and diagnostics cleanup before acknowledging shutdown,
+with a four-second limit so a blocked extension cannot hold the Windows shutdown response indefinitely. Completion
+is acknowledged before joining the monitor thread. This is a total best-effort budget, not a per-instance guarantee;
+a blocked disposal can prevent later instances from finishing before Windows terminates the process. The monitor
+uses an MTA thread so the acknowledgement wait does not dispatch nested shutdown messages. Caller-owned logging
+factories, loggers, and custom sinks remain owned by the application.
 
 ## Supporting utilities
 

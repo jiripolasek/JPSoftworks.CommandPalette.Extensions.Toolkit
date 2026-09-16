@@ -4,28 +4,22 @@
 //
 // ------------------------------------------------------------
 
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 using Microsoft.CommandPalette.Extensions;
+using static JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest.ComSmokeTestSupport;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest;
 
 internal static partial class ComLifetimeSmokeTest
 {
-    internal static Task RunAsync(bool useLegacyFactory)
+    internal static void Run(bool useLegacyFactory, bool enableEfficiencyMode)
     {
-        Marshal.ThrowExceptionForHR(CoInitializeEx(0, 0));
-        try
-        {
-            return ExerciseServer(useLegacyFactory).WaitAsync(TimeSpan.FromSeconds(10));
-        }
-        finally
-        {
-            CoUninitialize();
-        }
+        RunInMta(() => ExerciseServer(useLegacyFactory, enableEfficiencyMode).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult());
     }
 
-    private static unsafe Task ExerciseServer(bool useLegacyFactory)
+    private static unsafe Task ExerciseServer(bool useLegacyFactory, bool enableEfficiencyMode)
     {
         var creations = 0;
         var disposals = 0;
@@ -34,7 +28,7 @@ internal static partial class ComLifetimeSmokeTest
         {
             PublisherMoniker = "JPSoftworks",
             ProductMoniker = "ComLifetimeSmokeTest",
-            EnableEfficiencyMode = false,
+            EnableEfficiencyMode = enableEfficiencyMode,
         };
 
         IExtension CreateExtension(ManualResetEvent disposedEvent)
@@ -69,6 +63,21 @@ internal static partial class ComLifetimeSmokeTest
 
         var running = builder.RunAsync();
         Require(!running.IsCompleted, "The COM server exited before activation.");
+        Require(GetProcessShutdownParameters(out var shutdownLevel, out var shutdownFlags)
+            && shutdownLevel == 0x200 && shutdownFlags == 1, "The process shutdown priority was not applied.");
+        if (enableEfficiencyMode)
+        {
+            using var process = Process.GetCurrentProcess();
+            try
+            {
+                Require(process.PriorityClass == ProcessPriorityClass.Idle, "The process priority was not lowered.");
+            }
+            finally
+            {
+                // Do not run the timeout-based COM checks at Idle priority.
+                process.PriorityClass = ProcessPriorityClass.Normal;
+            }
+        }
 
         var clsid = typeof(LifetimeSmokeExtension).GUID;
         var iid = typeof(IExtension).GUID;
@@ -115,57 +124,12 @@ internal static partial class ComLifetimeSmokeTest
         return running;
     }
 
-    private static unsafe void DisposeExtension(nint extension)
-    {
-        var dispose = (delegate* unmanaged[Stdcall]<nint, int>)(*(nint**)extension)[7];
-        Marshal.ThrowExceptionForHR(dispose(extension));
-    }
-
-    private static unsafe nint ActivateExtension(Guid clsid, Guid iid)
-    {
-        // Activate through IUnknown so this unpackaged test needs no WinRT interface registration.
-        var unknownIid = new Guid("00000000-0000-0000-C000-000000000046");
-        Marshal.ThrowExceptionForHR(CoCreateInstance(in clsid, 0, 4, in unknownIid, out var unknown));
-        try
-        {
-            nint extension = 0;
-            var queryInterface = (delegate* unmanaged[Stdcall]<nint, Guid*, nint*, int>)(*(nint**)unknown)[0];
-            Marshal.ThrowExceptionForHR(queryInterface(unknown, &iid, &extension));
-            return extension;
-        }
-        finally
-        {
-            Marshal.Release(unknown);
-        }
-    }
-
-    private static void Release(nint instance)
-    {
-        if (instance != 0)
-        {
-            Marshal.Release(instance);
-        }
-    }
-
-    private static void Require(bool condition, string message)
-    {
-        if (!condition)
-        {
-            throw new InvalidOperationException(message);
-        }
-    }
-
-    [LibraryImport("ole32.dll")]
-    private static partial int CoInitializeEx(nint reserved, uint concurrencyModel);
-
-    [LibraryImport("ole32.dll")]
-    private static partial void CoUninitialize();
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static partial bool GetProcessShutdownParameters(out uint level, out uint flags);
 
     [LibraryImport("ole32.dll")]
     private static partial int CoGetClassObject(in Guid clsid, uint context, nint reserved, in Guid iid, out nint instance);
-
-    [LibraryImport("ole32.dll")]
-    private static partial int CoCreateInstance(in Guid clsid, nint outer, uint context, in Guid iid, out nint instance);
 }
 
 [Guid("949291B4-C07F-4D34-85C0-069DC49D62ED")]

@@ -4,6 +4,7 @@
 // 
 // ------------------------------------------------------------
 
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
@@ -17,19 +18,22 @@ internal static partial class ShutdownHelper
     {
         internal const uint SHUTDOWN_NORETRY = 0x00000001;
 
-        [LibraryImport("kernel32.dll")]
+        [LibraryImport("kernel32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static partial bool SetProcessShutdownParameters(uint dwLevel, uint dwFlags);
     }
 
 
 
-    public static void TrySetShutdownPriority(int level)
+    public static void SetShutdownPriority(int level)
     {
         if (level is < 0x100 or > 0x3FF)
         {
             throw new ArgumentOutOfRangeException(nameof(level), "Shutdown priority level must be between 0x100 and 0x3FF.");
         }
-        PInvoke.SetProcessShutdownParameters((uint)level, PInvoke.SHUTDOWN_NORETRY);
+        if (!PInvoke.SetProcessShutdownParameters((uint)level, PInvoke.SHUTDOWN_NORETRY))
+        {
+            throw new Win32Exception(Marshal.GetLastPInvokeError(), "Failed to set the process shutdown priority.");
+        }
     }
 }
