@@ -12,8 +12,8 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// Provides the original static logging API retained for compatibility.
 /// </summary>
 /// <remarks>
-/// When an <see cref="ExtensionHostRunner"/> is active, entries are forwarded to its effective log sink.
-/// Calling <see cref="Initialize"/> directly configures the original daily-file and Command Palette destinations.
+/// When an <see cref="ExtensionHostRunner" /> is active, entries are forwarded to its effective log sink.
+/// Calling <see cref="Initialize" /> directly configures the original daily-file and Command Palette destinations.
 /// </remarks>
 [Obsolete("Use IExtensionHostLogSink and configure sinks through ExtensionHostRunner.CreateBuilder instead.")]
 public static class Logger
@@ -96,7 +96,7 @@ internal static class LegacyLoggerBridge
 {
     private const string Category = "Logger";
 
-    private static readonly object SyncRoot = new();
+    private static readonly Lock SyncRoot = new();
 
     [ThreadStatic]
     private static bool _isWriting;
@@ -115,10 +115,10 @@ internal static class LegacyLoggerBridge
             var logFilePath = Path.Combine(localAppData, publisherName, productName, "log.txt");
             var fileSink = new DailyFileExtensionHostLogSink(logFilePath);
             var sink = new CompositeExtensionHostLogSink(
-                [
-                    fileSink,
-                    CommandPaletteExtensionHostLogSink.Instance,
-                ]);
+            [
+                fileSink,
+                CommandPaletteExtensionHostLogSink.Instance
+            ]);
 
             SetSink(sink, fileSink, isDebug);
             Write(ExtensionHostLogLevel.Debug, "Logger initialized");
@@ -135,7 +135,7 @@ internal static class LegacyLoggerBridge
     internal static void UseSink(IExtensionHostLogSink sink, bool isDebug)
     {
         ArgumentNullException.ThrowIfNull(sink);
-        SetSink(sink, ownedResource: null, isDebug: isDebug);
+        SetSink(sink, null, isDebug);
     }
 
     internal static void Write(
@@ -214,7 +214,7 @@ internal static class LegacyLoggerBridge
                 DateTimeOffset.Now,
                 level,
                 Category,
-                eventId: 0,
+                0,
                 message,
                 exception));
         }

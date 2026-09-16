@@ -46,8 +46,15 @@ runner.AddHostedExtensionFactory(context =>
     new MyExtension(context.ExtensionDisposedEvent));
 ```
 
-`ExtensionHostContext` supplies the process-owned disposal event. The extension must signal it when the extension is
-disposed so the runner can stop the COM server cleanly.
+Each call receives a separate `ExtensionHostContext` and lifetime lease. The toolkit wraps `IExtension.Dispose()`
+and releases that instance's lease after disposal completes, including when disposal throws. Extensions no longer
+need to signal `ExtensionDisposedEvent`; it remains available for compatibility and belongs only to that instance.
+Signaling the event alone does not shut down the process. Do not share or dispose the event.
+
+Factories must return a new instance of the same COM class on every call. Because the existing factory APIs do not
+expose a CLSID, the runner prepares the first instance during registration and hands it out at most once. Later
+activations create new instances. Prepared instances that are never activated are disposed during teardown and do
+not keep the process alive.
 
 For reusable factory objects, implement `IHostedExtensionFactory` or use `DelegateHostedExtensionFactory`:
 
@@ -98,11 +105,20 @@ leaving an apparently unresponsive background process.
 
 The runner starts the COM server on an MTA thread and waits until either:
 
-- the hosted extension signals its disposal event; or
+- the final active extension instance is disposed; or
 - the monitored application lifetime requests termination.
 
-It then unregisters the COM server and closes diagnostics. Caller-owned logging factories, loggers, and custom sinks
-remain owned by the application.
+All registered factories share one activation gate. An accepted activation holds a lifetime reference while its
+factory runs, so concurrent disposal cannot shut down a process that is creating another instance. Disposing one
+instance keeps the server running while other instances or accepted activations remain.
+
+The final instance's disposal synchronously closes the activation gate and calls `CoSuspendClassObjects` before
+returning to the client. Only after suspension succeeds does the runner begin normal teardown. Calls through an
+already acquired class factory are rejected while draining. COM can route a subsequent activation to a new server
+process, as described in [Microsoft's COM server lifetime guidance](https://learn.microsoft.com/en-us/windows/win32/com/out-of-process-server-implementation-helpers).
+
+Application termination also closes the gate and suspends COM before unregistering factories. The runner then
+closes diagnostics. Caller-owned logging factories, loggers, and custom sinks remain owned by the application.
 
 ## Supporting utilities
 

@@ -12,7 +12,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Test;
 
 public sealed class LoggingSinkTests
 {
-    private static readonly object TraceSyncRoot = new();
+    private static readonly Lock TraceSyncRoot = new();
 
     [Fact]
     public void DelegateSinkForwardsEntry()
