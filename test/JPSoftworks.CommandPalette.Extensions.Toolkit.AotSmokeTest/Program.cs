@@ -20,12 +20,21 @@ internal static class Program
     [MTAThread]
     private static async Task Main(string[] args)
     {
+        if (args.Contains("--exercise-com-registration", StringComparer.Ordinal))
+        {
+            ComRegistrationSmokeTest.Run(args.Contains("--explicit-first", StringComparer.Ordinal));
+            Console.WriteLine("COM registration smoke test passed.");
+            return;
+        }
+
         if (args.Contains("--exercise-com-shutdown", StringComparer.Ordinal))
         {
             ComShutdownSmokeTest.Run(
                 args.Contains("--legacy-factory", StringComparer.Ordinal),
                 args.Contains("--end-session", StringComparer.Ordinal),
-                args.Contains("--throw-on-dispose", StringComparer.Ordinal));
+                args.Contains("--throw-on-dispose", StringComparer.Ordinal),
+                args.Contains("--block-construction", StringComparer.Ordinal),
+                args.Contains("--lazy-factory", StringComparer.Ordinal));
             Console.WriteLine("COM shutdown smoke test passed.");
             return;
         }

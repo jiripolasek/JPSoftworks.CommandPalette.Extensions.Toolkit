@@ -66,7 +66,12 @@ runner.AddHostedExtensionFactory(
 The CLSID must be nonempty and match the extension's COM registration in the package manifest. It belongs to the
 registration and does not have to match the returned implementation's type GUID. The factory can return different
 implementation types that fulfill the same extension contract. Registration and class-factory lookup do not invoke
-the delegate, and an unused registration has no instance to dispose. Construction failures are reported on activation.
+the delegate, and an unused registration has no instance to dispose. Construction failures are returned to the caller
+on activation and logged with the CLSID and exception. Debug diagnostics list successfully registered CLSIDs.
+
+For duplicate CLSIDs, the first registration wins and later registrations are skipped with a warning. Factories from
+the parameters are registered before factories added through the builder. Remove the old registration when migrating
+to an explicit CLSID; adding another registration does not replace it.
 
 For reusable factory objects, implement `IHostedExtensionFactory` or use `DelegateHostedExtensionFactory`:
 
@@ -141,6 +146,7 @@ process, as described in [Microsoft's COM server lifetime guidance](https://lear
 Application termination also closes the gate and suspends COM before unregistering factories. The runner then
 disposes any remaining active and prepared instances sequentially, continuing cleanup if an instance throws.
 Concurrent client disposal and forced teardown share the wrapper's exactly-once disposal path.
+Forced teardown does not wait for running constructors; any instance they later return is rejected and disposed.
 
 During `WM_ENDSESSION`, the monitor waits for extension and diagnostics cleanup before acknowledging shutdown,
 with a four-second limit so a blocked extension cannot hold the Windows shutdown response indefinitely. Completion

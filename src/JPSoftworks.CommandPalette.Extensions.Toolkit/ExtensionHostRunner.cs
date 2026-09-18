@@ -199,7 +199,9 @@ public static class ExtensionHostRunner
                 {
                     logSink.LogError(
                         LogCategory,
-                        $"Failed to register hosted factory {factory.GetType().Name}",
+                        registration.ClassId is { } classId
+                            ? $"Failed to register hosted factory {factory.GetType().Name} for CLSID {classId}"
+                            : $"Failed to register hosted factory {factory.GetType().Name}",
                         ex);
                 }
             }
@@ -241,7 +243,7 @@ public static class ExtensionHostRunner
 
             void RegisterFactory(Func<ExtensionHostContext, IExtension> createExtension, Guid? classId = null)
             {
-                var classFactory = new ExtensionClassFactory(createExtension, lifetime, classId);
+                var classFactory = new ExtensionClassFactory(createExtension, lifetime, classId, logSink);
                 var registered = false;
                 try
                 {
@@ -249,6 +251,7 @@ public static class ExtensionHostRunner
                     if (registered)
                     {
                         registeredFactories.Add(classFactory);
+                        logSink.LogDebug(LogCategory, $"Registered extension CLSID {classFactory.ClassId}");
                     }
                     else
                     {

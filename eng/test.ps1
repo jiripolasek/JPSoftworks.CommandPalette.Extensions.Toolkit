@@ -62,6 +62,27 @@ foreach ($framework in @("net9.0-windows10.0.22621.0", "net10.0-windows10.0.2262
         }
     }
 
+    foreach ($explicitFirst in @($false, $true)) {
+        $smokeArguments = @("--exercise-com-registration")
+        if ($explicitFirst) { $smokeArguments += "--explicit-first" }
+        & dotnet $smokePath @smokeArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "COM registration smoke test '$framework/$($smokeArguments -join ' ')' failed with exit code $LASTEXITCODE."
+        }
+    }
+
+    foreach ($lazy in @($false, $true)) {
+        foreach ($endSession in @($false, $true)) {
+            $smokeArguments = @("--exercise-com-shutdown", "--block-construction")
+            if ($lazy) { $smokeArguments += "--lazy-factory" }
+            if ($endSession) { $smokeArguments += "--end-session" }
+            & dotnet $smokePath @smokeArguments
+            if ($LASTEXITCODE -ne 0) {
+                throw "COM construction/shutdown smoke test '$framework/$($smokeArguments -join ' ')' failed with exit code $LASTEXITCODE."
+            }
+        }
+    }
+
     foreach ($legacy in @($false, $true)) {
         foreach ($endSession in @($false, $true)) {
             foreach ($throwOnDispose in @($false, $true)) {

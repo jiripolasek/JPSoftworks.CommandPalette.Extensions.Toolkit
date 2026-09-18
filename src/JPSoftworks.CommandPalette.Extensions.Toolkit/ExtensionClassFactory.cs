@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------
 
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Microsoft.CommandPalette.Extensions;
 using Shmuelie.WinRTServer;
 
@@ -12,8 +13,10 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
 {
     private readonly Func<ExtensionHostContext, IExtension> _createExtension;
+    private readonly Lock _activationGate = new();
     private readonly Lock _gate = new();
     private readonly ExtensionHostLifetime _lifetime;
+    private readonly IExtensionHostLogSink? _logSink;
     private readonly bool _inferClassId;
     private bool _disposed;
     private HostedExtension? _preparedExtension;
@@ -27,7 +30,8 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
     internal ExtensionClassFactory(
         Func<ExtensionHostContext, IExtension> createExtension,
         ExtensionHostLifetime lifetime,
-        Guid? classId = null)
+        Guid? classId = null,
+        IExtensionHostLogSink? logSink = null)
     {
         if (classId == Guid.Empty)
         {
@@ -36,6 +40,7 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
 
         this._createExtension = createExtension;
         this._lifetime = lifetime;
+        this._logSink = logSink;
         this._inferClassId = !classId.HasValue;
         if (classId.HasValue)
         {
@@ -50,13 +55,15 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
 
     public void Dispose()
     {
+        HostedExtension? extension;
         lock (this._gate)
         {
             this._disposed = true;
-            var extension = this._preparedExtension;
+            extension = this._preparedExtension;
             this._preparedExtension = null;
-            extension?.Dispose();
         }
+
+        extension?.Dispose();
     }
 
     protected override object CreateInstance() => this.Activate();
@@ -67,24 +74,35 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
         this._lifetime.AcquireReference();
         try
         {
-            lock (this._gate)
+            // Serialize callbacks without blocking factory teardown.
+            lock (this._activationGate)
             {
-                ObjectDisposedException.ThrowIf(this._disposed, this);
-                var extension = this._preparedExtension ??
-                                HostedExtension.Create(this._createExtension, this._lifetime);
-                this._preparedExtension = null;
+                HostedExtension? extension;
+                lock (this._gate)
+                {
+                    ObjectDisposedException.ThrowIf(this._disposed, this);
+                    extension = this._preparedExtension;
+                    this._preparedExtension = null;
+                }
+
+                extension ??= this.CreateExtension();
                 try
                 {
-                    if (this._inferClassId && extension.GetImplementationClassId() != this.ClassId)
+                    lock (this._gate)
                     {
-                        throw new InvalidOperationException("The extension factory returned a different CLSID.");
-                    }
+                        ObjectDisposedException.ThrowIf(this._disposed, this);
+                        if (this._inferClassId && extension.GetImplementationClassId() != this.ClassId)
+                        {
+                            throw new InvalidOperationException("The extension factory returned a different CLSID.");
+                        }
 
-                    extension.Activate();
-                    return extension;
+                        extension.Activate();
+                        return extension;
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    this._logSink?.LogError(nameof(ExtensionClassFactory), $"Failed to activate extension for CLSID {this.ClassId}", ex);
                     extension.Dispose();
                     throw;
                 }
@@ -93,6 +111,19 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
         finally
         {
             this._lifetime.ReleaseReference();
+        }
+    }
+
+    private HostedExtension CreateExtension()
+    {
+        try
+        {
+            return HostedExtension.Create(this._createExtension, this._lifetime);
+        }
+        catch (Exception ex)
+        {
+            this._logSink?.LogError(nameof(ExtensionClassFactory), $"Failed to create extension for CLSID {this.ClassId}", ex);
+            throw;
         }
     }
 }

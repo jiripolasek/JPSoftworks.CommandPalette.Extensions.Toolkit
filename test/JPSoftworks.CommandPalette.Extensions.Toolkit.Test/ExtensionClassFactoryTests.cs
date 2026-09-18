@@ -5,6 +5,8 @@
 // ------------------------------------------------------------
 
 using System.Runtime.InteropServices;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Microsoft.CommandPalette.Extensions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Test;
@@ -198,6 +200,44 @@ public sealed class ExtensionClassFactoryTests
         Assert.Throws<COMException>(() => factory.Activate());
     }
 
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void ConstructionFailuresAreLoggedWithClsidBeforeDraining(bool useExplicitClassId, bool returnNull)
+    {
+        List<ExtensionHostLogEntry> entries = [];
+        var lifetime = new ExtensionHostLifetime(() => Assert.Single(entries));
+        var failure = new InvalidOperationException("Creation failed.");
+        var creations = 0;
+        using var factory = new ExtensionClassFactory(_ =>
+        {
+            if (++creations == 1 && !useExplicitClassId)
+            {
+                return new TestExtension();
+            }
+
+            return returnNull ? null! : throw failure;
+        }, lifetime, useExplicitClassId ? typeof(TestExtension).GUID : null, new DelegateExtensionHostLogSink(entries.Add));
+        var first = useExplicitClassId ? null : factory.Activate();
+
+        var error = Assert.Throws<InvalidOperationException>(() => factory.Activate());
+
+        var entry = Assert.Single(entries);
+        Assert.Equal(ExtensionHostLogLevel.Error, entry.Level);
+        Assert.Contains(factory.ClassId.ToString(), entry.Message);
+        Assert.Same(error, entry.Exception);
+        Assert.False(string.IsNullOrEmpty(error.StackTrace));
+        if (!returnNull)
+        {
+            Assert.Same(failure, error);
+        }
+
+        first?.Dispose();
+        Assert.True(lifetime.Shutdown.IsCompletedSuccessfully);
+    }
+
     [Fact]
     public void ExplicitRegistrationAllowsDifferentImplementationTypes()
     {
@@ -372,14 +412,19 @@ public sealed class ExtensionClassFactoryTests
     [Fact]
     public void DifferentClsidIsRejectedAndDisposedWithoutLeakingAnActiveLease()
     {
+        List<ExtensionHostLogEntry> entries = [];
         var lifetime = new ExtensionHostLifetime(() => { });
         var creations = 0;
         var other = new OtherExtension();
         using var factory = new ExtensionClassFactory(
-            _ => ++creations == 1 ? new TestExtension() : other, lifetime);
+            _ => ++creations == 1 ? new TestExtension() : other, lifetime, logSink: new DelegateExtensionHostLogSink(entries.Add));
         var first = factory.Activate();
 
-        Assert.Throws<InvalidOperationException>(() => factory.Activate());
+        var error = Assert.Throws<InvalidOperationException>(() => factory.Activate());
+        var entry = Assert.Single(entries);
+        Assert.Equal(ExtensionHostLogLevel.Error, entry.Level);
+        Assert.Contains(factory.ClassId.ToString(), entry.Message);
+        Assert.Same(error, entry.Exception);
         Assert.Equal(1, other.DisposeCount);
         Assert.False(lifetime.Shutdown.IsCompleted);
         first.Dispose();
@@ -443,6 +488,65 @@ public sealed class ExtensionClassFactoryTests
         first.Dispose();
         lifetime.Drain();
         Assert.Equal(1, suspensions);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task FactoryTeardownDisposesLiveInstancesWithoutWaitingForConstruction(bool useExplicitClassId)
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        var liveInner = new OtherExtension();
+        using var liveFactory = new ExtensionClassFactory(_ => liveInner, lifetime);
+        var live = liveFactory.Activate();
+        var constructing = NewSignal();
+        using var finishConstruction = new ManualResetEventSlim();
+        var rejected = new TestExtension();
+        ManualResetEvent? rejectedEvent = null;
+        var creations = 0;
+        using var factory = new ExtensionClassFactory(context =>
+        {
+            if (++creations == 1 && !useExplicitClassId)
+            {
+                return new TestExtension();
+            }
+
+            rejectedEvent = context.ExtensionDisposedEvent;
+            constructing.SetResult();
+            Assert.True(finishConstruction.Wait(Timeout));
+            return rejected;
+        }, lifetime, useExplicitClassId ? typeof(TestExtension).GUID : null);
+        var prepared = useExplicitClassId ? null : factory.Activate();
+        var activation = Task.Run(() => Record.Exception(() => factory.Activate()));
+        Task? teardown = null;
+        try
+        {
+            await constructing.Task.WaitAsync(Timeout);
+            teardown = Task.Run(() =>
+            {
+                lifetime.Drain();
+                factory.Dispose();
+                liveFactory.Dispose();
+                lifetime.DisposeActiveExtensions();
+            });
+
+            await teardown.WaitAsync(Timeout);
+            Assert.Equal(1, liveInner.DisposeCount);
+            Assert.False(activation.IsCompleted);
+            Assert.Equal(0, rejected.DisposeCount);
+        }
+        finally
+        {
+            finishConstruction.Set();
+            await Task.WhenAll(activation, teardown ?? Task.CompletedTask).WaitAsync(Timeout);
+        }
+
+        Assert.IsType<ObjectDisposedException>(await activation);
+        Assert.Equal(1, rejected.DisposeCount);
+        Assert.Throws<ObjectDisposedException>(() => rejectedEvent!.Set());
+        prepared?.Dispose();
+        live.Dispose();
+        Assert.Equal(1, liveInner.DisposeCount);
     }
 
     [Fact]
