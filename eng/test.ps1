@@ -55,7 +55,7 @@ $smokeProjectName = $repositoryConfig.AotProjectName
 $smokeConfiguration = $Configuration.ToLowerInvariant()
 foreach ($framework in @("net9.0-windows10.0.22621.0", "net10.0-windows10.0.22621.0")) {
     $smokePath = Join-Path $repositoryRoot "artifacts/bin/$smokeProjectName/${smokeConfiguration}_$framework/$smokeProjectName.dll"
-    foreach ($mode in @("--exercise-com-lifetime", "--exercise-com-lifetime-legacy")) {
+    foreach ($mode in @("--exercise-com-lifetime", "--exercise-com-lifetime-legacy", "--exercise-com-lifetime-lazy")) {
         & dotnet $smokePath $mode --enable-efficiency-mode
         if ($LASTEXITCODE -ne 0) {
             throw "COM lifetime smoke test '$framework/$mode' failed with exit code $LASTEXITCODE."

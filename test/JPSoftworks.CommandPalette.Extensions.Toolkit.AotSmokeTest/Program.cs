@@ -31,11 +31,13 @@ internal static class Program
         }
 
         if (args.Contains("--exercise-com-lifetime", StringComparer.Ordinal)
-            || args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal))
+            || args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal)
+            || args.Contains("--exercise-com-lifetime-lazy", StringComparer.Ordinal))
         {
             ComLifetimeSmokeTest.Run(
                 args.Contains("--exercise-com-lifetime-legacy", StringComparer.Ordinal),
-                args.Contains("--enable-efficiency-mode", StringComparer.Ordinal));
+                args.Contains("--enable-efficiency-mode", StringComparer.Ordinal),
+                args.Contains("--exercise-com-lifetime-lazy", StringComparer.Ordinal));
             Console.WriteLine("COM lifetime smoke test passed.");
             return;
         }

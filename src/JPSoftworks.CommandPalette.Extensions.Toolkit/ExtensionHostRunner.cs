@@ -67,13 +67,14 @@ public static class ExtensionHostRunner
     internal static async Task RunCoreAsync(
         ExtensionHostConfiguration configuration,
         ExtensionHostRunnerParameters runParams,
+        IReadOnlyCollection<HostedExtensionRegistration> hostedExtensionRegistrations,
         bool includeDefaultLogSinks,
         IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.PublisherMoniker);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.ProductMoniker);
-        ArgumentNullException.ThrowIfNull(runParams.HostedExtensionFactories);
+        ArgumentNullException.ThrowIfNull(hostedExtensionRegistrations);
 #pragma warning disable CS0618 // The runner preserves the event-only factory contract for binary compatibility.
         ArgumentNullException.ThrowIfNull(runParams.ExtensionFactories);
 #pragma warning restore CS0618
@@ -106,7 +107,7 @@ public static class ExtensionHostRunner
                     }
 
                     appLifeMonitor = TrySetAppLifeMonitor(appLifeMonitorTermination!, logSink);
-                    await RunComServerAsync(runParams, logSink, appLifeMonitorTermination!.Task);
+                    await RunComServerAsync(runParams, hostedExtensionRegistrations, logSink, appLifeMonitorTermination!.Task);
                 }
                 else
                 {
@@ -160,6 +161,7 @@ public static class ExtensionHostRunner
 
     private static async Task RunComServerAsync(
         ExtensionHostRunnerParameters runParams,
+        IReadOnlyCollection<HostedExtensionRegistration> hostedExtensionRegistrations,
         IExtensionHostLogSink logSink,
         Task appLifeMonitorTermination)
     {
@@ -180,8 +182,9 @@ public static class ExtensionHostRunner
             DefaultComWrappers? comWrappers = null;
 
             logSink.LogDebug(LogCategory, "Registering extension factories");
-            foreach (var factory in runParams.HostedExtensionFactories)
+            foreach (var registration in hostedExtensionRegistrations)
             {
+                var factory = registration.Factory;
                 if (factory == null)
                 {
                     logSink.LogWarning(LogCategory, "Hosted extension factory is null, skipping");
@@ -190,7 +193,7 @@ public static class ExtensionHostRunner
 
                 try
                 {
-                    RegisterFactory(factory.CreateExtension);
+                    RegisterFactory(factory.CreateExtension, registration.ClassId);
                 }
                 catch (Exception ex)
                 {
@@ -236,9 +239,9 @@ public static class ExtensionHostRunner
 
             logSink.LogDebug(LogCategory, "Shutting down COM server");
 
-            void RegisterFactory(Func<ExtensionHostContext, IExtension> createExtension)
+            void RegisterFactory(Func<ExtensionHostContext, IExtension> createExtension, Guid? classId = null)
             {
-                var classFactory = new ExtensionClassFactory(createExtension, lifetime);
+                var classFactory = new ExtensionClassFactory(createExtension, lifetime, classId);
                 var registered = false;
                 try
                 {

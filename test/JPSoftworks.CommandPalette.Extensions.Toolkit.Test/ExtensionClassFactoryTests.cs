@@ -14,7 +14,44 @@ public sealed class ExtensionClassFactoryTests
     private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
 
     [Fact]
-    public void ActivationsHaveDistinctInstancesContextsAndDisposalEvents()
+    public void ExplicitClsidRegistrationAndDisposalDoNotCreateAnInstance()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        var creations = 0;
+        using var factory = new ExtensionClassFactory(_ =>
+        {
+            creations++;
+            return new TestExtension();
+        }, lifetime, typeof(TestExtension).GUID);
+
+        Assert.Equal(typeof(TestExtension).GUID, factory.ClassId);
+        Assert.Equal(0, creations);
+        factory.Dispose();
+        factory.Dispose();
+        Assert.Equal(0, creations);
+        Assert.False(lifetime.Shutdown.IsCompleted);
+    }
+
+    [Fact]
+    public void EmptyClsidIsRejectedBeforeCreatingAnInstance()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        var creations = 0;
+
+        var error = Assert.Throws<ArgumentException>(() => new ExtensionClassFactory(_ =>
+        {
+            creations++;
+            return new TestExtension();
+        }, lifetime, Guid.Empty));
+
+        Assert.Equal("classId", error.ParamName);
+        Assert.Equal(0, creations);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void ActivationsHaveDistinctInstancesContextsAndDisposalEvents(bool useExplicitClassId)
     {
         var suspensions = 0;
         var lifetime = new ExtensionHostLifetime(() => suspensions++);
@@ -26,8 +63,9 @@ public sealed class ExtensionClassFactoryTests
             var extension = new TestExtension(() => context.ExtensionDisposedEvent.Set());
             extensions.Add(extension);
             return extension;
-        }, lifetime);
+        }, lifetime, useExplicitClassId ? typeof(TestExtension).GUID : null);
 
+        Assert.Equal(useExplicitClassId ? 0 : 1, extensions.Count);
         var first = factory.Activate();
         var second = factory.Activate();
 
@@ -106,6 +144,82 @@ public sealed class ExtensionClassFactoryTests
         var second = await activation.WaitAsync(Timeout);
         Assert.False(lifetime.Shutdown.IsCompleted);
         second.Dispose();
+        Assert.True(lifetime.Shutdown.IsCompletedSuccessfully);
+    }
+
+    [Fact]
+    public async Task FirstLazyActivationKeepsProcessAliveWhileAnotherFactoryIsDisposed()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        using var activeFactory = new ExtensionClassFactory(_ => new OtherExtension(), lifetime);
+        var active = activeFactory.Activate();
+        var constructing = NewSignal();
+        using var finishConstruction = new ManualResetEventSlim();
+        using var lazyFactory = new ExtensionClassFactory(_ =>
+        {
+            constructing.SetResult();
+            Assert.True(finishConstruction.Wait(Timeout));
+            return new TestExtension();
+        }, lifetime, typeof(TestExtension).GUID);
+        var activation = Task.Run(lazyFactory.Activate);
+        try
+        {
+            await constructing.Task.WaitAsync(Timeout);
+            active.Dispose();
+            Assert.False(lifetime.Shutdown.IsCompleted);
+        }
+        finally
+        {
+            finishConstruction.Set();
+        }
+
+        var extension = await activation.WaitAsync(Timeout);
+        extension.Dispose();
+        Assert.True(lifetime.Shutdown.IsCompletedSuccessfully);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FailedFirstLazyActivationReleasesReservationAndDisposalEvent(bool returnNull)
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        ManualResetEvent? failedEvent = null;
+        using var factory = new ExtensionClassFactory(context =>
+        {
+            failedEvent = context.ExtensionDisposedEvent;
+            return returnNull ? null! : throw new InvalidOperationException("Creation failed.");
+        }, lifetime, typeof(TestExtension).GUID);
+
+        Assert.Throws<InvalidOperationException>(() => factory.Activate());
+        Assert.True(lifetime.Shutdown.IsCompletedSuccessfully);
+        Assert.NotNull(failedEvent);
+        Assert.Throws<ObjectDisposedException>(() => failedEvent.Set());
+        Assert.Throws<COMException>(() => factory.Activate());
+    }
+
+    [Fact]
+    public void ExplicitRegistrationAllowsDifferentImplementationTypes()
+    {
+        var lifetime = new ExtensionHostLifetime(() => { });
+        var classId = new Guid("43E83895-C8D6-47B3-B030-7E0C2DC9C936");
+        var other = new OtherExtension();
+        var inner = new TestExtension();
+        var creations = 0;
+        using var factory = new ExtensionClassFactory(
+            _ => ++creations == 1 ? other : inner, lifetime, classId);
+
+        var first = factory.Activate();
+        var second = factory.Activate();
+
+        Assert.Equal(classId, factory.ClassId);
+        Assert.Equal(2, creations);
+        Assert.Same(inner.Provider, second.GetProvider(default));
+        first.Dispose();
+        Assert.Equal(1, other.DisposeCount);
+        Assert.False(lifetime.Shutdown.IsCompleted);
+        second.Dispose();
+        Assert.Equal(1, inner.DisposeCount);
         Assert.True(lifetime.Shutdown.IsCompletedSuccessfully);
     }
 

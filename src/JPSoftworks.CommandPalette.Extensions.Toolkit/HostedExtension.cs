@@ -16,13 +16,19 @@ internal sealed partial class HostedExtension : IExtension
     private readonly ExtensionLifetimeLease _lease;
     private IExtension? _extension;
 
-    internal Guid ClassId { get; }
-
     private HostedExtension(IExtension extension, ExtensionLifetimeLease lease)
     {
         this._extension = extension;
         this._lease = lease;
-        this.ClassId = extension.GetType().GUID;
+    }
+
+    internal Guid GetImplementationClassId()
+    {
+        lock (this._gate)
+        {
+            ObjectDisposedException.ThrowIf(this._extension is null, this);
+            return this._extension.GetType().GUID;
+        }
     }
 
     public object GetProvider(ProviderType providerType)

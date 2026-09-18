@@ -14,6 +14,7 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
     private readonly Func<ExtensionHostContext, IExtension> _createExtension;
     private readonly Lock _gate = new();
     private readonly ExtensionHostLifetime _lifetime;
+    private readonly bool _inferClassId;
     private bool _disposed;
     private HostedExtension? _preparedExtension;
 
@@ -25,13 +26,26 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
 
     internal ExtensionClassFactory(
         Func<ExtensionHostContext, IExtension> createExtension,
-        ExtensionHostLifetime lifetime)
+        ExtensionHostLifetime lifetime,
+        Guid? classId = null)
     {
+        if (classId == Guid.Empty)
+        {
+            throw new ArgumentException("The COM class ID must not be empty.", nameof(classId));
+        }
+
         this._createExtension = createExtension;
         this._lifetime = lifetime;
-        // Existing factory contracts expose the CLSID only through the extension type.
-        this._preparedExtension = HostedExtension.Create(createExtension, lifetime);
-        this.ClassId = this._preparedExtension.ClassId;
+        this._inferClassId = !classId.HasValue;
+        if (classId.HasValue)
+        {
+            this.ClassId = classId.Value;
+        }
+        else
+        {
+            this._preparedExtension = HostedExtension.Create(createExtension, lifetime);
+            this.ClassId = this._preparedExtension.GetImplementationClassId();
+        }
     }
 
     public void Dispose()
@@ -61,7 +75,7 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
                 this._preparedExtension = null;
                 try
                 {
-                    if (extension.ClassId != this.ClassId)
+                    if (this._inferClassId && extension.GetImplementationClassId() != this.ClassId)
                     {
                         throw new InvalidOperationException("The extension factory returned a different CLSID.");
                     }

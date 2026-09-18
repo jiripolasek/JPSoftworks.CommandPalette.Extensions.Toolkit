@@ -19,8 +19,9 @@ public interface IHostedExtensionFactory
     /// <param name="context">The lifecycle state for this instance, supplied by the extension host.</param>
     /// <returns>A new extension instance.</returns>
     /// <remarks>
-    /// Return a new instance of the same COM class on every call. The runner prepares the first instance to discover
-    /// its CLSID and hands it out once; subsequent activations call this factory again. The toolkit wraps Dispose
+    /// Return a new instance on every call. Without an explicit CLSID, the runner prepares the first instance during
+    /// registration and requires the same type GUID on later instances. An explicit registration defers creation until
+    /// activation and owns the CLSID independently of the implementation type. The toolkit wraps Dispose
     /// to release the instance's lifetime lease. Signaling <see cref="ExtensionHostContext.ExtensionDisposedEvent" /> is optional.
     /// Only composition code should depend on the host context; core services can continue to use their selected
     /// logging abstraction.

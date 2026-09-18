@@ -16,6 +16,7 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
 {
     private readonly ExtensionHostConfiguration _configuration;
     private readonly ExtensionHostRunnerParameters _parameters;
+    private readonly List<HostedExtensionRegistration> _hostedExtensionRegistrations = [];
     private readonly List<IExtensionHostLogSink> _additionalLogSinks = [];
 
     private bool _includeDefaultLogSinks = true;
@@ -26,6 +27,10 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
     {
         this._configuration = configuration;
         this._parameters = configuration.CreateRunnerParameters();
+        foreach (var factory in this._parameters.HostedExtensionFactories)
+        {
+            this._hostedExtensionRegistrations.Add(new HostedExtensionRegistration(factory));
+        }
     }
 
     /// <summary>
@@ -37,7 +42,7 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
     {
         ArgumentNullException.ThrowIfNull(factory);
         this.ThrowIfAlreadyRun();
-        this._parameters.HostedExtensionFactories.Add(factory);
+        this._hostedExtensionRegistrations.Add(new HostedExtensionRegistration(factory));
         return this;
     }
 
@@ -52,6 +57,28 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
         ArgumentNullException.ThrowIfNull(createExtension);
         return this.AddHostedExtensionFactory(
             new DelegateHostedExtensionFactory(createExtension));
+    }
+
+    /// <summary>
+    /// Adds a factory that creates extensions only when COM activates them.
+    /// </summary>
+    /// <param name="classId">The nonempty COM class ID to register, independent of the returned implementation type.</param>
+    /// <param name="createExtension">The function that creates a new extension for each activation.</param>
+    /// <returns>This builder.</returns>
+    public ExtensionHostRunnerBuilder AddHostedExtensionFactory(
+        Guid classId,
+        Func<ExtensionHostContext, IExtension> createExtension)
+    {
+        ArgumentNullException.ThrowIfNull(createExtension);
+        this.ThrowIfAlreadyRun();
+        if (classId == Guid.Empty)
+        {
+            throw new ArgumentException("The COM class ID must not be empty.", nameof(classId));
+        }
+
+        this._hostedExtensionRegistrations.Add(new HostedExtensionRegistration(
+            new DelegateHostedExtensionFactory(createExtension), classId));
+        return this;
     }
 
     /// <summary>
@@ -95,6 +122,7 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
         return ExtensionHostRunner.RunCoreAsync(
             this._configuration,
             this._parameters,
+            [.. this._hostedExtensionRegistrations],
             this._includeDefaultLogSinks,
             [.. this._additionalLogSinks]);
     }

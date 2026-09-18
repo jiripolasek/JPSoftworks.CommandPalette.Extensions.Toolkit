@@ -51,17 +51,34 @@ and releases that instance's lease after disposal completes, including when disp
 need to signal `ExtensionDisposedEvent`; it remains available for compatibility and belongs only to that instance.
 Signaling the event alone does not shut down the process. Do not share or dispose the event.
 
-Factories must return a new instance of the same COM class on every call. Because the existing factory APIs do not
-expose a CLSID, the runner prepares the first instance during registration and hands it out at most once. Later
-activations create new instances. Prepared instances that are never activated are disposed during teardown and do
-not keep the process alive.
+Factories must return a new instance on every call. Without an explicit CLSID, the runner prepares the first instance
+during registration to discover its type GUID and hands it out at most once. Later instances must have the same type
+GUID. Prepared instances that are never activated are disposed during teardown and do not keep the process alive.
+
+Supply an explicit CLSID to defer all extension construction until COM activation:
+
+```csharp
+runner.AddHostedExtensionFactory(
+    typeof(MyExtension).GUID,
+    context => new MyExtension(context.ExtensionDisposedEvent));
+```
+
+The CLSID must be nonempty and match the extension's COM registration in the package manifest. It belongs to the
+registration and does not have to match the returned implementation's type GUID. The factory can return different
+implementation types that fulfill the same extension contract. Registration and class-factory lookup do not invoke
+the delegate, and an unused registration has no instance to dispose. Construction failures are reported on activation.
 
 For reusable factory objects, implement `IHostedExtensionFactory` or use `DelegateHostedExtensionFactory`:
 
 ```csharp
 var factory = new DelegateHostedExtensionFactory(context =>
     new MyExtension(context.ExtensionDisposedEvent));
+
+runner.AddHostedExtensionFactory(typeof(MyExtension).GUID, factory.CreateExtension);
 ```
+
+Factory objects only create instances. The builder stores the CLSID with the registration, so the same factory can
+be registered under different CLSIDs. The creation context continues to expose only the instance's disposal event.
 
 The event-only `IExtensionFactory`, `DelegateExtensionFactory`, and
 `ExtensionHostRunnerParameters.ExtensionFactories` APIs remain available for binary compatibility, but are obsolete.

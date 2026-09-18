@@ -14,16 +14,21 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.AotSmokeTest;
 
 internal static partial class ComLifetimeSmokeTest
 {
-    internal static void Run(bool useLegacyFactory, bool enableEfficiencyMode)
+    internal static void Run(bool useLegacyFactory, bool enableEfficiencyMode, bool useExplicitClassId)
     {
-        RunInMta(() => ExerciseServer(useLegacyFactory, enableEfficiencyMode).WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult());
+        RunInMta(() => ExerciseServer(useLegacyFactory, enableEfficiencyMode, useExplicitClassId)
+            .WaitAsync(TimeSpan.FromSeconds(10)).GetAwaiter().GetResult());
     }
 
-    private static unsafe Task ExerciseServer(bool useLegacyFactory, bool enableEfficiencyMode)
+    private static unsafe Task ExerciseServer(bool useLegacyFactory, bool enableEfficiencyMode, bool useExplicitClassId)
     {
         var creations = 0;
+        var unusedCreations = 0;
         var disposals = 0;
         var providerRequests = 0;
+        var clsid = useExplicitClassId
+            ? new Guid("A670B3D0-6802-4162-977C-FD6843B9F2C0")
+            : typeof(LifetimeSmokeExtension).GUID;
         var parameters = new ExtensionHostRunnerParameters
         {
             PublisherMoniker = "JPSoftworks",
@@ -53,16 +58,31 @@ internal static partial class ComLifetimeSmokeTest
 #pragma warning restore CS0618
         }
 
+        var hostedFactory = new LifetimeSmokeFactory(context => CreateExtension(context.ExtensionDisposedEvent));
+        if (!useLegacyFactory && !useExplicitClassId)
+        {
+            parameters.HostedExtensionFactories.Add(hostedFactory);
+        }
+
         var builder = ExtensionHostRunner.CreateBuilder(["-RegisterProcessAsComServer"], parameters)
             .ClearDefaultLogSinks()
             .AddLogSink(new DelegateExtensionHostLogSink(entry => Console.WriteLine(entry.Message)));
-        if (!useLegacyFactory)
+        if (useExplicitClassId)
         {
-            builder.AddHostedExtensionFactory(context => CreateExtension(context.ExtensionDisposedEvent));
+            builder.AddHostedExtensionFactory(
+                clsid,
+                hostedFactory.CreateExtension);
+            builder.AddHostedExtensionFactory(typeof(SmokeTestExtension).GUID, _ =>
+            {
+                unusedCreations++;
+                return new SmokeTestExtension();
+            });
         }
 
         var running = builder.RunAsync();
         Require(!running.IsCompleted, "The COM server exited before activation.");
+        Require(creations == (useExplicitClassId ? 0 : 1), "Registration did not honor the class ID policy.");
+        Require(unusedCreations == 0, "Registration created an unused extension.");
         Require(GetProcessShutdownParameters(out var shutdownLevel, out var shutdownFlags)
             && shutdownLevel == 0x200 && shutdownFlags == 1, "The process shutdown priority was not applied.");
         if (enableEfficiencyMode)
@@ -79,7 +99,6 @@ internal static partial class ComLifetimeSmokeTest
             }
         }
 
-        var clsid = typeof(LifetimeSmokeExtension).GUID;
         var iid = typeof(IExtension).GUID;
         var factoryIid = new Guid("00000001-0000-0000-C000-000000000046");
         nint factory = 0;
@@ -89,6 +108,7 @@ internal static partial class ComLifetimeSmokeTest
         try
         {
             Marshal.ThrowExceptionForHR(CoGetClassObject(in clsid, 4, 0, in factoryIid, out factory));
+            Require(creations == (useExplicitClassId ? 0 : 1), "Getting the class factory created an extension.");
             first = ActivateExtension(clsid, iid);
             second = ActivateExtension(clsid, iid);
             Require(first != second && creations == 2, "COM reused an extension instance.");
@@ -121,6 +141,7 @@ internal static partial class ComLifetimeSmokeTest
             Release(factory);
         }
 
+        Require(unusedCreations == 0, "The server created an unused extension.");
         return running;
     }
 
@@ -130,6 +151,11 @@ internal static partial class ComLifetimeSmokeTest
 
     [LibraryImport("ole32.dll")]
     private static partial int CoGetClassObject(in Guid clsid, uint context, nint reserved, in Guid iid, out nint instance);
+}
+
+internal sealed class LifetimeSmokeFactory(Func<ExtensionHostContext, IExtension> createExtension) : IHostedExtensionFactory
+{
+    public IExtension CreateExtension(ExtensionHostContext context) => createExtension(context);
 }
 
 [Guid("949291B4-C07F-4D34-85C0-069DC49D62ED")]

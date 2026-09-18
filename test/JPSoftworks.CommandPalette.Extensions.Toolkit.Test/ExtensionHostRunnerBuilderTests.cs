@@ -38,14 +38,29 @@ public sealed class ExtensionHostRunnerBuilderTests
         Assert.Throws<ArgumentNullException>(
             () => builder.AddHostedExtensionFactory(
                 (Func<ExtensionHostContext, Microsoft.CommandPalette.Extensions.IExtension>)null!));
+        Assert.Throws<ArgumentNullException>(
+            () => builder.AddHostedExtensionFactory(typeof(TestExtension).GUID, null!));
     }
 
     [Fact]
-    public void AddHostedExtensionFactoryAcceptsDelegate()
+    public void ExplicitClsidRegistrationsRejectEmptyIds()
     {
         var builder = ExtensionHostRunner.CreateBuilder([], CreateParameters());
 
-        var result = builder.AddHostedExtensionFactory(_ => new TestExtension());
+        Assert.Throws<ArgumentException>(
+            () => builder.AddHostedExtensionFactory(Guid.Empty, _ => new TestExtension()));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void AddHostedExtensionFactoryAcceptsDelegateWithoutInvokingIt(bool useExplicitClassId)
+    {
+        var builder = ExtensionHostRunner.CreateBuilder([], CreateParameters());
+
+        var result = useExplicitClassId
+            ? builder.AddHostedExtensionFactory(typeof(TestExtension).GUID, _ => throw new InvalidOperationException())
+            : builder.AddHostedExtensionFactory(_ => throw new InvalidOperationException());
 
         Assert.Same(builder, result);
     }
