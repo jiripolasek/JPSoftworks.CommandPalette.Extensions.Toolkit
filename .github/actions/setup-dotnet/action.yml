@@ -1,5 +1,5 @@
 name: Set up Toolkit .NET SDKs
-description: Install the SDKs used by the lock files and both test runtimes.
+description: Install the build SDK and all three test runtimes.
 inputs:
   cache-scope:
     description: Separate NuGet cache for the build job or an AOT runtime; empty disables caching.
@@ -12,14 +12,15 @@ runs:
         dotnet-version: |
           9.0.318
           10.0.401
+          11.0.100
       env:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/toolkit-dotnet
     - name: Verify SDK selection
       shell: pwsh
       run: |
         $version = dotnet --version
-        if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.401') {
-          throw "Expected .NET SDK 10.0.401; selected '$version'."
+        if ($LASTEXITCODE -ne 0 -or $version -ne '11.0.100') {
+          throw "Expected .NET SDK 11.0.100; selected '$version'."
         }
     - name: Set NuGet packages folder
       if: inputs.cache-scope != ''
