@@ -126,7 +126,7 @@ nonnegative integer without leading zeroes. Tags such as `v0.12.0-beta.1`, `v0.1
 Both workflows share `validate.yml` and the local `eng` scripts. Each run builds once with its resolved package
 version, tests those assemblies, and packs without rebuilding. Tests cover both .NET 9 and .NET 10;
 Native AOT publishing covers both frameworks on `win-x64` and `win-arm64`. Native output is inspected but not
-executed. CI installs SDKs 9.0.318 and 10.0.400 in an isolated directory to match the lock files and provide
+executed. CI installs SDKs 9.0.318 and 10.0.401 in an isolated directory to match the lock files and provide
 NuGet 7.6 environment-key support. Local `global.json` SDK selection is unchanged. Update the CI SDK pins
 alongside dependency lock files when upgrading the toolchain. The build job and each AOT runtime use separate
 NuGet caches, keyed by the lock files and SDK setup action, so one job cannot exclude another's runtime packs.

@@ -11,15 +11,15 @@ runs:
       with:
         dotnet-version: |
           9.0.318
-          10.0.400
+          10.0.401
       env:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/toolkit-dotnet
     - name: Verify SDK selection
       shell: pwsh
       run: |
         $version = dotnet --version
-        if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.400') {
-          throw "Expected .NET SDK 10.0.400; selected '$version'."
+        if ($LASTEXITCODE -ne 0 -or $version -ne '10.0.401') {
+          throw "Expected .NET SDK 10.0.401; selected '$version'."
         }
     - name: Set NuGet packages folder
       if: inputs.cache-scope != ''
