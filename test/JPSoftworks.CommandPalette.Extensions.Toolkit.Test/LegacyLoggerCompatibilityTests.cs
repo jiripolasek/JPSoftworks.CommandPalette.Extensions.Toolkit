@@ -4,11 +4,14 @@
 //
 // ------------------------------------------------------------
 
+using System.Diagnostics;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Test;
 
+// The legacy logger routes through process-wide state shared with the runner.
+[Collection(nameof(LegacyLoggerBridge))]
 public sealed class LegacyLoggerCompatibilityTests
 {
     [Fact]
@@ -100,6 +103,27 @@ public sealed class LegacyLoggerCompatibilityTests
         }
 
         Assert.Equal(1, sinkInvocations);
+    }
+
+    [Fact]
+    public void LoggerWithoutSinkWritesToTrace()
+    {
+        using var writer = new StringWriter();
+        using var listener = new TextWriterTraceListener(writer);
+        LegacyLoggerBridge.CloseAndFlush();
+        Trace.Listeners.Add(listener);
+
+        try
+        {
+            Logger.LogWarning("Without sink");
+            Trace.Flush();
+        }
+        finally
+        {
+            Trace.Listeners.Remove(listener);
+        }
+
+        Assert.Contains("Logger: Without sink", writer.ToString(), StringComparison.Ordinal);
     }
 
     private static void AssertEntry(

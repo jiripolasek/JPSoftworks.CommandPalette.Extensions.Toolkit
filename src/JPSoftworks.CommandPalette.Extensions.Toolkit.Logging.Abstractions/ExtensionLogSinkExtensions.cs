@@ -7,12 +7,12 @@
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
-/// Convenience methods for emitting extension host diagnostics.
+/// Convenience methods for writing extension log entries.
 /// </summary>
 public static class ExtensionLogSinkExtensions
 {
     /// <summary>
-    /// Emits a debug diagnostic.
+    /// Writes a debug entry.
     /// </summary>
     public static void LogDebug(
         this IExtensionLogSink sink,
@@ -23,7 +23,7 @@ public static class ExtensionLogSinkExtensions
     }
 
     /// <summary>
-    /// Emits an informational diagnostic.
+    /// Writes an informational entry.
     /// </summary>
     public static void LogInformation(
         this IExtensionLogSink sink,
@@ -34,7 +34,7 @@ public static class ExtensionLogSinkExtensions
     }
 
     /// <summary>
-    /// Emits a warning diagnostic.
+    /// Writes a warning entry.
     /// </summary>
     public static void LogWarning(
         this IExtensionLogSink sink,
@@ -45,7 +45,7 @@ public static class ExtensionLogSinkExtensions
     }
 
     /// <summary>
-    /// Emits an error diagnostic.
+    /// Writes an error entry.
     /// </summary>
     public static void LogError(
         this IExtensionLogSink sink,
@@ -56,7 +56,7 @@ public static class ExtensionLogSinkExtensions
     }
 
     /// <summary>
-    /// Emits an error diagnostic with an exception.
+    /// Writes an error entry with an exception.
     /// </summary>
     public static void LogError(
         this IExtensionLogSink sink,
@@ -73,7 +73,7 @@ public static class ExtensionLogSinkExtensions
     }
 
     /// <summary>
-    /// Emits an error diagnostic with a message and exception.
+    /// Writes an error entry with a message and exception.
     /// </summary>
     public static void LogError(
         this IExtensionLogSink sink,
@@ -83,6 +83,47 @@ public static class ExtensionLogSinkExtensions
     {
         ArgumentNullException.ThrowIfNull(exception);
         Write(sink, ExtensionLogLevel.Error, category, $"{message}: {exception.Message}", exception);
+    }
+
+    /// <summary>
+    /// Writes a critical entry.
+    /// </summary>
+    public static void LogCritical(
+        this IExtensionLogSink sink,
+        string category,
+        string message)
+    {
+        Write(sink, ExtensionLogLevel.Critical, category, message, null);
+    }
+
+    /// <summary>
+    /// Writes a critical entry with an exception.
+    /// </summary>
+    public static void LogCritical(
+        this IExtensionLogSink sink,
+        string category,
+        Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        Write(
+            sink,
+            ExtensionLogLevel.Critical,
+            category,
+            $"{exception.GetType().Name}: {exception.Message}",
+            exception);
+    }
+
+    /// <summary>
+    /// Writes a critical entry with a message and exception.
+    /// </summary>
+    public static void LogCritical(
+        this IExtensionLogSink sink,
+        string category,
+        string message,
+        Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        Write(sink, ExtensionLogLevel.Critical, category, $"{message}: {exception.Message}", exception);
     }
 
     private static void Write(

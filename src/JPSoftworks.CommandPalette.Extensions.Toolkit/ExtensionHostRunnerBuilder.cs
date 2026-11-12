@@ -4,6 +4,7 @@
 //
 // ------------------------------------------------------------
 
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 using Microsoft.CommandPalette.Extensions;
 
@@ -98,7 +99,28 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionLoggingBuilder
     }
 
     /// <summary>
-    /// Removes the toolkit's daily file and Command Palette sinks.
+    /// Adds a caller-owned sink that receives only entries at or above <paramref name="minimumLevel" />.
+    /// </summary>
+    /// <param name="sink">The sink that should receive log entries.</param>
+    /// <param name="minimumLevel">The lowest level forwarded to <paramref name="sink" />.</param>
+    /// <returns>This builder.</returns>
+    /// <remarks>
+    /// The runner's debug policy applies first. The runner does not dispose caller-supplied sinks.
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="minimumLevel" /> is not a defined log level.</exception>
+    public ExtensionHostRunnerBuilder AddLogSink(IExtensionLogSink sink, ExtensionLogLevel minimumLevel)
+    {
+        ArgumentNullException.ThrowIfNull(sink);
+        if (!Enum.IsDefined(minimumLevel))
+        {
+            throw new ArgumentOutOfRangeException(nameof(minimumLevel), minimumLevel, "The minimum log level is not defined.");
+        }
+
+        return this.AddLogSink(new MinimumLevelLogSink(sink, minimumLevel));
+    }
+
+    /// <summary>
+    /// Removes the toolkit's default daily file sink.
     /// </summary>
     /// <returns>This builder.</returns>
     public ExtensionHostRunnerBuilder ClearDefaultLogSinks()

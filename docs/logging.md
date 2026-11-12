@@ -3,12 +3,12 @@
 The Toolkit keeps host policy consistent while letting each extension choose its application logging abstraction and
 destinations.
 
-## Default diagnostics
+## Default destination
 
-`ExtensionHostRunner.RunAsync` and an unmodified runner builder write to:
+`ExtensionHostRunner.RunAsync` and an unmodified runner builder write to a daily rolling file beneath the extension's
+canonical local-application-data directory. If the file cannot be opened, entries go to `System.Diagnostics.Trace`.
 
-- a daily rolling file beneath the extension's canonical local-application-data directory; and
-- the Command Palette host log.
+Nothing is sent to Command Palette by default. See [Forwarding to Command Palette](#forwarding-to-command-palette).
 
 Each run writes an information-level startup entry. Debug entries are enabled when either
 `ExtensionHostRunnerParameters.IsDebug` is `true` or the command line contains `-Debug`.
@@ -36,8 +36,28 @@ await ExtensionHostRunner
     .RunAsync();
 ```
 
-Call `ClearDefaultLogSinks()` before `AddLogSink` when the custom sink should replace the daily-file and Command
-Palette destinations.
+Call `ClearDefaultLogSinks()` before `AddLogSink` when the custom sink should replace the daily-file destination.
+
+## Forwarding to Command Palette
+
+`CommandPaletteLogSink` forwards entries to the Command Palette log through the Command Palette SDK's
+`IExtensionHost.LogMessage`. Each entry allocates a WinRT log message object and makes a cross-process COM call, and
+Command Palette then calls back into the extension to read the message. Entries are discarded until the extension's
+command provider receives the Command Palette host.
+
+The sink is opt-in. Reserve it for low-volume entries that users should see in Command Palette, such as errors:
+
+```csharp
+await ExtensionHostRunner
+    .CreateBuilder(args, parameters)
+    .AddLogSink(CommandPaletteLogSink.Instance, ExtensionLogLevel.Error)
+    .RunAsync();
+```
+
+The Microsoft.Extensions.Logging `AddCommandPalette` and Serilog `WriteTo.CommandPalette` destinations use the same
+path and have the same cost. Give them a minimum level, for example
+`.AddFilter<CommandPaletteLoggerProvider>(level => level >= LogLevel.Critical)` or
+`.WriteTo.CommandPalette(LogEventLevel.Fatal)`.
 
 ## Microsoft.Extensions.Logging
 
@@ -48,9 +68,7 @@ factory normally:
 var host = ExtensionHostConfiguration.Resolve(args, parameters);
 
 using var loggerFactory = LoggerFactory.Create(builder =>
-    builder
-        .AddDailyFile(host)
-        .AddCommandPalette(host));
+    builder.AddDailyFile(host));
 
 await ExtensionHostRunner.CreateBuilder(host)
     .AddHostedExtensionFactory(context =>
@@ -84,7 +102,6 @@ var host = ExtensionHostConfiguration.Resolve(args, parameters);
 using var logger = new LoggerConfiguration()
     .MinimumLevel.FromExtensionHost(host)
     .WriteTo.DailyFile(host)
-    .WriteTo.CommandPalette()
     .CreateLogger();
 
 await ExtensionHostRunner.CreateBuilder(host)
@@ -97,8 +114,8 @@ await ExtensionHostRunner.CreateBuilder(host)
 
 ## Bridge behavior
 
-Microsoft.Extensions.Logging trace and critical levels map to the Toolkit's debug and error levels. Serilog verbose
-and fatal levels map to the same logging-neutral levels.
+Microsoft.Extensions.Logging trace maps to the Toolkit's debug level, and critical maps to critical in both
+directions. Serilog verbose maps to debug, and fatal maps to critical in both directions.
 
 Bridge-originated entries are marked so connecting host and application logging in both directions cannot create a
 feedback loop.
@@ -110,5 +127,7 @@ extensions. The runner configures it automatically, so extension code can call `
 without passing a sink through its constructors. Calls use the runner's configured destinations and debug policy.
 
 Use a logging adapter or `IExtensionLogSink` when explicit dependencies are more useful than process-wide state.
+
+`Logger.Initialize` configures only the daily log file. Without initialization or a runner, entries go to `System.Diagnostics.Trace`.
 
 [Back to the project README](../README.md)

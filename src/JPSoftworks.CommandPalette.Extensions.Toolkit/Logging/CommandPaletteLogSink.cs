@@ -11,8 +11,14 @@ using Microsoft.CommandPalette.Extensions.Toolkit;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Forwards extension host diagnostics to the Command Palette host.
+/// Forwards entries to the Command Palette log through the Command Palette SDK's <c>IExtensionHost.LogMessage</c>.
 /// </summary>
+/// <remarks>
+/// Each entry allocates a WinRT log message object and makes a cross-process COM call, and Command Palette then calls
+/// back into the extension to read the message. The runner does not add this sink by default; add it explicitly only
+/// for low-volume entries that should be visible in Command Palette. Entries are discarded until the extension's command
+/// provider receives the Command Palette host.
+/// </remarks>
 public sealed class CommandPaletteLogSink : IExtensionLogSink
 {
     private CommandPaletteLogSink()
@@ -32,7 +38,7 @@ public sealed class CommandPaletteLogSink : IExtensionLogSink
         var state = entry.Level switch
         {
             ExtensionLogLevel.Warning => MessageState.Warning,
-            ExtensionLogLevel.Error => MessageState.Error,
+            ExtensionLogLevel.Error or ExtensionLogLevel.Critical => MessageState.Error,
             _ => MessageState.Info,
         };
 

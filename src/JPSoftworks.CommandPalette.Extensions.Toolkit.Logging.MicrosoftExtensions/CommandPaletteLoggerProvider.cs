@@ -12,6 +12,10 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 /// <summary>
 /// Writes Microsoft.Extensions.Logging events to the Command Palette host log.
 /// </summary>
+/// <remarks>
+/// Each event is a cross-process COM call into Command Palette through <see cref="CommandPaletteLogSink" />.
+/// Use a minimum level or filter so that only low-volume events that should be visible in Command Palette are forwarded.
+/// </remarks>
 public sealed class CommandPaletteLoggerProvider : ILoggerProvider
 {
     private readonly ExtensionHostLoggerProviderCore _provider;

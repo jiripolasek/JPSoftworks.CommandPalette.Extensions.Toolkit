@@ -7,7 +7,7 @@
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
-/// Identifies the severity of an extension host diagnostic entry.
+/// Identifies the severity of an extension log entry.
 /// </summary>
 public enum ExtensionLogLevel
 {
@@ -17,7 +17,7 @@ public enum ExtensionLogLevel
     Debug,
 
     /// <summary>
-    /// General information about normal extension host operation.
+    /// General information about normal extension operation.
     /// </summary>
     Information,
 
@@ -30,4 +30,9 @@ public enum ExtensionLogLevel
     /// A failure that prevented an operation from completing.
     /// </summary>
     Error,
+
+    /// <summary>
+    /// A failure that requires immediate attention, such as one that stops the extension or the host.
+    /// </summary>
+    Critical,
 }

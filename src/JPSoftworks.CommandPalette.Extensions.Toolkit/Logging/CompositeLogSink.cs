@@ -9,7 +9,7 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Forwards each diagnostic entry to multiple sinks.
+/// Forwards each log entry to multiple sinks.
 /// </summary>
 /// <remarks>
 /// Failures from an individual sink are suppressed so that logging cannot interrupt the extension host
@@ -33,6 +33,8 @@ public sealed class CompositeLogSink : IExtensionLogSink
             throw new ArgumentException("The sink collection cannot contain null entries.", nameof(sinks));
         }
     }
+
+    internal IReadOnlyList<IExtensionLogSink> Sinks => this._sinks;
 
     /// <inheritdoc />
     public void Write(ExtensionLogEntry entry)

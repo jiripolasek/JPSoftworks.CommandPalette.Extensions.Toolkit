@@ -17,7 +17,7 @@ public interface IExtensionLoggingBuilder
     void ClearDefaultLogSinks();
 
     /// <summary>
-    /// Adds a sink to the effective extension host logging pipeline.
+    /// Adds a sink to the runner's log pipeline.
     /// </summary>
     /// <param name="sink">The sink to add.</param>
     void AddLogSink(IExtensionLogSink sink);

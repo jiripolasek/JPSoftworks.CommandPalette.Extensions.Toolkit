@@ -8,6 +8,7 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogE
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogEntry.Message.get -> string!
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogEntry.Timestamp.get -> System.DateTimeOffset
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel.Critical = 4 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel.Debug = 0 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel.Error = 3 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel.Information = 1 -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel
@@ -18,6 +19,9 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLog
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLoggingBuilder.ClearDefaultLogSinks() -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogEntry! entry) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogCritical(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, string! message) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogCritical(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, string! message, System.Exception! exception) -> void
+static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogCritical(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, System.Exception! exception) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogDebug(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, string! message) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogError(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, string! message) -> void
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogSinkExtensions.LogError(this JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, string! category, string! message, System.Exception! exception) -> void

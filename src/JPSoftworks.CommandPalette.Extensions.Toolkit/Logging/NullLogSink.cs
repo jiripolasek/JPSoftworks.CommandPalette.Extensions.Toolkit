@@ -9,7 +9,7 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Discards all extension host diagnostics.
+/// Discards all log entries.
 /// </summary>
 public sealed class NullLogSink : IExtensionLogSink
 {

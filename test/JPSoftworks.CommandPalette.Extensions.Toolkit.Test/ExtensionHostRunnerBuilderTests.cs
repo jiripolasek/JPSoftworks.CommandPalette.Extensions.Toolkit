@@ -4,6 +4,9 @@
 //
 // ------------------------------------------------------------
 
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
+using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
+
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Test;
 
 public sealed class ExtensionHostRunnerBuilderTests
@@ -218,6 +221,38 @@ public sealed class ExtensionHostRunnerBuilderTests
 
         Assert.Same(context, receivedContext);
         Assert.Same(extension, result);
+    }
+
+    [Fact]
+    public void CommandPaletteLogSinkIsOptIn()
+    {
+        var logFilePath = Path.Combine(Path.GetTempPath(), "CmdPalExtToolkit", Guid.NewGuid().ToString("N"), "log.txt");
+        var configuration = new ExtensionHostConfiguration([], CreateParameters(), logFilePath);
+
+        using var defaultSinks = ExtensionHostRunner.CreateLogSink(configuration, includeDefaultLogSinks: true, []);
+        using var explicitSinks = ExtensionHostRunner.CreateLogSink(
+            configuration,
+            includeDefaultLogSinks: false,
+            [CommandPaletteLogSink.Instance]);
+
+        Assert.IsType<DailyFileLogSink>(Assert.Single(defaultSinks.Sinks));
+        Assert.Same(CommandPaletteLogSink.Instance, Assert.Single(explicitSinks.Sinks));
+    }
+
+    [Fact]
+    public void MinimumLevelSinkForwardsOnlyEntriesAtOrAboveItsLevel()
+    {
+        List<ExtensionLogLevel> levels = [];
+        var sink = new MinimumLevelLogSink(new DelegateLogSink(entry => levels.Add(entry.Level)), ExtensionLogLevel.Warning);
+
+        foreach (var level in Enum.GetValues<ExtensionLogLevel>())
+        {
+            sink.Write(new ExtensionLogEntry(DateTimeOffset.Now, level, "Test", 0, level.ToString()));
+        }
+
+        Assert.All(levels, level => Assert.True(level >= ExtensionLogLevel.Warning));
+        Assert.Contains(ExtensionLogLevel.Warning, levels);
+        Assert.Contains(ExtensionLogLevel.Error, levels);
     }
 
     private static ExtensionHostRunnerParameters CreateParameters(bool isDebug = false)

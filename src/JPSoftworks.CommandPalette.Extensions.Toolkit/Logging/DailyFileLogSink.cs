@@ -10,7 +10,7 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Writes diagnostics to an automatically flushed file that rolls each local calendar day.
+/// Writes log entries to an automatically flushed file that rolls each local calendar day.
 /// </summary>
 public sealed class DailyFileLogSink : IExtensionLogSink, IDisposable
 {
@@ -84,6 +84,7 @@ public sealed class DailyFileLogSink : IExtensionLogSink, IDisposable
             ExtensionLogLevel.Information => "INF",
             ExtensionLogLevel.Warning => "WRN",
             ExtensionLogLevel.Error => "ERR",
+            ExtensionLogLevel.Critical => "CRT",
             _ => level.ToString()
         };
     }

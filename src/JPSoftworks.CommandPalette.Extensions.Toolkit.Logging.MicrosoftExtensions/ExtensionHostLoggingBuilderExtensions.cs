@@ -42,6 +42,10 @@ public static class ExtensionHostLoggingBuilderExtensions
     /// <param name="builder">The Microsoft logging builder.</param>
     /// <param name="configuration">The resolved extension host configuration.</param>
     /// <returns><paramref name="builder"/> for further configuration.</returns>
+    /// <remarks>
+    /// Each event is a cross-process COM call into Command Palette. Add a stricter filter for
+    /// <see cref="CommandPaletteLoggerProvider" /> so that only low-volume events are forwarded.
+    /// </remarks>
     public static ILoggingBuilder AddCommandPalette(
         this ILoggingBuilder builder,
         ExtensionHostConfiguration configuration)

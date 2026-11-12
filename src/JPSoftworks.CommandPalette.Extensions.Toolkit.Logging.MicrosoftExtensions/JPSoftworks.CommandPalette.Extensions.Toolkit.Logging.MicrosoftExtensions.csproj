@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net9.0-windows10.0.22621.0;net10.0-windows10.0.22621.0</TargetFrameworks>
     <Title>Microsoft.Extensions.Logging adapter for Command Palette extension hosts</Title>
-    <Description>Bidirectional adapters between Command Palette extension host diagnostics and Microsoft.Extensions.Logging.</Description>
+    <Description>Bidirectional adapters between the Command Palette extension host runner's log and Microsoft.Extensions.Logging.</Description>
   </PropertyGroup>
 
   <ItemGroup>

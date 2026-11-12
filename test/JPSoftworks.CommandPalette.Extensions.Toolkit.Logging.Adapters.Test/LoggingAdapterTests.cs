@@ -168,7 +168,7 @@ public sealed class LoggingAdapterTests
         logger.LogCritical(new EventId(17), exception, "Failed item {ItemId}", 42);
 
         Assert.NotNull(receivedEntry);
-        Assert.Equal(ExtensionLogLevel.Error, receivedEntry.Level);
+        Assert.Equal(ExtensionLogLevel.Critical, receivedEntry.Level);
         Assert.Equal("CoreService", receivedEntry.Category);
         Assert.Equal(17, receivedEntry.EventId);
         Assert.Equal("Failed item 42", receivedEntry.Message);
@@ -251,7 +251,7 @@ public sealed class LoggingAdapterTests
             var contents = File.ReadAllText(dailyFilePath);
 
             Assert.Contains(
-                "[ERR] CoreService: Failed item 42",
+                "[CRT] CoreService: Failed item 42",
                 contents,
                 StringComparison.Ordinal);
         }
@@ -374,7 +374,7 @@ public sealed class LoggingAdapterTests
             .Fatal(exception, "Failed item {ItemId}", 42);
 
         Assert.NotNull(receivedEntry);
-        Assert.Equal(ExtensionLogLevel.Error, receivedEntry.Level);
+        Assert.Equal(ExtensionLogLevel.Critical, receivedEntry.Level);
         Assert.Equal("CoreService", receivedEntry.Category);
         Assert.Equal(17, receivedEntry.EventId);
         Assert.Equal("Failed item 42", receivedEntry.Message);

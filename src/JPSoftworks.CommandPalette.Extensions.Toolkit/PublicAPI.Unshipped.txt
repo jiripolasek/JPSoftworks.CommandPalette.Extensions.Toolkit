@@ -46,3 +46,4 @@ static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.CommandPaletteLogSi
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.NullLogSink!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceLogSink.Instance.get -> JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.TraceLogSink!
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Helpers.StartupHelper.HandleDirectLaunchAsync(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! logSink) -> System.Threading.Tasks.Task!
+JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder.AddLogSink(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.IExtensionLogSink! sink, JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogLevel minimumLevel) -> JPSoftworks.CommandPalette.Extensions.Toolkit.ExtensionHostRunnerBuilder!

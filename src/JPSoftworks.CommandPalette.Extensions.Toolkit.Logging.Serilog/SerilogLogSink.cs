@@ -11,7 +11,7 @@ using Serilog.Events;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 
 /// <summary>
-/// Forwards extension host diagnostics to a Serilog logger.
+/// Forwards log entries to a Serilog logger.
 /// </summary>
 public sealed class SerilogLogSink : IExtensionLogSink
 {
@@ -57,6 +57,7 @@ public sealed class SerilogLogSink : IExtensionLogSink
             ExtensionLogLevel.Information => LogEventLevel.Information,
             ExtensionLogLevel.Warning => LogEventLevel.Warning,
             ExtensionLogLevel.Error => LogEventLevel.Error,
+            ExtensionLogLevel.Critical => LogEventLevel.Fatal,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown extension host log level."),
         };
     }

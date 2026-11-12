@@ -11,7 +11,7 @@ using System.Collections.Concurrent;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions;
 
 /// <summary>
-/// Forwards extension host diagnostics to a Microsoft.Extensions.Logging logger.
+/// Forwards log entries to a Microsoft.Extensions.Logging logger.
 /// </summary>
 public sealed class MicrosoftLoggerLogSink : IExtensionLogSink
 {
@@ -76,6 +76,7 @@ public sealed class MicrosoftLoggerLogSink : IExtensionLogSink
             ExtensionLogLevel.Information => LogLevel.Information,
             ExtensionLogLevel.Warning => LogLevel.Warning,
             ExtensionLogLevel.Error => LogLevel.Error,
+            ExtensionLogLevel.Critical => LogLevel.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown extension host log level."),
         };
     }

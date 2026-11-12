@@ -7,16 +7,18 @@
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
-/// Receives diagnostics emitted by an extension host.
+/// Receives log entries written by an extension and by the host process that runs it.
 /// </summary>
 /// <remarks>
-/// This contract is an integration boundary for host diagnostics, not an application-wide logging abstraction.
-/// Implementations may forward entries to any logging system selected by the consuming application.
+/// Extensions without a logging framework can log through this contract directly. Implementations may forward entries
+/// to any logging system selected by the consuming application, so extensions that already use another logging
+/// abstraction can keep it and connect the host through an adapter. <see cref="Write" /> can be called concurrently
+/// from multiple threads, so implementations must be thread-safe.
 /// </remarks>
 public interface IExtensionLogSink
 {
     /// <summary>
-    /// Writes one diagnostic entry.
+    /// Writes one log entry.
     /// </summary>
     /// <param name="entry">The entry to write.</param>
     void Write(ExtensionLogEntry entry);

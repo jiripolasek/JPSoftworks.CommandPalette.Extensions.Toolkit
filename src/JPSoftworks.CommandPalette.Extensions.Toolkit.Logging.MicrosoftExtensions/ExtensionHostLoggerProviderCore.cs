@@ -109,7 +109,8 @@ internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
                 LogLevel.Trace or LogLevel.Debug => ExtensionLogLevel.Debug,
                 LogLevel.Information => ExtensionLogLevel.Information,
                 LogLevel.Warning => ExtensionLogLevel.Warning,
-                LogLevel.Error or LogLevel.Critical => ExtensionLogLevel.Error,
+                LogLevel.Error => ExtensionLogLevel.Error,
+                LogLevel.Critical => ExtensionLogLevel.Critical,
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown Microsoft log level."),
             };
         }

@@ -9,7 +9,7 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Forwards extension host diagnostics to a delegate.
+/// Forwards log entries to a delegate.
 /// </summary>
 public sealed class DelegateLogSink : IExtensionLogSink
 {
@@ -18,7 +18,7 @@ public sealed class DelegateLogSink : IExtensionLogSink
     /// <summary>
     /// Initializes a new delegate-backed sink.
     /// </summary>
-    /// <param name="write">The delegate that receives diagnostic entries.</param>
+    /// <param name="write">The delegate that receives log entries. It can be called concurrently from multiple threads.</param>
     public DelegateLogSink(Action<ExtensionLogEntry> write)
     {
         ArgumentNullException.ThrowIfNull(write);

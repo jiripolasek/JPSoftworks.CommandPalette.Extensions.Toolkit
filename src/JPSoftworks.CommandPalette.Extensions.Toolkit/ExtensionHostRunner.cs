@@ -87,7 +87,7 @@ public static class ExtensionHostRunner
         AppLifeMonitor? appLifeMonitor = null;
         try
         {
-            using var logSink = CreateLogSink(configuration, includeDefaultLogSinks, additionalLogSinks);
+            await using var logSink = CreateLogSink(configuration, includeDefaultLogSinks, additionalLogSinks);
             LegacyLoggerBridge.UseSink(logSink, configuration.IsDebug);
 
             try
@@ -116,7 +116,7 @@ public static class ExtensionHostRunner
             }
             catch (Exception ex)
             {
-                logSink.LogError(LogCategory, "Unhandled fatal exception", ex);
+                logSink.LogCritical(LogCategory, "Unhandled fatal exception", ex);
             }
             finally
             {
@@ -130,7 +130,7 @@ public static class ExtensionHostRunner
         }
     }
 
-    private static ExtensionLogRouter CreateLogSink(
+    internal static ExtensionLogRouter CreateLogSink(
         ExtensionHostConfiguration configuration,
         bool includeDefaultLogSinks,
         IReadOnlyCollection<IExtensionLogSink> additionalLogSinks)
@@ -151,7 +151,7 @@ public static class ExtensionHostRunner
                 sinks.Add(TraceLogSink.Instance);
             }
 
-            sinks.Add(CommandPaletteLogSink.Instance);
+            // CommandPaletteLogSink stays opt-in: every entry is a cross-process COM call into Command Palette.
         }
 
         sinks.AddRange(additionalLogSinks);

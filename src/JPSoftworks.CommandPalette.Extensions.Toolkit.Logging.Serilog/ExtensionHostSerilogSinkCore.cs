@@ -96,7 +96,8 @@ internal sealed class ExtensionHostSerilogSinkCore : ILogEventSink
             LogEventLevel.Verbose or LogEventLevel.Debug => ExtensionLogLevel.Debug,
             LogEventLevel.Information => ExtensionLogLevel.Information,
             LogEventLevel.Warning => ExtensionLogLevel.Warning,
-            LogEventLevel.Error or LogEventLevel.Fatal => ExtensionLogLevel.Error,
+            LogEventLevel.Error => ExtensionLogLevel.Error,
+            LogEventLevel.Fatal => ExtensionLogLevel.Critical,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown Serilog level."),
         };
     }

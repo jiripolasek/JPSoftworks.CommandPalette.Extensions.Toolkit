@@ -14,16 +14,16 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 public static class SerilogLoggingBuilderExtensions
 {
     /// <summary>
-    /// Uses <paramref name="logger"/> as the host diagnostic pipeline.
+    /// Uses <paramref name="logger"/> as the runner's log pipeline.
     /// </summary>
     /// <typeparam name="TBuilder">The concrete extension host logging builder type.</typeparam>
     /// <param name="builder">The extension host logging builder.</param>
     /// <param name="logger">The application-owned Serilog logger.</param>
     /// <returns><paramref name="builder"/> for further configuration.</returns>
     /// <remarks>
-    /// The logger and its sinks remain caller-owned. This method replaces the host's default sinks
-    /// and forwards host diagnostics to the logger while preserving their categories. Explicitly
-    /// added host sinks remain active.
+    /// The logger and its sinks remain caller-owned. This method replaces the runner's default sinks
+    /// and forwards the runner's log entries, including entries written through ExtensionHostContext.LogSink, to the
+    /// logger while preserving their categories. Explicitly added runner sinks remain active.
     /// </remarks>
     public static TBuilder UseSerilog<TBuilder>(
         this TBuilder builder,

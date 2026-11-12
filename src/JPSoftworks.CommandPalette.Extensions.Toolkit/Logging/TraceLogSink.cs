@@ -11,7 +11,7 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Writes extension host diagnostics through <see cref="Trace"/>.
+/// Writes log entries through <see cref="Trace"/>.
 /// </summary>
 public sealed class TraceLogSink : IExtensionLogSink
 {
@@ -53,6 +53,7 @@ public sealed class TraceLogSink : IExtensionLogSink
             ExtensionLogLevel.Information => "INF",
             ExtensionLogLevel.Warning => "WRN",
             ExtensionLogLevel.Error => "ERR",
+            ExtensionLogLevel.Critical => "CRT",
             _ => level.ToString(),
         };
     }

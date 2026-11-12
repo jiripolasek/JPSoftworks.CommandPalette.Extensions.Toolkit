@@ -15,16 +15,16 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 public static class MicrosoftExtensionsLoggingBuilderExtensions
 {
     /// <summary>
-    /// Uses <paramref name="loggerFactory"/> as the host diagnostic pipeline.
+    /// Uses <paramref name="loggerFactory"/> as the runner's log pipeline.
     /// </summary>
     /// <typeparam name="TBuilder">The concrete extension host logging builder type.</typeparam>
     /// <param name="builder">The extension host logging builder.</param>
     /// <param name="loggerFactory">The application-owned logger factory.</param>
     /// <returns><paramref name="builder"/> for further configuration.</returns>
     /// <remarks>
-    /// The logger factory and its providers remain caller-owned. This method replaces the host's default sinks
-    /// and forwards host diagnostics to the factory while preserving their categories. Explicitly added host
-    /// sinks remain active.
+    /// The logger factory and its providers remain caller-owned. This method replaces the runner's default sinks
+    /// and forwards the runner's log entries, including entries written through ExtensionHostContext.LogSink, to the
+    /// factory while preserving their categories. Explicitly added runner sinks remain active.
     /// </remarks>
     public static TBuilder UseMicrosoftExtensionsLogging<TBuilder>(
         this TBuilder builder,

@@ -7,12 +7,12 @@
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 /// <summary>
-/// Describes one diagnostic entry emitted by an extension host.
+/// Describes one entry in an extension log.
 /// </summary>
 public sealed class ExtensionLogEntry
 {
     /// <summary>
-    /// Initializes a new diagnostic entry.
+    /// Initializes a new log entry.
     /// </summary>
     public ExtensionLogEntry(
         DateTimeOffset timestamp,

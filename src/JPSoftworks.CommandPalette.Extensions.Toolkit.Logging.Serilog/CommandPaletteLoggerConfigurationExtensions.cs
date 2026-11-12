@@ -20,6 +20,10 @@ public static class CommandPaletteLoggerConfigurationExtensions
     /// <param name="sinkConfiguration">The Serilog sink configuration.</param>
     /// <param name="restrictedToMinimumLevel">The minimum level written to Command Palette.</param>
     /// <returns>The logger configuration.</returns>
+    /// <remarks>
+    /// Each event is a cross-process COM call into Command Palette. Raise <paramref name="restrictedToMinimumLevel" />
+    /// so that only low-volume events that should be visible in Command Palette are forwarded.
+    /// </remarks>
     public static LoggerConfiguration CommandPalette(
         this LoggerSinkConfiguration sinkConfiguration,
         LogEventLevel restrictedToMinimumLevel = LogEventLevel.Verbose)

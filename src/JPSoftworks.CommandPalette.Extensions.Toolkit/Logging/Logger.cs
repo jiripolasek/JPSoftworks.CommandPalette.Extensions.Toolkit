@@ -13,12 +13,13 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// </summary>
 /// <remarks>
 /// When an <see cref="ExtensionHostRunner" /> is active, entries are forwarded to its effective log sink.
-/// Calling <see cref="Initialize" /> directly configures the original daily-file and Command Palette destinations.
+/// Calling <see cref="Initialize" /> directly configures the daily log file. Without either, entries go to
+/// <see cref="System.Diagnostics.Trace" />.
 /// </remarks>
 public static class Logger
 {
     /// <summary>
-    /// Initializes the compatibility logger with its original default destinations.
+    /// Initializes the compatibility logger with the daily log file.
     /// </summary>
     public static void Initialize(string publisherName, string productName, bool isDebug = false)
     {
@@ -113,13 +114,8 @@ internal static class LegacyLoggerBridge
                 Environment.SpecialFolderOption.DoNotVerify);
             var logFilePath = Path.Combine(localAppData, publisherName, productName, "log.txt");
             var fileSink = new DailyFileLogSink(logFilePath);
-            var sink = new CompositeLogSink(
-            [
-                fileSink,
-                CommandPaletteLogSink.Instance
-            ]);
 
-            SetSink(sink, fileSink, isDebug);
+            SetSink(fileSink, fileSink, isDebug);
             Write(ExtensionLogLevel.Debug, "Logger initialized");
         }
         catch (Exception ex)
@@ -159,12 +155,12 @@ internal static class LegacyLoggerBridge
         if (level == ExtensionLogLevel.Debug && !isDebugEnabled)
         {
 #if DEBUG
-            TryWrite(CommandPaletteLogSink.Instance, level, message, exception);
+            TryWrite(TraceLogSink.Instance, level, message, exception);
 #endif
             return;
         }
 
-        TryWrite(sink ?? CommandPaletteLogSink.Instance, level, message, exception);
+        TryWrite(sink ?? TraceLogSink.Instance, level, message, exception);
     }
 
     internal static void CloseAndFlush()
