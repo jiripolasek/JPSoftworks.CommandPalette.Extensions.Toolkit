@@ -103,10 +103,12 @@ and fatal levels map to the same logging-neutral levels.
 Bridge-originated entries are marked so connecting host and application logging in both directions cannot create a
 feedback loop.
 
-## Legacy logger
+## Static logger
 
-The static `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger` API remains available as an obsolete
-compatibility facade. Existing calls are forwarded to the runner's effective sink. New code should use a logging
-adapter or `IExtensionHostLogSink`.
+The static `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger` API is a supported convenience for simple
+extensions. The runner configures it automatically, so extension code can call `Logger.LogInformation("Extension initialized")`
+without passing a sink through its constructors. Calls use the runner's configured destinations and debug policy.
+
+Use a logging adapter or `IExtensionHostLogSink` when explicit dependencies are more useful than process-wide state.
 
 [Back to the project README](../README.md)

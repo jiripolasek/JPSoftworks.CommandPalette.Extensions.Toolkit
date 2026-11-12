@@ -12,14 +12,10 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Test;
 public sealed class LegacyLoggerCompatibilityTests
 {
     [Fact]
-    public void LoggerIsMarkedObsolete()
+    public void LoggerRemainsSupported()
     {
-#pragma warning disable CS0618
-        var obsoleteAttribute = Assert.Single(
+        Assert.Empty(
             typeof(Logger).GetCustomAttributes(typeof(ObsoleteAttribute), inherit: false));
-#pragma warning restore CS0618
-
-        Assert.Contains(nameof(IExtensionHostLogSink), ((ObsoleteAttribute)obsoleteAttribute).Message);
     }
 
     [Fact]
@@ -32,14 +28,12 @@ public sealed class LegacyLoggerCompatibilityTests
 
         try
         {
-#pragma warning disable CS0618
             Logger.LogDebug("Debug");
             Logger.LogInformation("Information");
             Logger.LogWarning("Warning");
             Logger.LogError("Error");
             Logger.LogError(exception);
             Logger.LogError("Operation failed", exception);
-#pragma warning restore CS0618
         }
         finally
         {
@@ -73,9 +67,7 @@ public sealed class LegacyLoggerCompatibilityTests
 
         try
         {
-#pragma warning disable CS0618
             var exception = Record.Exception(() => Logger.LogInformation("Information"));
-#pragma warning restore CS0618
 
             Assert.Null(exception);
         }
@@ -94,17 +86,13 @@ public sealed class LegacyLoggerCompatibilityTests
             new DelegateExtensionHostLogSink(_ =>
             {
                 sinkInvocations++;
-#pragma warning disable CS0618
                 Logger.LogInformation("Relayed");
-#pragma warning restore CS0618
             }),
             isDebug: true);
 
         try
         {
-#pragma warning disable CS0618
             Logger.LogInformation("Original");
-#pragma warning restore CS0618
         }
         finally
         {

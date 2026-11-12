@@ -98,7 +98,6 @@ internal static class Program
 
     private static void ExerciseLegacyLogger()
     {
-#pragma warning disable CS0618
         Logger.Initialize("JPSoftworks", "AotSmokeTest", isDebug: true);
         Logger.LogDebug("Debug");
         Logger.LogInformation("Information");
@@ -107,7 +106,6 @@ internal static class Program
         Logger.LogError(new InvalidOperationException("Failure"));
         Logger.LogError("Operation failed", new InvalidOperationException("Failure"));
         Logger.CloseAndFlush();
-#pragma warning restore CS0618
     }
 
     private static void ExerciseApplicationAdapters()

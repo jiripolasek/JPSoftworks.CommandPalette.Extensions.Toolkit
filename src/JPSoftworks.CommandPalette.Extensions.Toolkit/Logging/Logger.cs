@@ -9,13 +9,12 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
 /// <summary>
-/// Provides the original static logging API retained for compatibility.
+/// Provides simple process-wide logging for extensions.
 /// </summary>
 /// <remarks>
 /// When an <see cref="ExtensionHostRunner" /> is active, entries are forwarded to its effective log sink.
 /// Calling <see cref="Initialize" /> directly configures the original daily-file and Command Palette destinations.
 /// </remarks>
-[Obsolete("Use IExtensionHostLogSink and configure sinks through ExtensionHostRunner.CreateBuilder instead.")]
 public static class Logger
 {
     /// <summary>
