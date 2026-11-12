@@ -33,7 +33,7 @@ public static class Logger
     /// </summary>
     public static void LogDebug(string message)
     {
-        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Debug, message);
+        LegacyLoggerBridge.Write(ExtensionLogLevel.Debug, message);
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public static class Logger
     /// </summary>
     public static void LogInformation(string message)
     {
-        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Information, message);
+        LegacyLoggerBridge.Write(ExtensionLogLevel.Information, message);
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public static class Logger
     /// </summary>
     public static void LogWarning(string message)
     {
-        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Warning, message);
+        LegacyLoggerBridge.Write(ExtensionLogLevel.Warning, message);
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public static class Logger
     /// </summary>
     public static void LogError(string message)
     {
-        LegacyLoggerBridge.Write(ExtensionHostLogLevel.Error, message);
+        LegacyLoggerBridge.Write(ExtensionLogLevel.Error, message);
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public static class Logger
     public static void LogError(Exception exception)
     {
         LegacyLoggerBridge.Write(
-            ExtensionHostLogLevel.Error,
+            ExtensionLogLevel.Error,
             $"{exception.GetType().Name}: {exception.Message}",
             exception);
     }
@@ -77,7 +77,7 @@ public static class Logger
     public static void LogError(string message, Exception exception)
     {
         LegacyLoggerBridge.Write(
-            ExtensionHostLogLevel.Error,
+            ExtensionLogLevel.Error,
             $"{message}: {exception.Message}",
             exception);
     }
@@ -100,7 +100,7 @@ internal static class LegacyLoggerBridge
     [ThreadStatic]
     private static bool _isWriting;
 
-    private static IExtensionHostLogSink? _sink;
+    private static IExtensionLogSink? _sink;
     private static IDisposable? _ownedResource;
     private static bool _isDebugEnabled;
 
@@ -112,33 +112,33 @@ internal static class LegacyLoggerBridge
                 Environment.SpecialFolder.LocalApplicationData,
                 Environment.SpecialFolderOption.DoNotVerify);
             var logFilePath = Path.Combine(localAppData, publisherName, productName, "log.txt");
-            var fileSink = new DailyFileExtensionHostLogSink(logFilePath);
-            var sink = new CompositeExtensionHostLogSink(
+            var fileSink = new DailyFileLogSink(logFilePath);
+            var sink = new CompositeLogSink(
             [
                 fileSink,
-                CommandPaletteExtensionHostLogSink.Instance
+                CommandPaletteLogSink.Instance
             ]);
 
             SetSink(sink, fileSink, isDebug);
-            Write(ExtensionHostLogLevel.Debug, "Logger initialized");
+            Write(ExtensionLogLevel.Debug, "Logger initialized");
         }
         catch (Exception ex)
         {
             Write(
-                ExtensionHostLogLevel.Error,
+                ExtensionLogLevel.Error,
                 $"{ex.GetType().Name}: {ex.Message}",
                 ex);
         }
     }
 
-    internal static void UseSink(IExtensionHostLogSink sink, bool isDebug)
+    internal static void UseSink(IExtensionLogSink sink, bool isDebug)
     {
         ArgumentNullException.ThrowIfNull(sink);
         SetSink(sink, null, isDebug);
     }
 
     internal static void Write(
-        ExtensionHostLogLevel level,
+        ExtensionLogLevel level,
         string message,
         Exception? exception = null)
     {
@@ -147,7 +147,7 @@ internal static class LegacyLoggerBridge
             return;
         }
 
-        IExtensionHostLogSink? sink;
+        IExtensionLogSink? sink;
         bool isDebugEnabled;
 
         lock (SyncRoot)
@@ -156,15 +156,15 @@ internal static class LegacyLoggerBridge
             isDebugEnabled = _isDebugEnabled;
         }
 
-        if (level == ExtensionHostLogLevel.Debug && !isDebugEnabled)
+        if (level == ExtensionLogLevel.Debug && !isDebugEnabled)
         {
 #if DEBUG
-            TryWrite(CommandPaletteExtensionHostLogSink.Instance, level, message, exception);
+            TryWrite(CommandPaletteLogSink.Instance, level, message, exception);
 #endif
             return;
         }
 
-        TryWrite(sink ?? CommandPaletteExtensionHostLogSink.Instance, level, message, exception);
+        TryWrite(sink ?? CommandPaletteLogSink.Instance, level, message, exception);
     }
 
     internal static void CloseAndFlush()
@@ -183,7 +183,7 @@ internal static class LegacyLoggerBridge
     }
 
     private static void SetSink(
-        IExtensionHostLogSink sink,
+        IExtensionLogSink sink,
         IDisposable? ownedResource,
         bool isDebug)
     {
@@ -201,15 +201,15 @@ internal static class LegacyLoggerBridge
     }
 
     private static void TryWrite(
-        IExtensionHostLogSink sink,
-        ExtensionHostLogLevel level,
+        IExtensionLogSink sink,
+        ExtensionLogLevel level,
         string message,
         Exception? exception)
     {
         try
         {
             _isWriting = true;
-            sink.Write(new ExtensionHostLogEntry(
+            sink.Write(new ExtensionLogEntry(
                 DateTimeOffset.Now,
                 level,
                 Category,

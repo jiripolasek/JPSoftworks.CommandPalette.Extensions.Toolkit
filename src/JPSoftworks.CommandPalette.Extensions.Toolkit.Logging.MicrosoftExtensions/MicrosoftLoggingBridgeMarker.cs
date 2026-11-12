@@ -11,14 +11,14 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 
 internal static class MicrosoftLoggingBridgeMarker
 {
-    private static readonly ConditionalWeakTable<ExtensionHostLogEntry, object> MarkedEntries = new();
+    private static readonly ConditionalWeakTable<ExtensionLogEntry, object> MarkedEntries = new();
 
-    public static bool IsMarked(ExtensionHostLogEntry entry)
+    public static bool IsMarked(ExtensionLogEntry entry)
     {
         return MarkedEntries.TryGetValue(entry, out _);
     }
 
-    public static void Mark(ExtensionHostLogEntry entry)
+    public static void Mark(ExtensionLogEntry entry)
     {
         _ = MarkedEntries.GetValue(entry, static _ => new object());
     }

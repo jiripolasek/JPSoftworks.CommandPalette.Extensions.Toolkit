@@ -29,13 +29,13 @@ public static class MicrosoftExtensionsLoggingBuilderExtensions
     public static TBuilder UseMicrosoftExtensionsLogging<TBuilder>(
         this TBuilder builder,
         ILoggerFactory loggerFactory)
-        where TBuilder : class, IExtensionHostLoggingBuilder
+        where TBuilder : class, IExtensionLoggingBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
         builder.ClearDefaultLogSinks();
-        builder.AddHostLogSink(new MicrosoftLoggerExtensionHostLogSink(loggerFactory));
+        builder.AddLogSink(new MicrosoftLoggerLogSink(loggerFactory));
         return builder;
     }
 }

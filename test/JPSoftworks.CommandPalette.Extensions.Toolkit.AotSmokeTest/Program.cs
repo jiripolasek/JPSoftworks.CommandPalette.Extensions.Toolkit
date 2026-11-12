@@ -92,7 +92,7 @@ internal static class Program
             .CreateBuilder(host)
             .AddHostedExtensionFactory(_ => new SmokeTestExtension())
             .UseMicrosoftExtensionsLogging(loggerFactory)
-            .AddLogSink(new DelegateExtensionHostLogSink(static _ => { }));
+            .AddLogSink(new DelegateLogSink(static _ => { }));
         await runner.RunAsync();
     }
 

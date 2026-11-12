@@ -11,15 +11,15 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 
 internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
 {
-    private readonly IExtensionHostLogSink _sink;
+    private readonly IExtensionLogSink _sink;
     private readonly LogLevel _minimumLevel;
 
-    public ExtensionHostLoggerProviderCore(IExtensionHostLogSink sink)
+    public ExtensionHostLoggerProviderCore(IExtensionLogSink sink)
         : this(sink, LogLevel.Trace)
     {
     }
 
-    public ExtensionHostLoggerProviderCore(IExtensionHostLogSink sink, LogLevel minimumLevel)
+    public ExtensionHostLoggerProviderCore(IExtensionLogSink sink, LogLevel minimumLevel)
     {
         ArgumentNullException.ThrowIfNull(sink);
         if (minimumLevel is < LogLevel.Trace or > LogLevel.None)
@@ -49,10 +49,10 @@ internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
     private sealed class ExtensionHostLogger : ILogger
     {
         private readonly string _categoryName;
-        private readonly IExtensionHostLogSink _sink;
+        private readonly IExtensionLogSink _sink;
         private readonly LogLevel _minimumLevel;
 
-        public ExtensionHostLogger(string categoryName, IExtensionHostLogSink sink, LogLevel minimumLevel)
+        public ExtensionHostLogger(string categoryName, IExtensionLogSink sink, LogLevel minimumLevel)
         {
             this._categoryName = categoryName;
             this._sink = sink;
@@ -86,9 +86,9 @@ internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
 
             try
             {
-                var entry = new ExtensionHostLogEntry(
+                var entry = new ExtensionLogEntry(
                     DateTimeOffset.Now,
-                    ToExtensionHostLogLevel(logLevel),
+                    ToExtensionLogLevel(logLevel),
                     this._categoryName,
                     eventId.Id,
                     formatter(state, exception),
@@ -102,14 +102,14 @@ internal sealed class ExtensionHostLoggerProviderCore : ILoggerProvider
             }
         }
 
-        private static ExtensionHostLogLevel ToExtensionHostLogLevel(LogLevel level)
+        private static ExtensionLogLevel ToExtensionLogLevel(LogLevel level)
         {
             return level switch
             {
-                LogLevel.Trace or LogLevel.Debug => ExtensionHostLogLevel.Debug,
-                LogLevel.Information => ExtensionHostLogLevel.Information,
-                LogLevel.Warning => ExtensionHostLogLevel.Warning,
-                LogLevel.Error or LogLevel.Critical => ExtensionHostLogLevel.Error,
+                LogLevel.Trace or LogLevel.Debug => ExtensionLogLevel.Debug,
+                LogLevel.Information => ExtensionLogLevel.Information,
+                LogLevel.Warning => ExtensionLogLevel.Warning,
+                LogLevel.Error or LogLevel.Critical => ExtensionLogLevel.Error,
                 _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown Microsoft log level."),
             };
         }

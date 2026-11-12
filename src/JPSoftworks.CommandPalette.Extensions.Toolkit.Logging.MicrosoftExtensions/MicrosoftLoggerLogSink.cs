@@ -13,7 +13,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 /// <summary>
 /// Forwards extension host diagnostics to a Microsoft.Extensions.Logging logger.
 /// </summary>
-public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
+public sealed class MicrosoftLoggerLogSink : IExtensionLogSink
 {
     private readonly ILogger? _logger;
     private readonly ILoggerFactory? _loggerFactory;
@@ -23,7 +23,7 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
     /// Initializes a sink that writes to <paramref name="logger"/>.
     /// </summary>
     /// <param name="logger">The target Microsoft.Extensions.Logging logger.</param>
-    public MicrosoftLoggerExtensionHostLogSink(ILogger logger)
+    public MicrosoftLoggerLogSink(ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
         this._logger = logger;
@@ -35,7 +35,7 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
     /// </summary>
     /// <param name="loggerFactory">The target application-owned logger factory.</param>
     /// <remarks>The factory and the loggers it creates remain caller-owned.</remarks>
-    public MicrosoftLoggerExtensionHostLogSink(ILoggerFactory loggerFactory)
+    public MicrosoftLoggerLogSink(ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(loggerFactory);
         this._loggerFactory = loggerFactory;
@@ -43,7 +43,7 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
     }
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -68,14 +68,14 @@ public sealed class MicrosoftLoggerExtensionHostLogSink : IExtensionHostLogSink
             static (logState, _) => logState.ToString());
     }
 
-    private static LogLevel ToMicrosoftLogLevel(ExtensionHostLogLevel level)
+    private static LogLevel ToMicrosoftLogLevel(ExtensionLogLevel level)
     {
         return level switch
         {
-            ExtensionHostLogLevel.Debug => LogLevel.Debug,
-            ExtensionHostLogLevel.Information => LogLevel.Information,
-            ExtensionHostLogLevel.Warning => LogLevel.Warning,
-            ExtensionHostLogLevel.Error => LogLevel.Error,
+            ExtensionLogLevel.Debug => LogLevel.Debug,
+            ExtensionLogLevel.Information => LogLevel.Information,
+            ExtensionLogLevel.Warning => LogLevel.Warning,
+            ExtensionLogLevel.Error => LogLevel.Error,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown extension host log level."),
         };
     }

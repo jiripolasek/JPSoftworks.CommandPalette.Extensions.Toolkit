@@ -28,13 +28,13 @@ public static class SerilogLoggingBuilderExtensions
     public static TBuilder UseSerilog<TBuilder>(
         this TBuilder builder,
         global::Serilog.ILogger logger)
-        where TBuilder : class, IExtensionHostLoggingBuilder
+        where TBuilder : class, IExtensionLoggingBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentNullException.ThrowIfNull(logger);
 
         builder.ClearDefaultLogSinks();
-        builder.AddHostLogSink(new SerilogExtensionHostLogSink(logger));
+        builder.AddLogSink(new SerilogLogSink(logger));
         return builder;
     }
 }

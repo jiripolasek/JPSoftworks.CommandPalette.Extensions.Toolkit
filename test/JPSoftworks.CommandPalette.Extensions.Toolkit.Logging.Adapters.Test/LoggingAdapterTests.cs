@@ -23,7 +23,7 @@ public sealed class LoggingAdapterTests
     {
         var logger = new RecordingMicrosoftLogger();
         var exception = new InvalidOperationException("Test exception");
-        var sink = new MicrosoftLoggerExtensionHostLogSink(logger);
+        var sink = new MicrosoftLoggerLogSink(logger);
 
         sink.Write(CreateEntry(exception));
 
@@ -39,7 +39,7 @@ public sealed class LoggingAdapterTests
     {
         using var loggerFactory = new RecordingMicrosoftLoggerFactory();
         var exception = new InvalidOperationException("Test exception");
-        var sink = new MicrosoftLoggerExtensionHostLogSink(loggerFactory);
+        var sink = new MicrosoftLoggerLogSink(loggerFactory);
 
         sink.Write(CreateEntry(exception));
 
@@ -62,7 +62,7 @@ public sealed class LoggingAdapterTests
 
         Assert.Same(builder, result);
         Assert.True(builder.DefaultLogSinksCleared);
-        Assert.IsType<MicrosoftLoggerExtensionHostLogSink>(Assert.Single(builder.Sinks));
+        Assert.IsType<MicrosoftLoggerLogSink>(Assert.Single(builder.Sinks));
         Assert.Empty(loggerFactory.Providers);
     }
 
@@ -92,7 +92,7 @@ public sealed class LoggingAdapterTests
 
         Assert.Same(builder, result);
         Assert.True(builder.DefaultLogSinksCleared);
-        Assert.IsType<SerilogExtensionHostLogSink>(Assert.Single(builder.Sinks));
+        Assert.IsType<SerilogLogSink>(Assert.Single(builder.Sinks));
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class LoggingAdapterTests
     [Fact]
     public void MicrosoftProviderCoreForwardsApplicationEntry()
     {
-        ExtensionHostLogEntry? receivedEntry = null;
+        ExtensionLogEntry? receivedEntry = null;
         var exception = new InvalidOperationException("Test exception");
         var sink = new CallbackLogSink(entry => receivedEntry = entry);
         using var provider = new ExtensionHostLoggerProviderCore(sink);
@@ -168,7 +168,7 @@ public sealed class LoggingAdapterTests
         logger.LogCritical(new EventId(17), exception, "Failed item {ItemId}", 42);
 
         Assert.NotNull(receivedEntry);
-        Assert.Equal(ExtensionHostLogLevel.Error, receivedEntry.Level);
+        Assert.Equal(ExtensionLogLevel.Error, receivedEntry.Level);
         Assert.Equal("CoreService", receivedEntry.Category);
         Assert.Equal(17, receivedEntry.EventId);
         Assert.Equal("Failed item 42", receivedEntry.Message);
@@ -178,7 +178,7 @@ public sealed class LoggingAdapterTests
     [Fact]
     public void MicrosoftProviderCoreAppliesMinimumLevel()
     {
-        var receivedEntries = new List<ExtensionHostLogEntry>();
+        var receivedEntries = new List<ExtensionLogEntry>();
         var sink = new CallbackLogSink(receivedEntries.Add);
         using var provider = new ExtensionHostLoggerProviderCore(sink, LogLevel.Information);
         var logger = provider.CreateLogger("CoreService");
@@ -189,7 +189,7 @@ public sealed class LoggingAdapterTests
         Assert.False(logger.IsEnabled(LogLevel.Debug));
         Assert.True(logger.IsEnabled(LogLevel.Information));
         var entry = Assert.Single(receivedEntries);
-        Assert.Equal(ExtensionHostLogLevel.Information, entry.Level);
+        Assert.Equal(ExtensionLogLevel.Information, entry.Level);
         Assert.Equal("Information message", entry.Message);
     }
 
@@ -212,17 +212,17 @@ public sealed class LoggingAdapterTests
     [Fact]
     public void MicrosoftProviderCoreReceivesForwardedHostEntry()
     {
-        var receivedEntries = new List<ExtensionHostLogEntry>();
+        var receivedEntries = new List<ExtensionLogEntry>();
         using var provider = new ExtensionHostLoggerProviderCore(
             new CallbackLogSink(receivedEntries.Add));
         using var loggerFactory = new ProviderMicrosoftLoggerFactory(provider);
-        var hostSink = new MicrosoftLoggerExtensionHostLogSink(loggerFactory);
+        var hostSink = new MicrosoftLoggerLogSink(loggerFactory);
         var exception = new InvalidOperationException("Test exception");
 
         hostSink.Write(CreateEntry(exception));
 
         var entry = Assert.Single(receivedEntries);
-        Assert.Equal(ExtensionHostLogLevel.Warning, entry.Level);
+        Assert.Equal(ExtensionLogLevel.Warning, entry.Level);
         Assert.Equal("TestCategory", entry.Category);
         Assert.Equal(42, entry.EventId);
         Assert.Equal("Test message", entry.Message);
@@ -344,7 +344,7 @@ public sealed class LoggingAdapterTests
             .WriteTo.Sink(recordingSink)
             .CreateLogger();
         var exception = new InvalidOperationException("Test exception");
-        var sink = new SerilogExtensionHostLogSink(logger);
+        var sink = new SerilogLogSink(logger);
 
         sink.Write(CreateEntry(exception));
 
@@ -359,7 +359,7 @@ public sealed class LoggingAdapterTests
     [Fact]
     public void SerilogAdapterForwardsApplicationEntry()
     {
-        ExtensionHostLogEntry? receivedEntry = null;
+        ExtensionLogEntry? receivedEntry = null;
         var extensionHostSink = new CallbackLogSink(entry => receivedEntry = entry);
         var sink = new ExtensionHostSerilogSinkCore(extensionHostSink);
         using var logger = new LoggerConfiguration()
@@ -374,7 +374,7 @@ public sealed class LoggingAdapterTests
             .Fatal(exception, "Failed item {ItemId}", 42);
 
         Assert.NotNull(receivedEntry);
-        Assert.Equal(ExtensionHostLogLevel.Error, receivedEntry.Level);
+        Assert.Equal(ExtensionLogLevel.Error, receivedEntry.Level);
         Assert.Equal("CoreService", receivedEntry.Category);
         Assert.Equal(17, receivedEntry.EventId);
         Assert.Equal("Failed item 42", receivedEntry.Message);
@@ -384,8 +384,8 @@ public sealed class LoggingAdapterTests
     [Fact]
     public void SerilogAdaptersAvoidBidirectionalFeedback()
     {
-        var hostEntries = new List<ExtensionHostLogEntry>();
-        IExtensionHostLogSink? hostSink = null;
+        var hostEntries = new List<ExtensionLogEntry>();
+        IExtensionLogSink? hostSink = null;
         var recordingSink = new RecordingSerilogSink();
         var extensionHostSink = new ExtensionHostSerilogSinkCore(
             new CallbackLogSink(entry => hostSink!.Write(entry)));
@@ -396,7 +396,7 @@ public sealed class LoggingAdapterTests
         hostSink = new CompositeLogSink(
         [
             new CallbackLogSink(hostEntries.Add),
-            new SerilogExtensionHostLogSink(logger),
+            new SerilogLogSink(logger),
         ]);
 
         logger.Information("Application message");
@@ -410,11 +410,11 @@ public sealed class LoggingAdapterTests
         Assert.Equal(2, recordingSink.Events.Count);
     }
 
-    private static ExtensionHostLogEntry CreateEntry(Exception exception)
+    private static ExtensionLogEntry CreateEntry(Exception exception)
     {
-        return new ExtensionHostLogEntry(
+        return new ExtensionLogEntry(
             new DateTimeOffset(2026, 7, 28, 12, 34, 56, TimeSpan.FromHours(2)),
-            ExtensionHostLogLevel.Warning,
+            ExtensionLogLevel.Warning,
             "TestCategory",
             42,
             "Test message",
@@ -508,13 +508,13 @@ public sealed class LoggingAdapterTests
         }
     }
 
-    private sealed class RecordingHostLoggingBuilder : IExtensionHostLoggingBuilder
+    private sealed class RecordingHostLoggingBuilder : IExtensionLoggingBuilder
     {
         public bool DefaultLogSinksCleared { get; private set; }
 
-        public List<IExtensionHostLogSink> Sinks { get; } = [];
+        public List<IExtensionLogSink> Sinks { get; } = [];
 
-        public void AddHostLogSink(IExtensionHostLogSink sink)
+        public void AddLogSink(IExtensionLogSink sink)
         {
             this.Sinks.Add(sink);
         }
@@ -569,21 +569,21 @@ public sealed class LoggingAdapterTests
         }
     }
 
-    private sealed class CallbackLogSink(Action<ExtensionHostLogEntry> write) : IExtensionHostLogSink
+    private sealed class CallbackLogSink(Action<ExtensionLogEntry> write) : IExtensionLogSink
     {
-        private readonly Action<ExtensionHostLogEntry> _write = write;
+        private readonly Action<ExtensionLogEntry> _write = write;
 
-        public void Write(ExtensionHostLogEntry entry)
+        public void Write(ExtensionLogEntry entry)
         {
             this._write(entry);
         }
     }
 
-    private sealed class CompositeLogSink(IEnumerable<IExtensionHostLogSink> sinks) : IExtensionHostLogSink
+    private sealed class CompositeLogSink(IEnumerable<IExtensionLogSink> sinks) : IExtensionLogSink
     {
-        private readonly IExtensionHostLogSink[] _sinks = sinks.ToArray();
+        private readonly IExtensionLogSink[] _sinks = sinks.ToArray();
 
-        public void Write(ExtensionHostLogEntry entry)
+        public void Write(ExtensionLogEntry entry)
         {
             foreach (var sink in this._sinks)
             {

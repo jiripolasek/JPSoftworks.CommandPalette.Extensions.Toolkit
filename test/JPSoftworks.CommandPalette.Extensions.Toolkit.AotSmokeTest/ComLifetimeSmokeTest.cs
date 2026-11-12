@@ -66,7 +66,7 @@ internal static partial class ComLifetimeSmokeTest
 
         var builder = ExtensionHostRunner.CreateBuilder(["-RegisterProcessAsComServer"], parameters)
             .ClearDefaultLogSinks()
-            .AddLogSink(new DelegateExtensionHostLogSink(entry => Console.WriteLine(entry.Message)));
+            .AddLogSink(new DelegateLogSink(entry => Console.WriteLine(entry.Message)));
         if (useExplicitClassId)
         {
             builder.AddHostedExtensionFactory(

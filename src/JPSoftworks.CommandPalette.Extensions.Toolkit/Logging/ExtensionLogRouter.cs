@@ -8,21 +8,21 @@ using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
 namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 
-internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposable
+internal sealed class ExtensionLogRouter : IExtensionLogSink, IDisposable
 {
     private readonly bool _isDebugEnabled;
     private readonly IDisposable[] _ownedResources;
-    private readonly CompositeExtensionHostLogSink _sink;
+    private readonly CompositeLogSink _sink;
     private readonly Lock _syncRoot = new();
 
     private bool _isDisposed;
 
-    public ExtensionHostLogRouter(
-        IEnumerable<IExtensionHostLogSink> sinks,
+    public ExtensionLogRouter(
+        IEnumerable<IExtensionLogSink> sinks,
         IEnumerable<IDisposable> ownedResources,
         bool isDebugEnabled)
     {
-        this._sink = new CompositeExtensionHostLogSink(sinks);
+        this._sink = new CompositeLogSink(sinks);
         this._ownedResources = ownedResources.ToArray();
         this._isDebugEnabled = isDebugEnabled;
     }
@@ -52,11 +52,11 @@ internal sealed class ExtensionHostLogRouter : IExtensionHostLogSink, IDisposabl
         }
     }
 
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
-        if (entry.Level == ExtensionHostLogLevel.Debug && !this._isDebugEnabled)
+        if (entry.Level == ExtensionLogLevel.Debug && !this._isDebugEnabled)
         {
             return;
         }

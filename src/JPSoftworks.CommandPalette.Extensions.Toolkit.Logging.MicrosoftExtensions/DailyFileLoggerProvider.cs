@@ -14,7 +14,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensi
 /// </summary>
 public sealed class DailyFileLoggerProvider : ILoggerProvider
 {
-    private readonly DailyFileExtensionHostLogSink _sink;
+    private readonly DailyFileLogSink _sink;
     private readonly ExtensionHostLoggerProviderCore _provider;
 
     /// <summary>
@@ -40,7 +40,7 @@ public sealed class DailyFileLoggerProvider : ILoggerProvider
     /// <param name="minimumLevel">The lowest Microsoft logging level that the provider accepts.</param>
     public DailyFileLoggerProvider(string baseFilePath, LogLevel minimumLevel)
     {
-        this._sink = new DailyFileExtensionHostLogSink(baseFilePath);
+        this._sink = new DailyFileLogSink(baseFilePath);
         this._provider = new ExtensionHostLoggerProviderCore(this._sink, minimumLevel);
     }
 

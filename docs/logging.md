@@ -17,14 +17,14 @@ Each run writes an information-level startup entry. Debug entries are enabled wh
 
 The main package includes:
 
-- `DailyFileExtensionHostLogSink`
-- `CommandPaletteExtensionHostLogSink`
-- `TraceExtensionHostLogSink`
-- `DelegateExtensionHostLogSink`
-- `CompositeExtensionHostLogSink`
-- `NullExtensionHostLogSink`
+- `DailyFileLogSink`
+- `CommandPaletteLogSink`
+- `TraceLogSink`
+- `DelegateLogSink`
+- `CompositeLogSink`
+- `NullLogSink`
 
-The shared `IExtensionHostLogSink`, `ExtensionHostLogEntry`, and `ExtensionHostLogLevel` contracts live in
+The shared `IExtensionLogSink`, `ExtensionLogEntry`, and `ExtensionLogLevel` contracts live in
 `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions`.
 
 Additional sinks retain the defaults:
@@ -32,7 +32,7 @@ Additional sinks retain the defaults:
 ```csharp
 await ExtensionHostRunner
     .CreateBuilder(args, parameters)
-    .AddLogSink(new DelegateExtensionHostLogSink(entry => targetLogger.Write(entry)))
+    .AddLogSink(new DelegateLogSink(entry => targetLogger.Write(entry)))
     .RunAsync();
 ```
 
@@ -109,6 +109,6 @@ The static `JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Logger` API is
 extensions. The runner configures it automatically, so extension code can call `Logger.LogInformation("Extension initialized")`
 without passing a sink through its constructors. Calls use the runner's configured destinations and debug policy.
 
-Use a logging adapter or `IExtensionHostLogSink` when explicit dependencies are more useful than process-wide state.
+Use a logging adapter or `IExtensionLogSink` when explicit dependencies are more useful than process-wide state.
 
 [Back to the project README](../README.md)

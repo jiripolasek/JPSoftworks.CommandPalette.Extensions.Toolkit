@@ -12,7 +12,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// <summary>
 /// Writes diagnostics to an automatically flushed file that rolls each local calendar day.
 /// </summary>
-public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisposable
+public sealed class DailyFileLogSink : IExtensionLogSink, IDisposable
 {
     private readonly string _baseFilePath;
     private readonly Lock _syncRoot = new();
@@ -28,7 +28,7 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
     /// The base path used to derive daily file names. For example, <c>log.txt</c> produces
     /// <c>log20260728.txt</c>.
     /// </param>
-    public DailyFileExtensionHostLogSink(string baseFilePath)
+    public DailyFileLogSink(string baseFilePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseFilePath);
         this._baseFilePath = Path.GetFullPath(baseFilePath);
@@ -51,7 +51,7 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
     }
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -76,14 +76,14 @@ public sealed class DailyFileExtensionHostLogSink : IExtensionHostLogSink, IDisp
         }
     }
 
-    private static string GetLevelName(ExtensionHostLogLevel level)
+    private static string GetLevelName(ExtensionLogLevel level)
     {
         return level switch
         {
-            ExtensionHostLogLevel.Debug => "DBG",
-            ExtensionHostLogLevel.Information => "INF",
-            ExtensionHostLogLevel.Warning => "WRN",
-            ExtensionHostLogLevel.Error => "ERR",
+            ExtensionLogLevel.Debug => "DBG",
+            ExtensionLogLevel.Information => "INF",
+            ExtensionLogLevel.Warning => "WRN",
+            ExtensionLogLevel.Error => "ERR",
             _ => level.ToString()
         };
     }

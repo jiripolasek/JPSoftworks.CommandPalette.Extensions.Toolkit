@@ -13,26 +13,26 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// <summary>
 /// Forwards extension host diagnostics to the Command Palette host.
 /// </summary>
-public sealed class CommandPaletteExtensionHostLogSink : IExtensionHostLogSink
+public sealed class CommandPaletteLogSink : IExtensionLogSink
 {
-    private CommandPaletteExtensionHostLogSink()
+    private CommandPaletteLogSink()
     {
     }
 
     /// <summary>
     /// Gets the shared stateless sink instance.
     /// </summary>
-    public static CommandPaletteExtensionHostLogSink Instance { get; } = new();
+    public static CommandPaletteLogSink Instance { get; } = new();
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
         var state = entry.Level switch
         {
-            ExtensionHostLogLevel.Warning => MessageState.Warning,
-            ExtensionHostLogLevel.Error => MessageState.Error,
+            ExtensionLogLevel.Warning => MessageState.Warning,
+            ExtensionLogLevel.Error => MessageState.Error,
             _ => MessageState.Info,
         };
 

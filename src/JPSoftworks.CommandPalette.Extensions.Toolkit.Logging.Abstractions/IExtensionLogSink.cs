@@ -13,11 +13,11 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 /// This contract is an integration boundary for host diagnostics, not an application-wide logging abstraction.
 /// Implementations may forward entries to any logging system selected by the consuming application.
 /// </remarks>
-public interface IExtensionHostLogSink
+public interface IExtensionLogSink
 {
     /// <summary>
     /// Writes one diagnostic entry.
     /// </summary>
     /// <param name="entry">The entry to write.</param>
-    void Write(ExtensionHostLogEntry entry);
+    void Write(ExtensionLogEntry entry);
 }

@@ -68,7 +68,7 @@ internal static partial class ComShutdownSmokeTest
 
         var builder = ExtensionHostRunner.CreateBuilder(["-RegisterProcessAsComServer"], parameters)
             .ClearDefaultLogSinks()
-            .AddLogSink(new DelegateExtensionHostLogSink(entry =>
+            .AddLogSink(new DelegateLogSink(entry =>
             {
                 if (entry.Exception != null)
                 {

@@ -21,10 +21,10 @@ public sealed class LegacyLoggerCompatibilityTests
     [Fact]
     public void LoggerForwardsExistingMethodsToEffectiveSink()
     {
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var exception = new InvalidOperationException("Failure");
 
-        LegacyLoggerBridge.UseSink(new DelegateExtensionHostLogSink(entries.Add), isDebug: true);
+        LegacyLoggerBridge.UseSink(new DelegateLogSink(entries.Add), isDebug: true);
 
         try
         {
@@ -42,18 +42,18 @@ public sealed class LegacyLoggerCompatibilityTests
 
         Assert.Collection(
             entries,
-            entry => AssertEntry(entry, ExtensionHostLogLevel.Debug, "Debug"),
-            entry => AssertEntry(entry, ExtensionHostLogLevel.Information, "Information"),
-            entry => AssertEntry(entry, ExtensionHostLogLevel.Warning, "Warning"),
-            entry => AssertEntry(entry, ExtensionHostLogLevel.Error, "Error"),
+            entry => AssertEntry(entry, ExtensionLogLevel.Debug, "Debug"),
+            entry => AssertEntry(entry, ExtensionLogLevel.Information, "Information"),
+            entry => AssertEntry(entry, ExtensionLogLevel.Warning, "Warning"),
+            entry => AssertEntry(entry, ExtensionLogLevel.Error, "Error"),
             entry =>
             {
-                AssertEntry(entry, ExtensionHostLogLevel.Error, "InvalidOperationException: Failure");
+                AssertEntry(entry, ExtensionLogLevel.Error, "InvalidOperationException: Failure");
                 Assert.Same(exception, entry.Exception);
             },
             entry =>
             {
-                AssertEntry(entry, ExtensionHostLogLevel.Error, "Operation failed: Failure");
+                AssertEntry(entry, ExtensionLogLevel.Error, "Operation failed: Failure");
                 Assert.Same(exception, entry.Exception);
             });
     }
@@ -62,7 +62,7 @@ public sealed class LegacyLoggerCompatibilityTests
     public void LoggerSuppressesSinkFailures()
     {
         LegacyLoggerBridge.UseSink(
-            new DelegateExtensionHostLogSink(_ => throw new InvalidOperationException()),
+            new DelegateLogSink(_ => throw new InvalidOperationException()),
             isDebug: true);
 
         try
@@ -83,7 +83,7 @@ public sealed class LegacyLoggerCompatibilityTests
         var sinkInvocations = 0;
 
         LegacyLoggerBridge.UseSink(
-            new DelegateExtensionHostLogSink(_ =>
+            new DelegateLogSink(_ =>
             {
                 sinkInvocations++;
                 Logger.LogInformation("Relayed");
@@ -103,8 +103,8 @@ public sealed class LegacyLoggerCompatibilityTests
     }
 
     private static void AssertEntry(
-        ExtensionHostLogEntry entry,
-        ExtensionHostLogLevel expectedLevel,
+        ExtensionLogEntry entry,
+        ExtensionLogLevel expectedLevel,
         string expectedMessage)
     {
         Assert.Equal(expectedLevel, entry.Level);

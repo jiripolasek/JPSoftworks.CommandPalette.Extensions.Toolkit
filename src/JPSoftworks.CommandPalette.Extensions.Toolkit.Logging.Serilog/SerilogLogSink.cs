@@ -13,7 +13,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 /// <summary>
 /// Forwards extension host diagnostics to a Serilog logger.
 /// </summary>
-public sealed class SerilogExtensionHostLogSink : IExtensionHostLogSink
+public sealed class SerilogLogSink : IExtensionLogSink
 {
     private const string EventIdPropertyName = "EventId";
     private readonly global::Serilog.ILogger _logger;
@@ -22,14 +22,14 @@ public sealed class SerilogExtensionHostLogSink : IExtensionHostLogSink
     /// Initializes a sink that writes to <paramref name="logger"/>.
     /// </summary>
     /// <param name="logger">The target Serilog logger.</param>
-    public SerilogExtensionHostLogSink(global::Serilog.ILogger logger)
+    public SerilogLogSink(global::Serilog.ILogger logger)
     {
         ArgumentNullException.ThrowIfNull(logger);
         this._logger = logger;
     }
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -49,14 +49,14 @@ public sealed class SerilogExtensionHostLogSink : IExtensionHostLogSink
                 entry.Message);
     }
 
-    private static LogEventLevel ToSerilogLevel(ExtensionHostLogLevel level)
+    private static LogEventLevel ToSerilogLevel(ExtensionLogLevel level)
     {
         return level switch
         {
-            ExtensionHostLogLevel.Debug => LogEventLevel.Debug,
-            ExtensionHostLogLevel.Information => LogEventLevel.Information,
-            ExtensionHostLogLevel.Warning => LogEventLevel.Warning,
-            ExtensionHostLogLevel.Error => LogEventLevel.Error,
+            ExtensionLogLevel.Debug => LogEventLevel.Debug,
+            ExtensionLogLevel.Information => LogEventLevel.Information,
+            ExtensionLogLevel.Warning => LogEventLevel.Warning,
+            ExtensionLogLevel.Error => LogEventLevel.Error,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown extension host log level."),
         };
     }

@@ -15,9 +15,9 @@ internal sealed class ExtensionHostSerilogSinkCore : ILogEventSink
 {
     private const string DefaultCategory = "Serilog";
     private const string EventIdPropertyName = "EventId";
-    private readonly IExtensionHostLogSink _sink;
+    private readonly IExtensionLogSink _sink;
 
-    public ExtensionHostSerilogSinkCore(IExtensionHostLogSink sink)
+    public ExtensionHostSerilogSinkCore(IExtensionLogSink sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
         this._sink = sink;
@@ -35,9 +35,9 @@ internal sealed class ExtensionHostSerilogSinkCore : ILogEventSink
 
         try
         {
-            var entry = new ExtensionHostLogEntry(
+            var entry = new ExtensionLogEntry(
                 logEvent.Timestamp,
-                ToExtensionHostLogLevel(logEvent.Level),
+                ToExtensionLogLevel(logEvent.Level),
                 GetCategory(logEvent),
                 GetEventId(logEvent),
                 logEvent.RenderMessage(CultureInfo.InvariantCulture),
@@ -89,14 +89,14 @@ internal sealed class ExtensionHostSerilogSinkCore : ILogEventSink
         return 0;
     }
 
-    private static ExtensionHostLogLevel ToExtensionHostLogLevel(LogEventLevel level)
+    private static ExtensionLogLevel ToExtensionLogLevel(LogEventLevel level)
     {
         return level switch
         {
-            LogEventLevel.Verbose or LogEventLevel.Debug => ExtensionHostLogLevel.Debug,
-            LogEventLevel.Information => ExtensionHostLogLevel.Information,
-            LogEventLevel.Warning => ExtensionHostLogLevel.Warning,
-            LogEventLevel.Error or LogEventLevel.Fatal => ExtensionHostLogLevel.Error,
+            LogEventLevel.Verbose or LogEventLevel.Debug => ExtensionLogLevel.Debug,
+            LogEventLevel.Information => ExtensionLogLevel.Information,
+            LogEventLevel.Warning => ExtensionLogLevel.Warning,
+            LogEventLevel.Error or LogEventLevel.Fatal => ExtensionLogLevel.Error,
             _ => throw new ArgumentOutOfRangeException(nameof(level), level, "Unknown Serilog level."),
         };
     }

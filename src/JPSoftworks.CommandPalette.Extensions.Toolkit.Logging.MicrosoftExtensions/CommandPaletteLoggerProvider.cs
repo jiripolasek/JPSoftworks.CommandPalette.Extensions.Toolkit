@@ -31,7 +31,7 @@ public sealed class CommandPaletteLoggerProvider : ILoggerProvider
     public CommandPaletteLoggerProvider(LogLevel minimumLevel)
     {
         this._provider = new ExtensionHostLoggerProviderCore(
-            CommandPaletteExtensionHostLogSink.Instance,
+            CommandPaletteLogSink.Instance,
             minimumLevel);
     }
 

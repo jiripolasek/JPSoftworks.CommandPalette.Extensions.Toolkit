@@ -9,14 +9,14 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 /// <summary>
 /// Describes one diagnostic entry emitted by an extension host.
 /// </summary>
-public sealed class ExtensionHostLogEntry
+public sealed class ExtensionLogEntry
 {
     /// <summary>
     /// Initializes a new diagnostic entry.
     /// </summary>
-    public ExtensionHostLogEntry(
+    public ExtensionLogEntry(
         DateTimeOffset timestamp,
-        ExtensionHostLogLevel level,
+        ExtensionLogLevel level,
         string category,
         int eventId,
         string message,
@@ -41,7 +41,7 @@ public sealed class ExtensionHostLogEntry
     /// <summary>
     /// Gets the severity of the entry.
     /// </summary>
-    public ExtensionHostLogLevel Level { get; }
+    public ExtensionLogLevel Level { get; }
 
     /// <summary>
     /// Gets the component that emitted the entry.

@@ -13,19 +13,19 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// <summary>
 /// Writes extension host diagnostics through <see cref="Trace"/>.
 /// </summary>
-public sealed class TraceExtensionHostLogSink : IExtensionHostLogSink
+public sealed class TraceLogSink : IExtensionLogSink
 {
-    private TraceExtensionHostLogSink()
+    private TraceLogSink()
     {
     }
 
     /// <summary>
     /// Gets the shared trace sink.
     /// </summary>
-    public static TraceExtensionHostLogSink Instance { get; } = new();
+    public static TraceLogSink Instance { get; } = new();
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 
@@ -45,14 +45,14 @@ public sealed class TraceExtensionHostLogSink : IExtensionHostLogSink
         Trace.WriteLine(message);
     }
 
-    private static string GetLevelName(ExtensionHostLogLevel level)
+    private static string GetLevelName(ExtensionLogLevel level)
     {
         return level switch
         {
-            ExtensionHostLogLevel.Debug => "DBG",
-            ExtensionHostLogLevel.Information => "INF",
-            ExtensionHostLogLevel.Warning => "WRN",
-            ExtensionHostLogLevel.Error => "ERR",
+            ExtensionLogLevel.Debug => "DBG",
+            ExtensionLogLevel.Information => "INF",
+            ExtensionLogLevel.Warning => "WRN",
+            ExtensionLogLevel.Error => "ERR",
             _ => level.ToString(),
         };
     }

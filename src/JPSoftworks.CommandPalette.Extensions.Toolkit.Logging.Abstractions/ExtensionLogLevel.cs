@@ -9,7 +9,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 /// <summary>
 /// Identifies the severity of an extension host diagnostic entry.
 /// </summary>
-public enum ExtensionHostLogLevel
+public enum ExtensionLogLevel
 {
     /// <summary>
     /// Detailed information useful while diagnosing an extension.

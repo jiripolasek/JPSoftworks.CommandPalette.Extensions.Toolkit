@@ -69,7 +69,7 @@ public static class ExtensionHostRunner
         ExtensionHostRunnerParameters runParams,
         IReadOnlyCollection<HostedExtensionRegistration> hostedExtensionRegistrations,
         bool includeDefaultLogSinks,
-        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
+        IReadOnlyCollection<IExtensionLogSink> additionalLogSinks)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentException.ThrowIfNullOrWhiteSpace(runParams.PublisherMoniker);
@@ -130,39 +130,39 @@ public static class ExtensionHostRunner
         }
     }
 
-    private static ExtensionHostLogRouter CreateLogSink(
+    private static ExtensionLogRouter CreateLogSink(
         ExtensionHostConfiguration configuration,
         bool includeDefaultLogSinks,
-        IReadOnlyCollection<IExtensionHostLogSink> additionalLogSinks)
+        IReadOnlyCollection<IExtensionLogSink> additionalLogSinks)
     {
-        List<IExtensionHostLogSink> sinks = [];
+        List<IExtensionLogSink> sinks = [];
         List<IDisposable> ownedResources = [];
 
         if (includeDefaultLogSinks)
         {
             try
             {
-                var fileSink = new DailyFileExtensionHostLogSink(configuration.LogFilePath);
+                var fileSink = new DailyFileLogSink(configuration.LogFilePath);
                 sinks.Add(fileSink);
                 ownedResources.Add(fileSink);
             }
             catch
             {
-                sinks.Add(TraceExtensionHostLogSink.Instance);
+                sinks.Add(TraceLogSink.Instance);
             }
 
-            sinks.Add(CommandPaletteExtensionHostLogSink.Instance);
+            sinks.Add(CommandPaletteLogSink.Instance);
         }
 
         sinks.AddRange(additionalLogSinks);
 
-        return new ExtensionHostLogRouter(sinks, ownedResources, configuration.IsDebug);
+        return new ExtensionLogRouter(sinks, ownedResources, configuration.IsDebug);
     }
 
     private static async Task RunComServerAsync(
         ExtensionHostRunnerParameters runParams,
         IReadOnlyCollection<HostedExtensionRegistration> hostedExtensionRegistrations,
-        IExtensionHostLogSink logSink,
+        IExtensionLogSink logSink,
         Task appLifeMonitorTermination)
     {
         logSink.LogDebug(LogCategory, "Running as COM server");
@@ -308,7 +308,7 @@ public static class ExtensionHostRunner
 
     private static void TryEnableEfficiencyMode(
         ExtensionHostRunnerParameters extensionHostRunnerParameters,
-        IExtensionHostLogSink logSink)
+        IExtensionLogSink logSink)
     {
         if (extensionHostRunnerParameters.EnableEfficiencyMode)
         {
@@ -328,7 +328,7 @@ public static class ExtensionHostRunner
 
     private static AppLifeMonitor? TrySetAppLifeMonitor(
         TaskCompletionSource appLifeMonitorTermination,
-        IExtensionHostLogSink logSink)
+        IExtensionLogSink logSink)
     {
         AppLifeMonitor? appLifeMonitor = null;
         try
@@ -347,7 +347,7 @@ public static class ExtensionHostRunner
         return null;
     }
 
-    private static void TrySetShutdownPriority(IExtensionHostLogSink logSink)
+    private static void TrySetShutdownPriority(IExtensionLogSink logSink)
     {
         try
         {

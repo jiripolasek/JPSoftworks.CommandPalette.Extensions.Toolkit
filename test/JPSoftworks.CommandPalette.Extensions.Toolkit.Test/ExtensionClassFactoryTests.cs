@@ -207,7 +207,7 @@ public sealed class ExtensionClassFactoryTests
     [InlineData(true, true)]
     public void ConstructionFailuresAreLoggedWithClsidBeforeDraining(bool useExplicitClassId, bool returnNull)
     {
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var lifetime = new ExtensionHostLifetime(() => Assert.Single(entries));
         var failure = new InvalidOperationException("Creation failed.");
         var creations = 0;
@@ -219,13 +219,13 @@ public sealed class ExtensionClassFactoryTests
             }
 
             return returnNull ? null! : throw failure;
-        }, lifetime, useExplicitClassId ? typeof(TestExtension).GUID : null, new DelegateExtensionHostLogSink(entries.Add));
+        }, lifetime, useExplicitClassId ? typeof(TestExtension).GUID : null, new DelegateLogSink(entries.Add));
         var first = useExplicitClassId ? null : factory.Activate();
 
         var error = Assert.Throws<InvalidOperationException>(() => factory.Activate());
 
         var entry = Assert.Single(entries);
-        Assert.Equal(ExtensionHostLogLevel.Error, entry.Level);
+        Assert.Equal(ExtensionLogLevel.Error, entry.Level);
         Assert.Contains(factory.ClassId.ToString(), entry.Message);
         Assert.Same(error, entry.Exception);
         Assert.False(string.IsNullOrEmpty(error.StackTrace));
@@ -412,17 +412,17 @@ public sealed class ExtensionClassFactoryTests
     [Fact]
     public void DifferentClsidIsRejectedAndDisposedWithoutLeakingAnActiveLease()
     {
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var lifetime = new ExtensionHostLifetime(() => { });
         var creations = 0;
         var other = new OtherExtension();
         using var factory = new ExtensionClassFactory(
-            _ => ++creations == 1 ? new TestExtension() : other, lifetime, logSink: new DelegateExtensionHostLogSink(entries.Add));
+            _ => ++creations == 1 ? new TestExtension() : other, lifetime, logSink: new DelegateLogSink(entries.Add));
         var first = factory.Activate();
 
         var error = Assert.Throws<InvalidOperationException>(() => factory.Activate());
         var entry = Assert.Single(entries);
-        Assert.Equal(ExtensionHostLogLevel.Error, entry.Level);
+        Assert.Equal(ExtensionLogLevel.Error, entry.Level);
         Assert.Contains(factory.ClassId.ToString(), entry.Message);
         Assert.Same(error, entry.Exception);
         Assert.Equal(1, other.DisposeCount);

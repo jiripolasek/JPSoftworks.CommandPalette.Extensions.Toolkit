@@ -1,7 +1,7 @@
 #nullable enable
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink.SerilogExtensionHostLogSink(Serilog.ILogger! logger) -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLogSink.SerilogLogSink(Serilog.ILogger! logger) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogEntry! entry) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLoggingBuilderExtensions
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog.SerilogLoggingBuilderExtensions.UseSerilog<TBuilder>(this TBuilder! builder, Serilog.ILogger! logger) -> TBuilder!
 Serilog.CommandPaletteLoggerConfigurationExtensions

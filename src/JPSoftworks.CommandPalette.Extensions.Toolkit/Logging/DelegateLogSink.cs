@@ -11,22 +11,22 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// <summary>
 /// Forwards extension host diagnostics to a delegate.
 /// </summary>
-public sealed class DelegateExtensionHostLogSink : IExtensionHostLogSink
+public sealed class DelegateLogSink : IExtensionLogSink
 {
-    private readonly Action<ExtensionHostLogEntry> _write;
+    private readonly Action<ExtensionLogEntry> _write;
 
     /// <summary>
     /// Initializes a new delegate-backed sink.
     /// </summary>
     /// <param name="write">The delegate that receives diagnostic entries.</param>
-    public DelegateExtensionHostLogSink(Action<ExtensionHostLogEntry> write)
+    public DelegateLogSink(Action<ExtensionLogEntry> write)
     {
         ArgumentNullException.ThrowIfNull(write);
         this._write = write;
     }
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
         this._write(entry);

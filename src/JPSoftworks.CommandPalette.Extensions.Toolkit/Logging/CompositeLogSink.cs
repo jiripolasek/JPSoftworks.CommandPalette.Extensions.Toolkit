@@ -15,15 +15,15 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging;
 /// Failures from an individual sink are suppressed so that logging cannot interrupt the extension host
 /// or prevent the remaining sinks from receiving an entry.
 /// </remarks>
-public sealed class CompositeExtensionHostLogSink : IExtensionHostLogSink
+public sealed class CompositeLogSink : IExtensionLogSink
 {
-    private readonly IExtensionHostLogSink[] _sinks;
+    private readonly IExtensionLogSink[] _sinks;
 
     /// <summary>
     /// Initializes a composite sink from a snapshot of the supplied sinks.
     /// </summary>
     /// <param name="sinks">The sinks that should receive each entry.</param>
-    public CompositeExtensionHostLogSink(IEnumerable<IExtensionHostLogSink> sinks)
+    public CompositeLogSink(IEnumerable<IExtensionLogSink> sinks)
     {
         ArgumentNullException.ThrowIfNull(sinks);
         this._sinks = sinks.ToArray();
@@ -35,7 +35,7 @@ public sealed class CompositeExtensionHostLogSink : IExtensionHostLogSink
     }
 
     /// <inheritdoc />
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
 

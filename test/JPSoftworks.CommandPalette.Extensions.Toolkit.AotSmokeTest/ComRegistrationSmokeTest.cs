@@ -24,7 +24,7 @@ internal static class ComRegistrationSmokeTest
         var classId = typeof(LifetimeSmokeExtension).GUID;
         var failingClassId = new Guid("76F1405B-146C-4CE3-9568-BD78E64CABAB");
         var failure = new InvalidOperationException("Expected construction failure.");
-        var entries = new ConcurrentQueue<ExtensionHostLogEntry>();
+        var entries = new ConcurrentQueue<ExtensionLogEntry>();
         var winnerCreations = 0;
         var loserCreations = 0;
         var winnerDisposals = 0;
@@ -56,7 +56,7 @@ internal static class ComRegistrationSmokeTest
 
         var builder = ExtensionHostRunner.CreateBuilder(["-RegisterProcessAsComServer"], parameters)
             .ClearDefaultLogSinks()
-            .AddLogSink(new DelegateExtensionHostLogSink(entries.Enqueue));
+            .AddLogSink(new DelegateLogSink(entries.Enqueue));
         if (explicitFirst)
         {
             builder.AddHostedExtensionFactory(classId, CreateWinner);
@@ -76,12 +76,12 @@ internal static class ComRegistrationSmokeTest
             Require(winnerCreations == (explicitFirst ? 0 : 1), "The winning registration did not honor its creation policy.");
             Require(loserCreations == (explicitFirst ? 1 : 0) && loserDisposals == loserCreations,
                 "The skipped registration was created or disposed incorrectly.");
-            Require(entries.Count(entry => entry.Level == ExtensionHostLogLevel.Warning
+            Require(entries.Count(entry => entry.Level == ExtensionLogLevel.Warning
                 && entry.Message.Contains($"Duplicate extension CLSID {classId}", StringComparison.Ordinal)) == 1,
                 "The duplicate registration was not identified in diagnostics.");
             foreach (var registeredClassId in new[] { classId, failingClassId })
             {
-                Require(entries.Count(entry => entry.Level == ExtensionHostLogLevel.Debug
+                Require(entries.Count(entry => entry.Level == ExtensionLogLevel.Debug
                     && entry.Message == $"Registered extension CLSID {registeredClassId}") == 1,
                     "Successful registration diagnostics did not identify the CLSID.");
             }
@@ -103,7 +103,7 @@ internal static class ComRegistrationSmokeTest
                 Release(unexpected);
             }
 
-            var errors = entries.Where(entry => entry.Level == ExtensionHostLogLevel.Error).ToArray();
+            var errors = entries.Where(entry => entry.Level == ExtensionLogLevel.Error).ToArray();
             Require(errors.Length == 1 && ReferenceEquals(errors[0].Exception, failure)
                 && errors[0].Message.Contains(failingClassId.ToString(), StringComparison.Ordinal)
                 && !string.IsNullOrEmpty(failure.StackTrace), "The activation failure lost its CLSID or exception diagnostics.");

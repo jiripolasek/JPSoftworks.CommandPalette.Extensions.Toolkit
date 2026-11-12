@@ -12,12 +12,12 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 /// <summary>
 /// Configures and runs an extension host while retaining the toolkit's default behavior unless explicitly replaced.
 /// </summary>
-public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
+public sealed class ExtensionHostRunnerBuilder : IExtensionLoggingBuilder
 {
     private readonly ExtensionHostConfiguration _configuration;
     private readonly ExtensionHostRunnerParameters _parameters;
     private readonly List<HostedExtensionRegistration> _hostedExtensionRegistrations = [];
-    private readonly List<IExtensionHostLogSink> _additionalLogSinks = [];
+    private readonly List<IExtensionLogSink> _additionalLogSinks = [];
 
     private bool _includeDefaultLogSinks = true;
     private int _hasRun;
@@ -89,7 +89,7 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
     /// <remarks>
     /// The runner does not dispose caller-supplied sinks.
     /// </remarks>
-    public ExtensionHostRunnerBuilder AddLogSink(IExtensionHostLogSink sink)
+    public ExtensionHostRunnerBuilder AddLogSink(IExtensionLogSink sink)
     {
         ArgumentNullException.ThrowIfNull(sink);
         this.ThrowIfAlreadyRun();
@@ -127,12 +127,12 @@ public sealed class ExtensionHostRunnerBuilder : IExtensionHostLoggingBuilder
             [.. this._additionalLogSinks]);
     }
 
-    void IExtensionHostLoggingBuilder.AddHostLogSink(IExtensionHostLogSink sink)
+    void IExtensionLoggingBuilder.AddLogSink(IExtensionLogSink sink)
     {
         this.AddLogSink(sink);
     }
 
-    void IExtensionHostLoggingBuilder.ClearDefaultLogSinks()
+    void IExtensionLoggingBuilder.ClearDefaultLogSinks()
     {
         this.ClearDefaultLogSinks();
     }

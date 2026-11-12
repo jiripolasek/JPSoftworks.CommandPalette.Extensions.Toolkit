@@ -13,7 +13,7 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 internal sealed class CommandPaletteSerilogSink : ILogEventSink
 {
     private readonly ExtensionHostSerilogSinkCore _sink = new(
-        CommandPaletteExtensionHostLogSink.Instance);
+        CommandPaletteLogSink.Instance);
 
     public void Emit(LogEvent logEvent)
     {

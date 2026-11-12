@@ -17,9 +17,9 @@ public sealed class LoggingSinkTests
     [Fact]
     public void DelegateSinkForwardsEntry()
     {
-        ExtensionHostLogEntry? receivedEntry = null;
+        ExtensionLogEntry? receivedEntry = null;
         var expectedEntry = CreateEntry();
-        var sink = new DelegateExtensionHostLogSink(entry => receivedEntry = entry);
+        var sink = new DelegateLogSink(entry => receivedEntry = entry);
 
         sink.Write(expectedEntry);
 
@@ -29,12 +29,12 @@ public sealed class LoggingSinkTests
     [Fact]
     public void CompositeSinkContinuesAfterSinkFailure()
     {
-        ExtensionHostLogEntry? receivedEntry = null;
+        ExtensionLogEntry? receivedEntry = null;
         var expectedEntry = CreateEntry();
-        var sink = new CompositeExtensionHostLogSink(
+        var sink = new CompositeLogSink(
         [
-            new DelegateExtensionHostLogSink(_ => throw new InvalidOperationException("Expected test failure")),
-            new DelegateExtensionHostLogSink(entry => receivedEntry = entry),
+            new DelegateLogSink(_ => throw new InvalidOperationException("Expected test failure")),
+            new DelegateLogSink(entry => receivedEntry = entry),
         ]);
 
         sink.Write(expectedEntry);
@@ -53,7 +53,7 @@ public sealed class LoggingSinkTests
 
             try
             {
-                TraceExtensionHostLogSink.Instance.Write(CreateEntry());
+                TraceLogSink.Instance.Write(CreateEntry());
                 Trace.Flush();
 
                 var output = writer.ToString();
@@ -76,7 +76,7 @@ public sealed class LoggingSinkTests
 
         try
         {
-            using (var sink = new DailyFileExtensionHostLogSink(baseFilePath))
+            using (var sink = new DailyFileLogSink(baseFilePath))
             {
                 sink.Write(CreateEntry());
             }
@@ -95,11 +95,11 @@ public sealed class LoggingSinkTests
         }
     }
 
-    private static ExtensionHostLogEntry CreateEntry()
+    private static ExtensionLogEntry CreateEntry()
     {
-        return new ExtensionHostLogEntry(
+        return new ExtensionLogEntry(
             new DateTimeOffset(2026, 7, 28, 12, 34, 56, TimeSpan.FromHours(2)),
-            ExtensionHostLogLevel.Warning,
+            ExtensionLogLevel.Warning,
             "TestCategory",
             42,
             "Test message",

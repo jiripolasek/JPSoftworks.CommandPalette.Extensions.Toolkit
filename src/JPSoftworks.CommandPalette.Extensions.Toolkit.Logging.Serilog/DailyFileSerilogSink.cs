@@ -12,12 +12,12 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Serilog;
 
 internal sealed class DailyFileSerilogSink : ILogEventSink, IDisposable
 {
-    private readonly DailyFileExtensionHostLogSink _fileSink;
+    private readonly DailyFileLogSink _fileSink;
     private readonly ExtensionHostSerilogSinkCore _sink;
 
     public DailyFileSerilogSink(string baseFilePath)
     {
-        this._fileSink = new DailyFileExtensionHostLogSink(baseFilePath);
+        this._fileSink = new DailyFileLogSink(baseFilePath);
         this._sink = new ExtensionHostSerilogSinkCore(this._fileSink);
     }
 

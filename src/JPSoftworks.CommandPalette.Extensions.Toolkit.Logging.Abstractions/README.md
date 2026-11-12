@@ -4,14 +4,14 @@ This package provides dependency-free diagnostics contracts for Command Palette 
 It does not include concrete sinks or require Microsoft.Extensions.Logging, Serilog, or another application logging
 framework.
 
-Implement `IExtensionHostLogSink` to route host diagnostics to the logging system selected by an extension:
+Implement `IExtensionLogSink` to route host diagnostics to the logging system selected by an extension:
 
 ```csharp
 using JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions;
 
-public sealed class MyExtensionHostLogSink : IExtensionHostLogSink
+public sealed class MyExtensionHostLogSink : IExtensionLogSink
 {
-    public void Write(ExtensionHostLogEntry entry)
+    public void Write(ExtensionLogEntry entry)
     {
         // Map the entry to the application's logging system.
     }
@@ -27,5 +27,5 @@ composite, null, and Command Palette sinks. Framework-specific adapters are avai
 These contracts are an integration boundary for extension-host diagnostics. Application and core-service projects
 should continue to use whichever logging abstraction best fits them.
 
-`IExtensionHostLoggingBuilder` is the small composition contract used by optional adapter packages. Host builders
+`IExtensionLoggingBuilder` is the small composition contract used by optional adapter packages. Host builders
 implement it without depending on a particular logging framework.

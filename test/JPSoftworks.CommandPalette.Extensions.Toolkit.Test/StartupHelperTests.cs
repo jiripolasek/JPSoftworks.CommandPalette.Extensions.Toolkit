@@ -18,7 +18,7 @@ public sealed class StartupHelperTests
         var retail = new TestApp(() => Task.FromResult(true));
         var dev = new TestApp(() => Task.FromResult(true));
 
-        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, NullExtensionHostLogSink.Instance));
+        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, NullLogSink.Instance));
         Assert.Equal(1, retail.Attempts);
         Assert.Equal(0, dev.Attempts);
     }
@@ -29,7 +29,7 @@ public sealed class StartupHelperTests
     public async Task FailedRetailLaunchFallsBackToDev(bool throwException)
     {
         List<string> attempts = [];
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var failure = new InvalidOperationException("Retail launch failed.");
         var retail = new TestApp(() =>
         {
@@ -42,7 +42,7 @@ public sealed class StartupHelperTests
             return Task.FromResult(true);
         });
 
-        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, new DelegateExtensionHostLogSink(entries.Add)));
+        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, new DelegateLogSink(entries.Add)));
         Assert.Equal(["retail", "dev"], attempts);
         if (throwException)
         {
@@ -59,7 +59,7 @@ public sealed class StartupHelperTests
     {
         var dev = new TestApp(() => Task.FromResult(true));
 
-        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(null, dev, NullExtensionHostLogSink.Instance));
+        Assert.True(await StartupHelper.TryStartCommandPaletteAsync(null, dev, NullLogSink.Instance));
         Assert.Equal(1, dev.Attempts);
     }
 
@@ -73,7 +73,7 @@ public sealed class StartupHelperTests
             ? Task.FromException<bool>(new InvalidOperationException("Dev launch failed."))
             : Task.FromResult(false));
 
-        Assert.False(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, NullExtensionHostLogSink.Instance));
+        Assert.False(await StartupHelper.TryStartCommandPaletteAsync(retail, dev, NullLogSink.Instance));
         Assert.Equal(1, retail.Attempts);
         Assert.Equal(1, dev.Attempts);
     }
@@ -81,7 +81,7 @@ public sealed class StartupHelperTests
     [Fact]
     public async Task MissingAppsReportFailure()
     {
-        Assert.False(await StartupHelper.TryStartCommandPaletteAsync(null, null, NullExtensionHostLogSink.Instance));
+        Assert.False(await StartupHelper.TryStartCommandPaletteAsync(null, null, NullLogSink.Instance));
     }
 
     [Theory]
@@ -91,11 +91,11 @@ public sealed class StartupHelperTests
     {
         var app = new TestApp(() => Task.FromResult(true));
         var failure = new InvalidOperationException("Discovery failed.");
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var catalog = new TestCatalog(
             () => failRetail ? throw failure : app,
             () => failRetail ? app : throw failure);
-        var logSink = new DelegateExtensionHostLogSink(entries.Add);
+        var logSink = new DelegateLogSink(entries.Add);
 
         var result = StartupHelper.FindCommandPaletteApps(catalog, logSink);
 
@@ -115,13 +115,13 @@ public sealed class StartupHelperTests
     {
         var retailFailure = new InvalidOperationException("Retail discovery failed.");
         var devFailure = new InvalidOperationException("Dev discovery failed.");
-        List<ExtensionHostLogEntry> entries = [];
+        List<ExtensionLogEntry> entries = [];
         var catalog = new TestCatalog(
             () => failRetail ? throw retailFailure : null,
             () => failDev ? throw devFailure : null);
 
         var exception = Assert.Throws<AggregateException>(() => StartupHelper.FindCommandPaletteApps(
-            catalog, new DelegateExtensionHostLogSink(entries.Add)));
+            catalog, new DelegateLogSink(entries.Add)));
 
         Assert.Equal((failRetail ? 1 : 0) + (failDev ? 1 : 0), exception.InnerExceptions.Count);
         if (failRetail)
@@ -143,7 +143,7 @@ public sealed class StartupHelperTests
     {
         var catalog = new TestCatalog(() => null, () => null);
 
-        var result = StartupHelper.FindCommandPaletteApps(catalog, NullExtensionHostLogSink.Instance);
+        var result = StartupHelper.FindCommandPaletteApps(catalog, NullLogSink.Instance);
 
         Assert.Null(result.RetailApp);
         Assert.Null(result.DevApp);

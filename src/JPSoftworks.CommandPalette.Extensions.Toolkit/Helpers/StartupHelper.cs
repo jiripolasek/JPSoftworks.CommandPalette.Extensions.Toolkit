@@ -31,7 +31,7 @@ public static class StartupHelper
     /// <returns>A task representing the asynchronous operation.</returns>
     public static Task HandleDirectLaunchAsync()
     {
-        return HandleDirectLaunchAsync(TraceExtensionHostLogSink.Instance);
+        return HandleDirectLaunchAsync(TraceLogSink.Instance);
     }
 
     /// <summary>
@@ -39,7 +39,7 @@ public static class StartupHelper
     /// </summary>
     /// <param name="logSink">The caller-owned diagnostics sink.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static async Task HandleDirectLaunchAsync(IExtensionHostLogSink logSink)
+    public static async Task HandleDirectLaunchAsync(IExtensionLogSink logSink)
     {
         ArgumentNullException.ThrowIfNull(logSink);
 
@@ -65,7 +65,7 @@ public static class StartupHelper
         }
     }
 
-    private static async Task HandleDirectLaunchCoreAsync(IExtensionHostLogSink logSink)
+    private static async Task HandleDirectLaunchCoreAsync(IExtensionLogSink logSink)
     {
         // Let's add something meaningful for the end-user experience.
         // 1. We are not running as a COM server, so we can show a message box.
@@ -111,12 +111,12 @@ public static class StartupHelper
     internal static async Task<bool> TryStartCommandPaletteAsync(
         ICommandPaletteApp? retailApp,
         ICommandPaletteApp? devApp,
-        IExtensionHostLogSink logSink)
+        IExtensionLogSink logSink)
     {
         return await TryStartAsync(retailApp, logSink) || await TryStartAsync(devApp, logSink);
     }
 
-    private static async Task<bool> TryStartAsync(ICommandPaletteApp? app, IExtensionHostLogSink logSink)
+    private static async Task<bool> TryStartAsync(ICommandPaletteApp? app, IExtensionLogSink logSink)
     {
         if (app == null)
         {
@@ -135,7 +135,7 @@ public static class StartupHelper
         return false;
     }
 
-    internal static PackageDetectionResult FindCommandPaletteApps(ICommandPaletteAppCatalog catalog, IExtensionHostLogSink logSink)
+    internal static PackageDetectionResult FindCommandPaletteApps(ICommandPaletteAppCatalog catalog, IExtensionLogSink logSink)
     {
         List<Exception>? discoveryErrors = null;
         var retailApp = TryFind(catalog.FindRetailApp);

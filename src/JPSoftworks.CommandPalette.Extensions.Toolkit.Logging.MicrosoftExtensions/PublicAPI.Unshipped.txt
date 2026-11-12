@@ -9,10 +9,10 @@ JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyF
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.DailyFileLoggerProvider(string! baseFilePath) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.DailyFileLoggerProvider(string! baseFilePath, Microsoft.Extensions.Logging.LogLevel minimumLevel) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.DailyFileLoggerProvider.Dispose() -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.MicrosoftLoggerExtensionHostLogSink(Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.MicrosoftLoggerExtensionHostLogSink(Microsoft.Extensions.Logging.ILogger! logger) -> void
-JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerExtensionHostLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionHostLogEntry! entry) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerLogSink
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerLogSink.MicrosoftLoggerLogSink(Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerLogSink.MicrosoftLoggerLogSink(Microsoft.Extensions.Logging.ILogger! logger) -> void
+JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftLoggerLogSink.Write(JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.Abstractions.ExtensionLogEntry! entry) -> void
 JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftExtensionsLoggingBuilderExtensions
 static JPSoftworks.CommandPalette.Extensions.Toolkit.Logging.MicrosoftExtensions.MicrosoftExtensionsLoggingBuilderExtensions.UseMicrosoftExtensionsLogging<TBuilder>(this TBuilder! builder, Microsoft.Extensions.Logging.ILoggerFactory! loggerFactory) -> TBuilder!
 Microsoft.Extensions.Logging.ExtensionHostLoggingBuilderExtensions

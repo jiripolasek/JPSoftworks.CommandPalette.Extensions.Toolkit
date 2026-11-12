@@ -16,7 +16,7 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
     private readonly Lock _activationGate = new();
     private readonly Lock _gate = new();
     private readonly ExtensionHostLifetime _lifetime;
-    private readonly IExtensionHostLogSink? _logSink;
+    private readonly IExtensionLogSink? _logSink;
     private readonly bool _inferClassId;
     private bool _disposed;
     private HostedExtension? _preparedExtension;
@@ -31,7 +31,7 @@ internal sealed class ExtensionClassFactory : BaseClassFactory, IDisposable
         Func<ExtensionHostContext, IExtension> createExtension,
         ExtensionHostLifetime lifetime,
         Guid? classId = null,
-        IExtensionHostLogSink? logSink = null)
+        IExtensionLogSink? logSink = null)
     {
         if (classId == Guid.Empty)
         {
