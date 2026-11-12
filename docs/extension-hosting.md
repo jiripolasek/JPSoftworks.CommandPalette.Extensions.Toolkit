@@ -9,7 +9,7 @@
 - Process shutdown priority so Command Palette can release the extension first during system shutdown.
 - Optional process priority reduction and Windows Efficiency Mode (EcoQoS).
 - Direct-launch fallback for Start menu, taskbar, and Microsoft Store certification scenarios.
-- Default daily-file and Command Palette diagnostics.
+- Default daily-file logging, with explicit opt-in for Command Palette forwarding.
 
 ## Basic hosting
 

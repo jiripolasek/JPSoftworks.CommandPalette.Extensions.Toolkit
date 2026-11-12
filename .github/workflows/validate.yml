@@ -59,7 +59,7 @@ jobs:
         env:
           PACKAGE_VERSION: ${{ steps.version.outputs.version }}
         run: ./eng/build.ps1 -Version $env:PACKAGE_VERSION
-      - name: Run tests for both target frameworks
+      - name: Run tests for all target frameworks
         run: ./eng/test.ps1 -NoBuild -NoRestore -ResultsDirectory artifacts/test-results
       - name: Pack all four packages and symbols
         env:
@@ -101,7 +101,7 @@ jobs:
         with:
           cache-scope: aot-${{ matrix.runtime }}
       - uses: ./.github/actions/setup-windows-sdk
-      - name: Publish and verify both target frameworks
+      - name: Publish and verify all target frameworks
         env:
           AOT_RUNTIME: ${{ matrix.runtime }}
         run: ./eng/verify-aot.ps1 -RuntimeIdentifiers $env:AOT_RUNTIME -ArtifactsPath "$env:RUNNER_TEMP/aot"

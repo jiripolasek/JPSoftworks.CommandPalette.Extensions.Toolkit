@@ -19,8 +19,8 @@ namespace JPSoftworks.CommandPalette.Extensions.Toolkit;
 /// Runs self-contained Command Palette extension servers.
 /// </summary>
 /// <remarks>
-/// The zero-configuration <see cref="RunAsync" /> overload uses the toolkit's daily file and Command Palette
-/// diagnostic sinks. <see cref="M:ExtensionHostRunner.CreateBuilder(System.String[],ExtensionHostRunnerParameters)" /> exposes the same execution path with additional or replacement sinks.
+/// The zero-configuration <see cref="RunAsync" /> overload writes to the toolkit's daily log file.
+/// <see cref="M:ExtensionHostRunner.CreateBuilder(System.String[],ExtensionHostRunnerParameters)" /> exposes the same execution path with additional or replacement sinks.
 /// </remarks>
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static class ExtensionHostRunner

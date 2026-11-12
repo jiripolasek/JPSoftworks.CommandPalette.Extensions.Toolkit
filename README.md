@@ -26,9 +26,9 @@ An opinionated set of hosting, lifecycle, startup, and diagnostics utilities for
 - **A useful direct-launch experience** — open Command Palette or guide users to PowerToys instead of leaving an
   apparently unresponsive process.
 - **Consistent host conventions** — centralize debug detection and canonical data paths across every extension.
-- **Logging without lock-in** — use the built-in rolling file and Command Palette diagnostics, logging-neutral sinks,
-  or optional Microsoft.Extensions.Logging and Serilog integrations.
-- **Modern deployment support** — target .NET 9 or .NET 10, including trimming and Native AOT on x64 and Arm64.
+- **Logging without lock-in** — use the built-in in-process rolling file, logging-neutral sinks, or optional
+  Microsoft.Extensions.Logging and Serilog integrations.
+- **Modern deployment support** — target .NET 9, .NET 10, or .NET 11, including trimming and Native AOT on x64 and Arm64.
 
 ## Packages
 
@@ -41,11 +41,11 @@ An opinionated set of hosting, lifecycle, startup, and diagnostics utilities for
 
 ## Compatibility
 
-The Toolkit targets .NET 9 and .NET 10 on Windows. It is Native AOT-compatible and trimmable, with `win-x64` and
-`win-arm64` publishes verified for both target frameworks.
+The Toolkit targets .NET 9, .NET 10, and .NET 11 on Windows. It is Native AOT-compatible and trimmable, with CI publishing
+for `win-x64` and `win-arm64` on every target framework.
 
 > [!NOTE]
-> `Microsoft.CommandPalette.Extensions` is selected per target framework: .NET 9 uses `0.9.260303001`, and .NET 10
+> `Microsoft.CommandPalette.Extensions` is selected per target framework: .NET 9 uses `0.9.260303001`, and .NET 10 and 11
 > uses `0.12.260812002`. The `0.12.260812002` package advertises a .NET 8 target, but its toolkit assembly requires
 > .NET 10. Keeping the older SDK for .NET 9 preserves compatibility with existing .NET 9 extensions.
 
@@ -73,7 +73,7 @@ public static async Task Main(string[] args)
 ```
 
 The default runner provides the COM server lifecycle, process monitoring, direct-launch fallback, Efficiency Mode,
-daily rolling files, and Command Palette diagnostics. Pass `-Debug` or set
+and daily rolling log files. Pass `-Debug` or set
 `ExtensionHostRunnerParameters.IsDebug` to enable debug entries consistently.
 
 ## Documentation

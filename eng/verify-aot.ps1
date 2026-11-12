@@ -5,10 +5,12 @@ param(
 
     [ValidateSet(
         "net9.0-windows10.0.22621.0",
-        "net10.0-windows10.0.22621.0")]
+        "net10.0-windows10.0.22621.0",
+        "net11.0-windows10.0.22621.0")]
     [string[]] $Frameworks = @(
         "net9.0-windows10.0.22621.0",
-        "net10.0-windows10.0.22621.0"),
+        "net10.0-windows10.0.22621.0",
+        "net11.0-windows10.0.22621.0"),
 
     [ValidateSet("win-x64", "win-arm64")]
     [string[]] $RuntimeIdentifiers = @("win-x64", "win-arm64"),

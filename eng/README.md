@@ -19,7 +19,7 @@ Restore operations used by `build.ps1`, `test.ps1`, and `pack.ps1` run in locked
 AOT smoke-test project are declared in `eng\Package.config.psd1`. `pack.ps1` produces every Toolkit `.nupkg` together
 with a matching `.snupkg`, and `publish-local.ps1` copies both package types to `artifacts\local-feed`.
 
-`test.ps1` also runs the managed COM lifetime and shutdown smoke tests for both target frameworks. Shutdown tests
+`test.ps1` also runs the managed COM lifetime and shutdown smoke tests for all target frameworks. Shutdown tests
 cover hosted and legacy factories, window-close and end-session messages, and throwing disposal callbacks. Each
 case runs in its own process and sends messages only to that process's monitor window; no system shutdown occurs.
 Lifetime tests verify the lowered process priority, then restore normal priority before the timed COM checks.
@@ -37,7 +37,7 @@ For `publish-nuget.ps1` and `publish-github.ps1`, `-WhatIf` previews the operati
 or publishing. Add `-NoPack -WhatIf` to validate an existing package set without uploading it. GitHub publishing
 requires an explicit `-Version` and rejects stable and `preview.N` release identities, including casing variants.
 
-`verify-aot.ps1` treats warnings as errors, publishes both target frameworks for `win-x64` and `win-arm64` beneath
+`verify-aot.ps1` treats warnings as errors, publishes all target frameworks for `win-x64` and `win-arm64` beneath
 `artifacts\aot`, and verifies that every output is native rather than framework-dependent.
 Use `-ArtifactsPath` to select a shorter output root when the checkout path would exceed the native linker's
 path length limit. CI uses the runner's temporary directory for these outputs.
@@ -124,10 +124,10 @@ nonnegative integer without leading zeroes. Tags such as `v0.12.0-beta.1`, `v0.1
 `v0.12.0-preview.1.extra` are rejected. Automatic `ci.N` packages from branch pushes continue to use GitHub Packages.
 
 Both workflows share `validate.yml` and the local `eng` scripts. Each run builds once with its resolved package
-version, tests those assemblies, and packs without rebuilding. Tests cover both .NET 9 and .NET 10;
-Native AOT publishing covers both frameworks on `win-x64` and `win-arm64`. Native output is inspected but not
-executed. CI installs SDKs 9.0.318 and 10.0.401 in an isolated directory to match the lock files and provide
-NuGet 7.6 environment-key support. Local `global.json` SDK selection is unchanged. Update the CI SDK pins
+version, tests those assemblies, and packs without rebuilding. Tests cover .NET 9, .NET 10, and .NET 11;
+Native AOT publishing covers all three frameworks on `win-x64` and `win-arm64`. Native output is inspected but not
+executed. CI installs SDKs 9.0.318, 10.0.401, and 11.0.100 in an isolated directory and selects 11.0.100 for builds.
+The older SDKs supply the .NET 9 and .NET 10 test runtimes. Local `global.json` requires the .NET 11 SDK. Update the CI SDK pins
 alongside dependency lock files when upgrading the toolchain. The build job and each AOT runtime use separate
 NuGet caches, keyed by the lock files and SDK setup action, so one job cannot exclude another's runtime packs.
 When caching is enabled, the setup action defaults `NUGET_PACKAGES` to `artifacts/nuget` in the workspace and

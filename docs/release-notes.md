@@ -2,6 +2,12 @@
 
 ## Unreleased (draft)
 
+### Framework support
+
+- Adds .NET 11 targets to all four packages, alongside .NET 9 and .NET 10.
+- Uses Microsoft.Extensions.Logging 11.0.0 for the .NET 11 adapter.
+- Builds with the .NET 11 SDK and includes .NET 11 in tests and Native AOT checks.
+
 ### Breaking logging changes from v0.12.0-preview.1
 
 - Custom sinks can now receive concurrent writes. The v0.12.0-preview.1 runner serialized writes to its sinks,
@@ -24,3 +30,4 @@ See [Diagnostics and logging](logging.md) for sink and adapter configuration.
   a sink that never returns prevents runner completion.
 - Shutdown triggered from inside a sink now awaits the active write asynchronously, avoiding a self-deadlock while
   still waiting for that write and owned-sink disposal before completing the runner.
+- `AddLogSink(sink, minimumLevel)` rejects undefined log levels instead of silently filtering entries incorrectly.
